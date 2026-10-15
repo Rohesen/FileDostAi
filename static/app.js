@@ -53,7 +53,7 @@ function renderToolsGrid(category) {
       openToolModal(tool.id);
     });
 
-    const local = !tool.endpoint;
+    const local = !tool.endpoint && !tool.server;
     card.innerHTML = `
       ${typeof TileArt !== "undefined" ? TileArt.html(tool) : ""}
       <div class="card-head">
@@ -135,7 +135,7 @@ function openToolModal(toolId, { push = true } = {}) {
   fileInput.multiple = !!tool.multipleFiles;
   fileInput.accept = tool.accept;
 
-  const local = !tool.endpoint;
+  const local = !tool.endpoint && !tool.server;
   document.getElementById("dropHint").textContent =
     (tool.multipleFiles ? "Add as many files as you like" : "One file") +
     (local ? ". Your file stays on this device." : ". Uploaded over HTTPS, processed in memory, never stored.");

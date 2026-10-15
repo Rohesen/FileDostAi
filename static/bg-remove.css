@@ -51,3 +51,4 @@
   .bgr-wrap { grid-template-columns: 1fr; }
   .bgr-stage canvas { max-height: 320px; }
 }
+.bgr [hidden] { display: none !important; }

@@ -1,13 +1,16 @@
 // Background Remover: cuts the person or object out of a photo and saves it see-through (PNG),
 // on white, or on any colour (handy for passport and exam photos).
-// The model (a small U²-Net, 44 MB) and ONNX Runtime Web live in /static/vendor/bg-remove/ and
-// are downloaded only the first time this tool is used. It all runs on the device, in a worker.
+// Two models (U²-Net "silueta" and ISNet) find the subject. By default they run on our server
+// (/api/remove-background, nothing to download; the photo is not stored), which sends back only
+// the mask. Visitors who want the photo to stay on their device can run the same models in a
+// worker instead: ONNX Runtime Web and the models (90 MB) then download once from
+// /static/vendor/bg-remove/. Edges, colours and trimming always happen in the browser.
 
-document.head.append(Object.assign(document.createElement("link"), { rel: "stylesheet", href: "/static/bg-remove.css?v=25" }));
+document.head.append(Object.assign(document.createElement("link"), { rel: "stylesheet", href: "/static/bg-remove.css?v=27" }));
 
 const BgRemove = (() => {
   const UserError = (msg) => new ClientPDF.UserError(msg);
-  const SIZE = 320;            // what the model looks at
+  const SMALL = 320, BIG = 1024; // what the two models look at
   const MAX_SIDE = 4096;       // bigger photos are scaled down to this, so phones don't run out of memory
   const SWATCHES = [
     ["#ffffff", "White"], ["#d9ecff", "Light blue"], ["#1e5bbd", "Blue"], ["#d62828", "Red"], ["#e9e9e9", "Light grey"], ["#111111", "Black"],
@@ -23,7 +26,7 @@ const BgRemove = (() => {
   function getWorker() {
     if (worker) return worker;
     try {
-      worker = new Worker("/static/bg-remove-worker.js?v=25", { type: "module" });
+      worker = new Worker("/static/bg-remove-worker.js?v=27", { type: "module" });
     } catch (e) {
       throw UserError("This browser can't run the background remover. Try a recent Chrome, Edge, Firefox or Safari.");
     }
@@ -63,18 +66,130 @@ const BgRemove = (() => {
     worker = null;
   }
 
+  const pixels = (src, size) => ImageKit.draw(src, size, size).getContext("2d").getImageData(0, 0, size, size).data;
+
+  /** Drops loose specks: keeps only solid areas at least 4% the size of the biggest one.
+      m: size×size values 0..255, changed in place. */
+  function dropSpecks(m, size) {
+    const n = size * size, label = new Int32Array(n), areas = [0], stack = new Int32Array(n);
+    for (let i = 0; i < n; i++) {
+      if (m[i] < 128 || label[i]) continue;
+      const id = areas.length;
+      let top = 0, area = 0;
+      stack[top++] = i; label[i] = id;
+      while (top) {
+        const p = stack[--top]; area++;
+        const x = p % size, y = (p - x) / size;
+        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+          const nx = x + dx, ny = y + dy;
+          if (nx < 0 || ny < 0 || nx >= size || ny >= size) continue;
+          const q = ny * size + nx;
+          if (!label[q] && m[q] >= 128) { label[q] = id; stack[top++] = q; }
+        }
+      }
+      areas.push(area);
+    }
+    const big = areas.reduce((a, b) => Math.max(a, b), 0);
+    if (!big) return m;
+    const keep = areas.map((a) => a >= big * 0.04);
+    // Pixels next to a kept area keep their soft edge; everything else that is loose goes.
+    const near = new Uint8Array(n);
+    for (let i = 0; i < n; i++) if (label[i] && keep[label[i]]) near[i] = 1;
+    for (let pass = 0; pass < 3; pass++) {
+      const prev = near.slice();
+      for (let i = 0; i < n; i++) {
+        if (prev[i]) continue;
+        const x = i % size;
+        if ((x > 0 && prev[i - 1]) || (x < size - 1 && prev[i + 1]) || (i >= size && prev[i - size]) || (i < n - size && prev[i + size])) near[i] = 1;
+      }
+    }
+    for (let i = 0; i < n; i++) if (!near[i]) m[i] = 0;
+    return m;
+  }
+
+  /** Asks the server for the mask: sends a copy of the photo at most 1600 px wide or tall. */
+  async function serverMask(src) {
+    const s = Math.min(1, 1600 / Math.max(src.width, src.height));
+    const jpg = await ImageKit.encode(ImageKit.draw(src, src.width * s, src.height * s, { background: "#ffffff" }), "jpeg", 0.92);
+    const form = new FormData();
+    form.append("file", new Blob([jpg], { type: "image/jpeg" }), "photo.jpg");
+    let res;
+    try {
+      res = await fetch("/api/remove-background", { method: "POST", body: form });
+    } catch (e) {
+      throw UserError("Couldn't reach the server. Check your connection, or choose \"On this device\".");
+    }
+    if (!res.ok) {
+      let detail = `The server couldn't do this right now (${res.status}).`;
+      try { const j = await res.json(); if (typeof j.detail === "string") detail = j.detail; } catch (e) { /* not json */ }
+      throw UserError(detail);
+    }
+    const bmp = await createImageBitmap(await res.blob());
+    const c = ImageKit.draw(bmp, bmp.width, bmp.height);
+    const d = c.getContext("2d").getImageData(0, 0, c.width, c.height).data;
+    const m = new Uint8Array(c.width * c.height);
+    for (let i = 0; i < m.length; i++) m[i] = d[i * 4];
+    return { m, size: c.width };
+  }
+
   /** The cut-out mask for a picture, as a canvas the picture's size whose alpha is the mask. */
-  async function maskFor(src) {
-    const small = ImageKit.draw(src, SIZE, SIZE);
-    const rgba = small.getContext("2d").getImageData(0, 0, SIZE, SIZE).data;
-    const r = await ask({ type: "mask", rgba: rgba.buffer }, [rgba.buffer]);
-    const m = new Uint8Array(r.mask);
-    const img = new ImageData(SIZE, SIZE);
+  async function maskFor(src, onDevice = false) {
+    let m, size;
+    if (onDevice) {
+      const small = pixels(src, SMALL), big = pixels(src, BIG);
+      const r = await ask({ type: "mask", rgba: small.buffer, big: big.buffer }, [small.buffer, big.buffer]);
+      m = new Uint8Array(r.mask); size = r.size;
+    } else {
+      ({ m, size } = await serverMask(src));
+      dropSpecks(m, size);
+    }
+    const img = new ImageData(size, size);
     for (let i = 0; i < m.length; i++) { const k = i * 4; img.data[k] = img.data[k + 1] = img.data[k + 2] = 255; img.data[k + 3] = m[i]; }
     const c = document.createElement("canvas");
-    c.width = c.height = SIZE;
+    c.width = c.height = size;
     c.getContext("2d").putImageData(img, 0, 0);
-    return ImageKit.draw(c, src.width, src.height); // smooth upscale to full size
+    return ImageKit.draw(c, src.width, src.height); // smooth resize to full size
+  }
+
+  /** Exam and ID photos often carry a plain strip with the name and date under (or over) the photo.
+      It isn't background to the model, but it is to the visitor. Finds such a strip: plain colour
+      edge to edge at the very bottom or top, ending at a straight line where the photo starts.
+      Returns { top, bottom } in pixels of src (0 when there is none). */
+  function captionStrips(src) {
+    const w = Math.min(400, src.width), h = Math.max(1, Math.round((src.height * w) / src.width));
+    const d = ImageKit.draw(src, w, h).getContext("2d").getImageData(0, 0, w, h).data;
+    const px = (x, y) => (y * w + x) * 4;
+    const near = (i, c, tol) => Math.abs(d[i] - c[0]) <= tol && Math.abs(d[i + 1] - c[1]) <= tol && Math.abs(d[i + 2] - c[2]) <= tol;
+    const match = (y, c) => { let n = 0; for (let x = 0; x < w; x++) if (near(px(x, y), c, 36)) n++; return n / w; };
+    function find(edge, step) {
+      // The outermost two rows must be one plain colour.
+      const c = [0, 0, 0];
+      for (let x = 0; x < w; x++) for (let k = 0; k < 3; k++) c[k] += (d[px(x, edge) + k] + d[px(x, edge + step) + k]) / (2 * w);
+      if (match(edge, c) < 0.9 || match(edge + step, c) < 0.9) return 0;
+      let y = edge, sum = 0, rows = 0;
+      while (y >= 0 && y < h && match(y, c) >= 0.3) { sum += match(y, c); rows++; y += step; }
+      const inner = y, outer = y - step; // first photo row, last strip row
+      if (rows < h * 0.03 || rows > h * 0.4 || sum / rows < 0.6) return 0;
+      const p1 = inner + step;
+      if (p1 < 0 || p1 >= h || match(inner, c) >= 0.5 || match(p1, c) >= 0.5) return 0;
+      // A straight edge: most columns change sharply between the strip and the photo.
+      let sharp = 0;
+      for (let x = 0; x < w; x++) {
+        const a = px(x, outer), b = px(x, inner);
+        if (Math.abs(d[a] - d[b]) + Math.abs(d[a + 1] - d[b + 1]) + Math.abs(d[a + 2] - d[b + 2]) > 60) sharp++;
+      }
+      if (sharp / w < 0.6) return 0;
+      return Math.min(src.height, Math.ceil(((rows + 1) * src.height) / h));
+    }
+    return { bottom: find(h - 1, -1), top: find(0, 1) };
+  }
+
+  /** Clears the mask over caption strips (mask is a canvas the picture's size). */
+  function clearStrips(mask, strips) {
+    const g = mask.getContext("2d");
+    if (strips.bottom) g.clearRect(0, mask.height - strips.bottom, mask.width, strips.bottom);
+    if (strips.top) g.clearRect(0, 0, mask.width, strips.top);
+    return mask;
   }
 
   /** Applies the edge setting to the full-size mask and returns the cut-out (transparent) picture. */
@@ -151,6 +266,14 @@ const BgRemove = (() => {
               <input type="color" id="bgrPick" class="bgr-pick" value="#d9ecff" aria-label="Pick any colour">
             </div>
             <div class="form-group">
+              <label class="form-label" for="bgrWhere">Run on</label>
+              <select id="bgrWhere" class="form-select">
+                <option value="server" selected>Our server (fast, nothing to download)</option>
+                <option value="device">This device (photo never leaves it, 90 MB download once)</option>
+              </select>
+            </div>
+            <label class="checkbox-group" id="bgrStripRow" hidden><input type="checkbox" id="bgrKeepStrip"> Keep the name &amp; date strip</label>
+            <div class="form-group">
               <label class="form-label" for="bgrEdge">Edges</label>
               <select id="bgrEdge" class="form-select">
                 <option value="soft">Soft (hair, fur)</option>
@@ -170,10 +293,10 @@ const BgRemove = (() => {
             <p class="bgr-info" id="bgrInfo"></p>
           </div>
         </div>
-        <p class="drop-hint">Works best on photos of people, pets, products and cars. The picture never leaves your device. The first time, the tool downloads about 55 MB; after that it opens quickly.</p>
+        <p class="drop-hint">Works best on photos of people, pets, products and cars. Photos sent to our server are processed in memory and never stored. Choose "This device" to keep the photo on your phone or computer.</p>
       </div>`;
     const $ = (id) => root.querySelector(`#${id}`);
-    let src = null, mask = null, cut = null, name = "image", note = "";
+    let src = null, mask = null, cut = null, name = "image", note = "", file = null, strips = { top: 0, bottom: 0 }, rawMask = null;
     let token = 0;
 
     function bg() {
@@ -198,6 +321,11 @@ const BgRemove = (() => {
       view.getContext("2d").drawImage(canvas, 0, 0, view.width, view.height);
     }
 
+    function applyStrips() {
+      const found = strips.top || strips.bottom;
+      $("bgrStripRow").hidden = !found;
+      mask = found && !$("bgrKeepStrip").checked ? clearStrips(ImageKit.draw(rawMask, rawMask.width, rawMask.height), strips) : rawMask;
+    }
     function render() {
       if (!src || !mask) return;
       cut = cutOut(src, mask, $("bgrEdge").value);
@@ -206,11 +334,12 @@ const BgRemove = (() => {
       const fmt = $("bgrFmt").value;
       const msg = !cut.box ? "No clear subject was found, so nothing is left. Try a photo with a clear person or object."
         : !bg() && fmt === "jpeg" ? "JPG can't be see-through, so it will be saved on white. Choose PNG or WebP to keep it see-through."
-          : `${out.width}×${out.height} px${note}`;
+          : `${out.width}×${out.height} px${note}${(strips.top || strips.bottom) && !$("bgrKeepStrip").checked ? ". The name and date strip was removed too." : ""}`;
       info(msg, !cut.box);
     }
 
-    async function setFile(file) {
+    async function setFile(f) {
+      file = f;
       const my = ++token;
       name = ImageKit.stem(file.name);
       const bmp = await ImageKit.decode(file);
@@ -230,9 +359,11 @@ const BgRemove = (() => {
         else busy(`Downloading the background remover, only the first time… ${Math.round(p.received / 1048576)} of ${Math.round(p.total / 1048576)} MB`, p.received / p.total);
       };
       try {
-        const m = await maskFor(src);
+        const m = await maskFor(src, $("bgrWhere").value === "device");
         if (my !== token) return;
-        mask = m;
+        rawMask = m;
+        strips = captionStrips(src);
+        applyStrips();
         busy("");
         render();
       } catch (e) {
@@ -244,6 +375,8 @@ const BgRemove = (() => {
     }
 
     root.addEventListener("change", (e) => {
+      if (e.target.id === "bgrWhere") { if (file) setFile(file).catch(() => {}); return; }
+      if (e.target.id === "bgrKeepStrip" && rawMask) applyStrips();
       if (e.target.name === "bgrBg") $("bgrColours").hidden = e.target.value !== "colour";
       render();
     });
@@ -281,7 +414,7 @@ const BgRemove = (() => {
     };
   }
 
-  return { configHtml, create, EDGES };
+  return { configHtml, create, EDGES, _strips: captionStrips };
 })();
 
 TOOLS.push({
@@ -292,6 +425,7 @@ TOOLS.push({
   desc: "Remove the background from a photo in one tap. Save it see-through, on white, or on any colour for passport and exam photos.",
   keywords: "remove background remove bg background remover erase background transparent png cut out photo cutout white background blue background passport photo background change background colour color product photo",
   category: "image",
+  server: true, // runs on our server by default (the visitor can pick "This device")
   badge: "New",
   accept: "image/*,.heic,.heif",
   acceptLabel: "a photo",

@@ -33,6 +33,7 @@ from guards import UploadLimitMiddleware, RateLimitMiddleware
 import feedback
 import converters
 import image_ocr
+import bg_remove
 import sandbox
 
 log = logging.getLogger("ultrapdf")
@@ -549,6 +550,13 @@ async def image_to_word(files: List[UploadFile] = File(...), language: str = For
     return _download(data, f"{name}.docx", DOCX_MIME)
 
 
+@app.post("/api/remove-background")
+async def remove_background(file: UploadFile = File(...)):
+    """The subject mask of one photo (1024×1024 greyscale PNG); the browser makes the cut-out."""
+    data = (await _read_all([file]))[0]
+    return Response(content=await _run("Background removal", bg_remove.mask_png, data), media_type="image/png")
+
+
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
@@ -620,7 +628,7 @@ TOOL_PAGES = {
     "jpg-to-word": ("JPG to Word Converter", "Convert a photo or scan (JPG, PNG) into an editable Word document free with OCR. Paragraphs are kept. Files are never stored."),
     "image-upscaler": ("Image Upscaler", "Make small or blurry photos 2x or 4x bigger and sharper with free on-device AI. Nothing is uploaded."),
     "signature-maker": ("Signature Maker", "Draw or type your signature, or clean up a photo of one, and download a transparent PNG for forms and documents. Free and private."),
-    "remove-background": ("Background Remover", "Remove the background from a photo free: save it see-through (PNG), on white or on any colour for passport and exam photos. Runs on your device, nothing is uploaded."),
+    "remove-background": ("Background Remover", "Remove the background from a photo free: save it see-through (PNG), on white or on any colour for passport and exam photos. Nothing to install or download, and photos are never stored."),
     "qr-code": ("QR Code Maker & Reader", "Make a QR code for a link, text, Wi-Fi, UPI payment or contact card, or read a QR code from a photo, PDF or your camera."),
     "zip-tools": ("ZIP Maker & Opener", "Pack any files into one ZIP, or open a ZIP, RAR, 7z or TAR to see what's inside and take out the files you need."),
     "compress-video": ("Compress Video", "Shrink a video to fit WhatsApp (16 MB), email (25 MB) or any size. Runs in your browser, nothing uploaded. Free."),

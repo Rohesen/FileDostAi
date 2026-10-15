@@ -17,4 +17,6 @@ python-pptx>=0.6.21
 pdf2docx>=0.5.6
 markdown>=3.4
 pdfplumber>=0.10.0
+onnxruntime>=1.20.0
+numpy>=1.26
 pywin32>=306; sys_platform == "win32"

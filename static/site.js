@@ -14,7 +14,7 @@ const Site = (() => {
     organize: "Organize", edit: "Edit & Sign", convert: "Convert", image: "Images",
     optimize: "Optimize", security: "Security", ai: "Read & Compare",
   };
-  const isLocal = (t) => !t.endpoint;
+  const isLocal = (t) => !t.endpoint && !t.server;
   const toolLink = (t) => `<a href="/${t.slug}" data-tool="${t.id}">${Icons.tool(t, "ti-sm")}${esc(t.name)}</a>`;
 
   // ---------- Top menu ----------

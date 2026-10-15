@@ -6,8 +6,8 @@ FileDost AI is a free, open-source (AGPL-3.0) web app with 72 file tools for PDF
 
 | Where it runs | Tools | What happens to the file |
 | :--- | ---: | :--- |
-| Browser only | 48 | Read with FileReader, processed in JavaScript or WebAssembly, saved as a download. Never uploaded. |
-| Server | 17 | Uploaded over HTTPS, processed in memory inside a sandboxed job process, sent back, then discarded. |
+| Browser only | 47 | Read with FileReader, processed in JavaScript or WebAssembly, saved as a download. Never uploaded. |
+| Server | 18 | Uploaded over HTTPS, processed in memory inside a sandboxed job process, sent back, then discarded. |
 | Hybrid | 2 | Browser does most of the work and calls the server for one step (PDF compression). |
 
 ---
@@ -38,7 +38,7 @@ FileDost AI is a free, open-source (AGPL-3.0) web app with 72 file tools for PDF
 | **libarchive.js** | MIT | Opening RAR, 7z, TAR and GZ archives |
 | **qrcode-generator** | MIT | Making QR codes (links, Wi-Fi, UPI, contact cards) |
 | **jsQR** | Apache-2.0 | Reading QR codes from photos, PDFs or the camera |
-| **ONNX Runtime Web** + **silueta** model | 1.22.0, MIT; model MIT/Apache-2.0 (U²-Net) | Background Remover (55 MB in all) and Image Upscaler (Real-ESRGAN, BSD-3-Clause, 4.9 MB), each downloaded only on first use |
+| **ONNX Runtime Web** + **silueta** and **ISNet** models | 1.22.0, MIT; models MIT/Apache-2.0 (U²-Net, DIS) | Background Remover's "This device" option (90 MB of models) and Image Upscaler (Real-ESRGAN, BSD-3-Clause, 4.9 MB), each downloaded only on first use |
 | **UltraFace** RFB-640 face model | MIT (Linzaer) | Blur Faces & Text finds faces (1.6 MB, downloaded on first use) |
 | **Browser APIs** | built in | Canvas/OffscreenCanvas (image work), getUserMedia (camera), Web Speech (read aloud), Chrome's on-device Translator and Summarizer, Service Worker + Cache Storage (offline), localStorage (theme, recipes, recent tools) |
 
@@ -48,6 +48,7 @@ FileDost AI is a free, open-source (AGPL-3.0) web app with 72 file tools for PDF
 | :--- | :--- |
 | **FastAPI + Uvicorn + python-multipart** | Web server, routing, file uploads |
 | **PyMuPDF (fitz)** | Compression (image rewrite), true redaction, flattening, OCR fallback, table finding, rendering pages for PowerPoint, HTML/Markdown to PDF (Story) |
+| **onnxruntime** (MIT) with the silueta and ISNet models | Background Remover: finds the subject on the server and returns the mask (`bg_remove.py`) |
 | **pypdf** | Encryption (AES-256), unlock, metadata, merging in the API |
 | **pikepdf (qpdf)** | Repairing broken PDFs, removing hidden private data |
 | **ReportLab** | Drawing text overlays (watermarks, page numbers) in the API |
@@ -157,7 +158,7 @@ A request to a server tool passes through these steps:
 | Exam Photo & Signature Resizer | Browser | Crop box plus presets (JEE, NEET, SSC, UPSC...) for exact pixels, DPI and KB range; finds the quality that fits by binary search | Canvas |
 | Exam & Govt Form Kit | Browser | One screen that prepares every photo, signature, thumb impression and certificate a form asks for, each to its own size rules | Canvas, pdf-lib, JSZip |
 | HEIC to JPG | Browser | Decodes iPhone HEIC/HEIF with libheif (WebAssembly) and saves JPG or PNG, many at once | libheif-js, Canvas |
-| Background Remover | Browser | A small U²-Net model ("silueta", 44 MB, downloaded once) finds the subject in a worker; saves see-through PNG, on white or any colour, with soft or sharp edges and optional trim | ONNX Runtime Web, Canvas |
+| Background Remover | Server `/api/remove-background` (or Browser, if chosen) | The browser sends a copy at most 1600 px; the server runs U²-Net "silueta" (320 px, the whole subject) and ISNet (1024 px, removes what it is sure is background next to the person) and returns only a 1024×1024 mask. The browser drops loose specks, removes a plain name-and-date strip on exam photos (can be kept), and makes the cut-out at full size: see-through PNG, on white or any colour, soft or sharp edges, optional trim. "This device" runs the same models in a worker (90 MB download once) | onnxruntime, ONNX Runtime Web, Canvas |
 | Image to Text | Server `/api/image-to-text` | Photo is turned upright (EXIF), small ones enlarged, then Tesseract reads it in the chosen language; text shown to edit, copy or save as .txt | PyMuPDF, Tesseract, Pillow |
 | Image Upscaler | Browser | Real-ESRGAN general x4 v3 (4.9 MB) runs in a worker on 128 px tiles with overlap; 2× is the 4× result scaled down; photos over 2 MP get a sharpened resize instead; transparency kept | ONNX Runtime Web, Canvas |
 | Watermark Images | Browser | Text (with a soft outline so it reads on any photo) or a logo, in one of 9 positions or tiled across, with size, opacity, angle and colour; many photos at once into a ZIP | Canvas, JSZip |
