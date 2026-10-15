@@ -1,0 +1,78 @@
+/* FileDost AI icons (icons.js): line icons on rounded tiles coloured by category. */
+
+.ico { display: inline-block; flex: none; width: 1.15em; height: 1.15em; vertical-align: -0.2em; }
+[data-ico] { display: inline-flex; align-items: center; justify-content: center; }
+
+.ti, .ci {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  color: #fff;
+  background: linear-gradient(135deg, var(--ti-a), var(--ti-b));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 4px 10px -5px var(--ti-a);
+}
+.ti .ico, .ci .ico { width: 64%; height: 64%; vertical-align: 0; }
+.ti-emoji { font-size: 60%; line-height: 1; }
+.ti-xs { width: 20px; height: 20px; border-radius: 6px; }
+.ti-sm { width: 24px; height: 24px; border-radius: 7px; }
+.ti-md { width: 40px; height: 40px; border-radius: 11px; }
+.ti-lg { width: 52px; height: 52px; border-radius: 14px; }
+.ti-xs .ico { width: 70%; height: 70%; stroke-width: 2.1; }
+.ti-sm .ico { width: 68%; height: 68%; stroke-width: 2; }
+
+/* Category marks: a plain coloured glyph next to text (menu headings, tabs). */
+.ci.ci-plain { width: auto; height: auto; background: none; box-shadow: none; color: var(--ti-a); }
+.ci.ci-plain .ico { width: 1.15em; height: 1.15em; }
+.tab-btn .ci { margin-right: 5px; vertical-align: -0.2em; }
+.tab-btn.active .ci.ci-plain { color: #fff; }
+.mega-col h5 .ci { margin-right: 6px; vertical-align: -0.25em; }
+
+/* Mega menu and search results: the tile replaces the old emoji box. */
+.mega a .ti, .search-results a .ti { width: 26px; height: 26px; border-radius: 7px; }
+@media (min-width: 981px) { .nav-drop-all .mega a .ti { width: 22px; height: 22px; border-radius: 6px; } }
+
+/* Brand mark, search button, donate heart, burger. */
+.brand-icon { color: #fff; }
+.brand-icon .ico { width: 24px; height: 24px; }
+.icon-btn .ico { width: 19px; height: 19px; }
+.btn-donate .ico { width: 16px; height: 16px; color: #ff6b8a; }
+.btn .ico { width: 1.1em; height: 1.1em; }
+
+/* Tool modal header and drop zone. */
+.modal-icon { display: inline-flex; }
+.modal-icon .ti { width: 40px; height: 40px; border-radius: 11px; }
+.modal-icon > .ico { width: 28px; height: 28px; color: var(--soft-indigo); }
+.drop-icon { color: var(--soft-indigo); }
+.drop-icon .ico { width: 40px; height: 40px; stroke-width: 1.5; }
+
+/* "Runs on your device" / "Server" pills. */
+.runs-on .ico { width: 13px; height: 13px; margin-right: 3px; vertical-align: -0.15em; }
+
+/* 3D card scenes: the tool's glyph on a small coloured chip. */
+.t3-icon .ti { width: 30px; height: 30px; border-radius: 9px; }
+
+/* Theme switch: moon and sun drawn as SVG instead of emoji. */
+.theme-toggle .knob::before {
+  content: "";
+  width: 14px; height: 14px;
+  background: #fff;
+  -webkit-mask: var(--knob-icon) center / contain no-repeat;
+  mask: var(--knob-icon) center / contain no-repeat;
+  --knob-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M20.5 14.5A8.5 8.5 0 1 1 9.5 3.5a7 7 0 0 0 11 11z'/%3E%3C/svg%3E");
+}
+:root[data-theme="light"] .theme-toggle .knob::before {
+  content: "";
+  --knob-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='4.5' fill='black'/%3E%3Cpath d='M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8'/%3E%3C/svg%3E");
+}
+
+/* Support links and the small file icons inside tools. */
+.support-icon { display: inline-grid; place-items: center; color: var(--soft-indigo); }
+.support-icon .ico { width: 24px; height: 24px; }
+.zt-ico .ico { width: 16px; height: 16px; color: var(--text-muted); }
+/* Sit the chip on the left corner of the page stack so it never runs into the card's badge. */
+.tile3d .t3-icon { right: auto; left: -16px; top: -2px; }
+.t3-icon .ti { width: 28px; height: 28px; border-radius: 8px; }
+.donate-ico { display: inline-flex; font-style: normal; }

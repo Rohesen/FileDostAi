@@ -1,0 +1,60 @@
+/* Compress Video, Video to MP3 and Trim Audio or Video (media-tool.js). */
+
+.media-note { margin-top: 6px; }
+
+.media-trim { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+
+.media-preview {
+  background: #000;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md, 12px);
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+}
+.media-preview video { display: block; width: 100%; max-height: 46vh; background: #000; }
+.media-preview.is-audio { background: var(--sunken); padding: 14px 10px; }
+.media-preview audio { width: 100%; }
+
+/* Two sliders stacked on one track: the left thumb is the start, the right one the end. */
+.media-range { position: relative; height: 34px; margin: 2px 4px; }
+.media-track {
+  position: absolute; left: 0; right: 0; top: 50%; height: 8px; transform: translateY(-50%);
+  border-radius: 999px; background: rgba(var(--ink), 0.12);
+}
+.media-sel {
+  position: absolute; top: 0; bottom: 0; left: 0; width: 100%;
+  border-radius: 999px; background: var(--primary);
+}
+.media-range input[type="range"] {
+  position: absolute; inset: 0; width: 100%; height: 100%; margin: 0;
+  background: none; pointer-events: none; -webkit-appearance: none; appearance: none;
+}
+.media-range input[type="range"]::-webkit-slider-runnable-track { background: none; height: 100%; }
+.media-range input[type="range"]::-moz-range-track { background: none; }
+.media-range input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none; pointer-events: auto; cursor: grab;
+  width: 22px; height: 22px; margin-top: 6px; border-radius: 50%;
+  background: var(--surface-modal, #fff); border: 3px solid var(--primary);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+}
+.media-range input[type="range"]::-moz-range-thumb {
+  pointer-events: auto; cursor: grab; width: 18px; height: 18px; border-radius: 50%;
+  background: var(--surface-modal, #fff); border: 3px solid var(--primary);
+}
+.media-range input[type="range"]:focus { outline: none; }
+.media-range input[type="range"]:focus-visible::-webkit-slider-thumb { outline: 2px solid var(--text-strong); outline-offset: 2px; }
+.media-range input[type="range"]:focus-visible::-moz-range-thumb { outline: 2px solid var(--text-strong); outline-offset: 2px; }
+
+.media-times .form-group { margin: 0; }
+.media-time-row { display: flex; gap: 6px; align-items: stretch; }
+.media-time-row .form-input { flex: 1; min-width: 0; font-variant-numeric: tabular-nums; }
+.media-time-row .btn { white-space: nowrap; flex: none; }
+
+.media-actions { flex-wrap: wrap; margin-top: 0; }
+.media-exact { align-items: flex-start; color: var(--text-muted); line-height: 1.4; }
+.media-exact input { flex: none; margin-top: 2px; }
+
+@media (max-width: 520px) {
+  .media-preview video { max-height: 34vh; }
+}

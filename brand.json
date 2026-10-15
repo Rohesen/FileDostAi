@@ -1,0 +1,10 @@
+{
+  "_comment": "Change the app's name and contact details here. Restart the server afterwards. logo_main and logo_accent are shown side by side in the top bar (the accent part in colour). Set site_url to https://your-domain once you have one.",
+  "name": "FileDost AI",
+  "logo_main": "FileDost",
+  "logo_accent": "AI",
+  "tagline": "Free for everyone",
+  "contact_email": "REPLACE_ME@example.com",
+  "source_code_url": "https://github.com/REPLACE_ME/filedost-ai",
+  "site_url": "https://filedostai.com"
+}

@@ -1,0 +1,49 @@
+/* Tool chains: "Keep going" bar after a result, recipe banner and the My Recipes list. */
+.chain-box {
+  margin: 14px 0 4px; padding: 14px 16px; border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--primary, #6366f1) 35%, transparent);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.10), rgba(6, 182, 212, 0.06));
+  animation: chain-in 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes chain-in { from { opacity: 0; transform: translateY(6px); } }
+.chain-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin-bottom: 10px; }
+.chain-head strong { color: var(--text-strong); font-size: 14px; word-break: break-all; }
+.chain-sub { font-size: 12px; color: var(--text-muted); }
+.chain-next { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.chain-btn {
+  display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 999px; cursor: pointer;
+  font: 600 13px var(--font-sans); color: var(--text-strong);
+  background: rgba(var(--ink), 0.06); border: 1px solid var(--border-subtle);
+  transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+.chain-btn:hover { transform: translateY(-2px); border-color: var(--primary, #6366f1); background: rgba(99, 102, 241, 0.14); }
+.chain-more { width: auto; min-width: 9rem; padding-top: 6px; padding-bottom: 6px; font-size: 13px; }
+.chain-save { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border-subtle); }
+.chain-steps { font-size: 12.5px; color: var(--text-muted); flex: 1 1 100%; }
+.chain-steps b { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: var(--primary, #6366f1); color: #fff; font-size: 10px; margin-right: 2px; }
+.chain-steps i { font-style: normal; opacity: 0.6; margin: 0 4px; }
+.chain-name { flex: 1 1 12rem; max-width: 22rem; padding-top: 6px; padding-bottom: 6px; font-size: 13px; }
+.chain-note { font-size: 12px; color: var(--text-muted); }
+
+.recipe-banner {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 10px 18px;
+  font-size: 13px; color: #fff; background: linear-gradient(90deg, #6366f1, #06b6d4);
+  border-radius: var(--radius-md, 16px) var(--radius-md, 16px) 0 0;
+}
+.recipe-banner span { display: flex; flex-wrap: wrap; gap: 4px; }
+.recipe-banner i { font-style: normal; font-size: 11px; padding: 2px 8px; border-radius: 999px; background: rgba(255, 255, 255, 0.18); }
+.recipe-banner i.done { opacity: 0.6; text-decoration: line-through; }
+.recipe-banner i.now { background: #fff; color: #312e81; font-weight: 700; }
+
+.recipe-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+.recipe-row {
+  display: grid; grid-template-columns: auto 1fr auto; grid-template-areas: "pick name del" "pick steps del";
+  align-items: center; gap: 2px 10px; padding: 10px 12px; border-radius: 12px; cursor: pointer;
+  border: 1px solid var(--border-subtle); background: rgba(var(--ink), 0.03);
+}
+.recipe-row:has(input:checked) { border-color: var(--primary, #6366f1); background: rgba(99, 102, 241, 0.1); }
+.recipe-row input { grid-area: pick; }
+.recipe-name { grid-area: name; font-weight: 700; color: var(--text-strong); }
+.recipe-name small { font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-left: 4px; }
+.recipe-steps { grid-area: steps; font-size: 12px; color: var(--text-muted); }
+.recipe-del { grid-area: del; }

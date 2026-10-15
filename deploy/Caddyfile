@@ -1,0 +1,15 @@
+# ONLY for the alternative setup without Cloudflare Tunnel (see "Appendix B" in LAUNCH-GUIDE.md).
+# Replace example.com with your domain. Caddy gets and renews the HTTPS certificate by itself.
+# Keep ULTRAPDF_TRUST_PROXY=cloudflare and let only Cloudflare IPs reach ports 80/443.
+example.com, www.example.com {
+	encode zstd gzip
+	request_body {
+		max_size 110MB
+	}
+	reverse_proxy 127.0.0.1:8000 {
+		transport http {
+			read_timeout 330s
+			write_timeout 330s
+		}
+	}
+}

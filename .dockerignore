@@ -1,0 +1,15 @@
+# Keep the image small and free of local junk (a Windows venv, caches, test output, zips).
+.git
+.venv
+venv
+env
+__pycache__
+*.pyc
+*.zip
+data
+node_modules
+tests
+test_suite.py
+test_write.txt
+*.log
+.env

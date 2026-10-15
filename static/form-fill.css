@@ -1,0 +1,82 @@
+/* Fill PDF Form (static/form-fill.js). Uses the theme tokens from style.css. */
+
+.ff { display: flex; flex-direction: column; gap: 12px; font-size: 13px; color: var(--text-main); }
+.ff-empty { color: var(--text-muted); text-align: center; padding: 6px 0; margin: 0; }
+
+.ff-none {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 8px;
+  padding: 16px; border: 1px dashed var(--border-accent); border-radius: var(--radius-md); background: var(--sunken);
+}
+.ff-none strong { color: var(--text-strong); font-size: 15px; }
+.ff-none p { margin: 0; color: var(--text-muted); line-height: 1.5; }
+
+.ff-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: space-between; }
+.ff-sum { color: var(--text-muted); font-weight: 600; }
+.ff-filter { flex: 1 1 200px; max-width: 320px; padding: 8px 12px; }
+
+.ff-main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+
+.ff-list {
+  display: flex; flex-direction: column; gap: 8px;
+  max-height: min(62vh, 640px); overflow-y: auto; padding-right: 4px;
+}
+.ff-page-head {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase;
+  color: var(--text-dim); padding: 6px 2px 0;
+}
+.ff-row {
+  display: flex; flex-direction: column; gap: 6px; padding: 10px 12px;
+  border: 1px solid var(--border-subtle); border-radius: var(--radius-sm);
+  background: rgba(var(--ink), 0.025); transition: border-color 0.15s, background 0.15s;
+}
+.ff-row[hidden], .ff-page-head[hidden] { display: none; }
+.ff-row.ff-active { border-color: var(--primary); background: var(--primary-light); }
+.ff-row.ff-changed { border-left: 3px solid var(--accent-emerald); }
+.ff-row.ff-ro { opacity: 0.6; }
+.ff-label { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.ff-label label { font-weight: 600; color: var(--text-strong); font-size: 13px; overflow-wrap: anywhere; }
+.ff-kind { font-size: 11px; color: var(--text-dim); white-space: nowrap; }
+.ff-req { color: #ef4444; }
+.ff-input { width: 100%; padding: 8px 12px; }
+textarea.ff-input { resize: vertical; min-height: 64px; }
+select.ff-input[multiple], select.ff-input[size] { padding: 4px; }
+.ff-radios { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; }
+.ff-radios .ff-clear { margin-left: auto; }
+.ff-note { margin: 0; color: var(--text-muted); }
+.ff-note a { color: var(--soft-indigo); }
+
+.ff-preview {
+  position: sticky; top: 0;
+  border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); background: var(--sunken);
+  padding: 8px;
+}
+.ff-preview > summary { cursor: pointer; font-weight: 600; color: var(--text-muted); font-size: 12px; padding: 2px 4px 6px; }
+.ff-stage {
+  position: relative; width: 100%; max-height: min(56vh, 620px); overflow: auto;
+  border-radius: 6px; background: rgba(var(--ink), 0.04);
+}
+.ff-sheet { position: relative; width: fit-content; margin: 0 auto; }
+.ff-sheet canvas { display: block; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25); }
+.ff-layer { position: absolute; inset: 0; pointer-events: none; }
+.ff-box {
+  position: absolute; pointer-events: auto; cursor: pointer;
+  border: 1px solid rgba(99, 102, 241, 0.45); background: rgba(99, 102, 241, 0.08);
+  border-radius: 2px; overflow: hidden; display: flex; align-items: center;
+  color: #0f172a; font-family: Helvetica, Arial, sans-serif; line-height: 1; padding: 0 2px; white-space: nowrap;
+}
+.ff-box.filled { background: rgba(255, 255, 255, 0.92); border-color: rgba(16, 185, 129, 0.8); }
+.ff-box.mid { justify-content: center; }
+.ff-box.on { border: 2px solid #f59e0b; box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.35); z-index: 2; }
+.ff-box span { overflow: hidden; text-overflow: ellipsis; }
+.ff-pager { display: flex; align-items: center; justify-content: center; gap: 10px; padding-top: 6px; color: var(--text-muted); font-size: 12px; }
+
+.ff-flat { align-items: flex-start; line-height: 1.45; }
+.ff-flat input { margin-top: 2px; flex: none; }
+.ff-flat strong { color: var(--text-strong); }
+
+@media (max-width: 700px) {
+  .ff-main { grid-template-columns: 1fr; }
+  .ff-preview { position: static; order: -1; }
+  .ff-list { max-height: none; overflow: visible; padding-right: 0; }
+  .ff-stage { max-height: 60vh; }
+}

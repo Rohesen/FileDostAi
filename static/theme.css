@@ -1,0 +1,119 @@
+/* Light/dark theme toggle, the animated background, and finishing touches. */
+
+/* ---------- Theme toggle ---------- */
+.theme-toggle {
+  position: relative; width: 62px; height: 32px; flex-shrink: 0;
+  border-radius: 99px; border: 1px solid var(--border-subtle); cursor: pointer;
+  background: rgba(var(--ink), 0.06);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.25);
+  transition: background 0.4s ease;
+}
+.theme-toggle:hover { border-color: var(--border-accent); }
+.theme-toggle .knob {
+  position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%;
+  display: grid; place-items: center; font-size: 14px;
+  background: linear-gradient(145deg, #312e81, #6366f1);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.6);
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.4s ease;
+}
+.theme-toggle .knob::before { content: "🌙"; }
+:root[data-theme="light"] .theme-toggle .knob { transform: translateX(30px) rotate(360deg); background: linear-gradient(145deg, #fbbf24, #f97316); box-shadow: 0 2px 10px rgba(249, 115, 22, 0.55); }
+:root[data-theme="light"] .theme-toggle .knob::before { content: "☀️"; }
+.theme-toggle .stars { position: absolute; right: 9px; top: 7px; font-size: 9px; opacity: 0.7; transition: opacity 0.3s; }
+:root[data-theme="light"] .theme-toggle .stars { opacity: 0; }
+
+/* Smooth cross-fade when switching themes (the class is added for a moment by theme.js). */
+.theme-fade, .theme-fade * { transition: background-color 0.45s ease, color 0.45s ease, border-color 0.45s ease, box-shadow 0.45s ease !important; }
+
+/* ---------- Animated background ---------- */
+.bg-fx { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+.bg-fx canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.aurora { position: absolute; inset: -20%; filter: blur(70px); opacity: 0.55; }
+.aurora i {
+  position: absolute; width: 46vmax; height: 46vmax; border-radius: 50%;
+  mix-blend-mode: screen; animation: drift 26s ease-in-out infinite alternate;
+}
+.aurora i:nth-child(1) { background: radial-gradient(circle, #6366f1 0%, transparent 65%); left: 0; top: 0; }
+.aurora i:nth-child(2) { background: radial-gradient(circle, #06b6d4 0%, transparent 65%); right: 0; top: 20%; animation-duration: 32s; animation-delay: -8s; }
+.aurora i:nth-child(3) { background: radial-gradient(circle, #ec4899 0%, transparent 65%); left: 25%; bottom: 0; animation-duration: 38s; animation-delay: -16s; opacity: 0.7; }
+:root[data-theme="light"] .aurora { opacity: 0.32; }
+:root[data-theme="light"] .aurora i { mix-blend-mode: multiply; }
+@keyframes drift {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(14vw, 8vh) scale(1.15); }
+  100% { transform: translate(-8vw, 14vh) scale(0.9); }
+}
+.bg-grid {
+  position: absolute; inset: -50% -50% 0; height: 150%;
+  background-image:
+    linear-gradient(rgba(var(--ink), 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(var(--ink), 0.05) 1px, transparent 1px);
+  background-size: 64px 64px;
+  transform: perspective(600px) rotateX(62deg) translateY(var(--grid-shift, 0));
+  transform-origin: 50% 100%;
+  mask-image: linear-gradient(to top, #000 0%, transparent 60%);
+  -webkit-mask-image: linear-gradient(to top, #000 0%, transparent 60%);
+  animation: grid-run 18s linear infinite;
+}
+@keyframes grid-run { to { background-position: 0 64px, 0 0; } }
+.container, .hero, .support { position: relative; }
+
+/* ---------- Polish ---------- */
+.tool-card {
+  background-clip: padding-box;
+}
+.tool-card::before {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1px; pointer-events: none;
+  background: linear-gradient(135deg, var(--c1, #6366f1), transparent 40%, transparent 60%, var(--c2, #06b6d4));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  opacity: 0; transition: opacity 0.35s ease;
+}
+.tool-card:hover::before { opacity: 0.9; }
+.card-title { letter-spacing: -0.01em; }
+.hero-title { letter-spacing: -0.03em; }
+.gradient-text { background-size: 200% 200%; animation: hue-flow 8s ease-in-out infinite; }
+@keyframes hue-flow { 50% { background-position: 100% 50%; } }
+.category-tabs { backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+::selection { background: rgba(99, 102, 241, 0.35); }
+html { scrollbar-color: rgba(var(--ink), 0.2) transparent; }
+
+/* ---------- Light theme: softer shadows and surfaces ---------- */
+:root[data-theme="light"] .tool-card { box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 8px 24px -16px rgba(15, 23, 42, 0.25); }
+:root[data-theme="light"] .tool-card:hover { box-shadow: 0 24px 40px -20px rgba(15, 23, 42, 0.35), var(--shadow-glow); }
+:root[data-theme="light"] .card-icon { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 3px 0 rgba(15, 23, 42, 0.12), 0 10px 18px -8px rgba(15, 23, 42, 0.25); }
+:root[data-theme="light"] .btn-secondary { box-shadow: 0 3px 0 rgba(15, 23, 42, 0.12); background: rgba(255, 255, 255, 0.85); }
+:root[data-theme="light"] .stats-strip { box-shadow: 0 20px 40px -24px rgba(15, 23, 42, 0.3); }
+:root[data-theme="light"] .page-card:hover { box-shadow: 0 16px 26px -14px rgba(15, 23, 42, 0.35); }
+:root[data-theme="light"] .modal-backdrop.open { background: rgba(15, 23, 42, 0.45); }
+:root[data-theme="light"] .modal-card { box-shadow: 0 30px 60px -20px rgba(15, 23, 42, 0.4); }
+:root[data-theme="light"] .tile3d { box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.06); }
+:root[data-theme="light"] .t3-sheet { box-shadow: 0 6px 14px rgba(15, 23, 42, 0.22); }
+:root[data-theme="light"] .scene-floor { opacity: 0.5; }
+:root[data-theme="light"] .support-card { background: linear-gradient(135deg, rgba(236, 72, 153, 0.08), rgba(99, 102, 241, 0.08) 50%, rgba(6, 182, 212, 0.08)), rgba(255, 255, 255, 0.6); }
+:root[data-theme="light"] .runs-device { color: #047857; }
+:root[data-theme="light"] .form-select option { background: #fff; color: #0f172a; }
+
+/* Phones: fewer layers. Reduced motion: everything still. */
+@media (max-width: 700px) {
+  .aurora { filter: blur(50px); }
+  .aurora i:nth-child(3), .bg-grid { display: none; }
+  .theme-toggle { width: 54px; height: 28px; }
+  .theme-toggle .knob { width: 20px; height: 20px; font-size: 12px; }
+  :root[data-theme="light"] .theme-toggle .knob { transform: translateX(26px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .aurora i, .bg-grid, .gradient-text { animation: none; }
+  .theme-toggle .knob { transition: none; }
+}
+
+/* Drop-down lists: the open list is drawn by the browser, and on Windows it ignores the
+   see-through field colour and paints a white list, so white option text vanished.
+   Give every list a solid background and readable text in both themes. */
+select { color-scheme: dark; }
+select option, select optgroup { background-color: #161d2e; color: #f1f5f9; }
+select option:checked { background-color: #4f46e5; color: #fff; }
+select option:disabled { color: #64748b; }
+:root[data-theme="light"] select { color-scheme: light; }
+:root[data-theme="light"] select option, :root[data-theme="light"] select optgroup { background-color: #fff; color: #0f172a; }
+:root[data-theme="light"] select option:checked { background-color: #e0e7ff; color: #1e1b4b; }

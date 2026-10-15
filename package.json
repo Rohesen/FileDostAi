@@ -1,0 +1,12 @@
+{
+  "name": "filedost-ai",
+  "private": true,
+  "description": "Free PDF tools that keep your files private",
+  "license": "AGPL-3.0-or-later",
+  "scripts": {
+    "test:e2e": "node tests/e2e_browser.js"
+  },
+  "devDependencies": {
+    "playwright": "1.56.1"
+  }
+}

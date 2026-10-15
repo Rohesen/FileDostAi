@@ -1,0 +1,25 @@
+# Production run with the container locked down. Start with:  docker compose up -d --build
+# Then put Cloudflare (or another HTTPS proxy) in front and only allow it to reach port 8000.
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8000:8000"   # reachable from this machine only; the HTTPS proxy forwards to it
+    environment:
+      ULTRAPDF_TRUST_PROXY: "cloudflare"     # "1" for nginx/Caddy, remove when nothing is in front
+      ULTRAPDF_HTTPS: "1"
+      # ULTRAPDF_ALLOWED_HOSTS: "example.com,www.example.com"
+    volumes:
+      - feedback-data:/app/data
+    read_only: true              # the app can't change its own code
+    tmpfs:
+      - /tmp:size=2g,mode=1777   # job scratch space, wiped on restart
+      - /home/app:size=64m,uid=10001
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 6g
+    pids_limit: 512
+volumes:
+  feedback-data:

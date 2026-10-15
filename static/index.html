@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>
+    // Pick the theme before anything is drawn, so the page never flashes the wrong one.
+    (function () {
+      var t = null;
+      try { t = localStorage.getItem("filedost-theme") || localStorage.getItem("mypdfdost-theme") || localStorage.getItem("ultrapdf-theme"); } catch (e) {}
+      if (!t) t = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+      document.documentElement.dataset.theme = t;
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FileDost AI: Free PDF, Image and File Tools That Keep Your Files Private</title>
+  <meta name="description" content="Free PDF tools: merge, split, rotate, compress, OCR, redact and more. Organize tools run in your browser, so your files never leave your device.">
+  <link rel="preload" href="/static/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/static/style.css?v=24">
+  <link rel="stylesheet" href="/static/fonts.css?v=24">
+  <link rel="stylesheet" href="/static/edit-tool.css?v=24">
+  <link rel="stylesheet" href="/static/scan-tool.css?v=24">
+  <link rel="stylesheet" href="/static/tiles.css?v=24">
+  <link rel="stylesheet" href="/static/theme.css?v=24">
+  <link rel="stylesheet" href="/static/site.css?v=24">
+  <link rel="stylesheet" href="/static/home-plus.css?v=24">
+  <link rel="stylesheet" href="/static/form-kit.css?v=24">
+  <link rel="stylesheet" href="/static/pdf-extras.css?v=24">
+  <link rel="stylesheet" href="/static/form-fill.css?v=24">
+  <link rel="stylesheet" href="/static/qr-tool.css?v=24">
+  <link rel="stylesheet" href="/static/zip-tool.css?v=24">
+  <link rel="stylesheet" href="/static/media-tool.css?v=24">
+  <link rel="stylesheet" href="/static/chains.css?v=24">
+  <link rel="stylesheet" href="/static/icons.css?v=24">
+  <link rel="stylesheet" href="/static/redesign.css?v=24">
+  <link rel="stylesheet" href="/static/holo.css?v=24">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#0b1020">
+  <link rel="icon" href="/static/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+</head>
+<body>
+  <div class="bg-fx" id="bgFx" aria-hidden="true">
+    <div class="aurora"><i></i><i></i><i></i></div>
+  </div>
+
+  <!-- Navigation -->
+  <header class="navbar">
+    <div class="nav-container">
+      <a class="brand" href="/" aria-label="Home">
+        <div class="brand-icon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M13.5 2 4.5 13.5H11L10 22l9-11.5h-6.5z" fill="currentColor"/></svg></div>
+        <div class="brand-text">
+          <span class="brand-title">FileDost <strong>AI</strong></span>
+          <span class="brand-badge">Free for everyone</span>
+        </div>
+      </a>
+
+      <nav class="main-nav" id="mainNav" aria-label="Main">
+        <a class="nav-link" href="/merge-pdf" data-tool="merge">Merge PDF</a>
+        <a class="nav-link" href="/split-pdf" data-tool="split">Split PDF</a>
+        <a class="nav-link" href="/compress-pdf" data-tool="compress">Compress PDF</a>
+        <div class="nav-drop">
+          <button type="button" class="nav-link" aria-expanded="false" aria-controls="megaConvert">Convert <span class="caret">▾</span></button>
+          <div class="mega" id="megaConvert"></div>
+        </div>
+        <div class="nav-drop nav-drop-all">
+          <button type="button" class="nav-link" aria-expanded="false" aria-controls="megaAll">All Tools <span class="caret">▾</span></button>
+          <div class="mega mega-wide" id="megaAll"></div>
+        </div>
+        <a class="nav-link" href="/faq" data-page="faq">FAQ</a>
+      </nav>
+
+      <div class="nav-actions">
+        <div class="nav-search" id="navSearch">
+          <button type="button" class="icon-btn" id="searchToggle" aria-label="Search tools" aria-expanded="false"><span data-ico="search"></span></button>
+          <input type="search" id="toolSearch" placeholder="Search tools: png to jpg, 50 kb photo…" autocomplete="off" aria-label="Search tools">
+          <div class="search-results" id="searchResults" role="listbox" hidden></div>
+        </div>
+        <button type="button" class="theme-toggle" id="themeToggle" aria-label="Dark or light mode" aria-pressed="false">
+          <span class="stars" aria-hidden="true">✦</span><span class="knob" aria-hidden="true"></span>
+        </button>
+        <a class="btn btn-primary btn-donate" href="/#support"><i class="donate-ico" data-ico="heart"></i> <span>Donate</span></a>
+        <button type="button" class="icon-btn nav-burger" id="navBurger" aria-label="Menu" aria-expanded="false" aria-controls="mainNav"><span data-ico="menu"></span></button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-scene hs-left" aria-hidden="true">
+      <div class="scene-rig">
+        <div class="scene-floor"></div>
+        <div class="paper p1"><i class="paper-head"></i><i></i><i></i><i class="short"></i><i></i><i class="short"></i></div>
+        <div class="paper p2"><i class="paper-head"></i><i></i><i class="short"></i><i></i><i></i><i class="short"></i></div>
+        <div class="paper p3"><i class="paper-head"></i><i></i><i></i><i></i><i class="short"></i><i></i></div>
+        <div class="paper p4"><i class="paper-head"></i><i class="short"></i><i></i><i></i><i class="short"></i><i></i></div>
+        <div class="scene-chip">PDF</div>
+        <div class="scene-orb o1"></div>
+        <div class="scene-orb o2"></div>
+      </div>
+    </div>
+    <div class="hero-scene hs-right" aria-hidden="true">
+      <div class="scene-rig">
+        <div class="scene-floor"></div>
+        <div class="paper p1"><i class="paper-head"></i><i></i><i></i><i class="short"></i><i></i><i class="short"></i></div>
+        <div class="paper p2"><i class="paper-head"></i><i></i><i class="short"></i><i></i><i></i><i class="short"></i></div>
+        <div class="paper p3"><i class="paper-head"></i><i></i><i></i><i></i><i class="short"></i><i></i></div>
+        <div class="paper p4"><i class="paper-head"></i><i class="short"></i><i></i><i></i><i class="short"></i><i></i></div>
+        <div class="scene-chip">JPG</div>
+        <div class="scene-orb o1"></div>
+        <div class="scene-orb o2"></div>
+      </div>
+    </div>
+    <div class="hero-badge"><span class="dot"></span> Free forever · No sign-up · No watermarks</div>
+    <h1 class="hero-title">
+      Do anything with your files.<br>
+      <span class="gradient-text">Privately.</span>
+    </h1>
+    <p class="hero-subtitle">
+      PDFs, photos and Office files: convert, compress, sign and resize to the exact KB, right in your browser. Most tools never upload your file.
+    </p>
+  </section>
+
+  <!-- Category Filter Bar -->
+  <div class="container">
+    <div class="category-tabs" id="categoryTabs">
+      <button class="tab-btn active" data-cat="all">All Tools</button>
+      <button class="tab-btn" data-cat="organize">Organize</button>
+      <button class="tab-btn" data-cat="edit">Edit &amp; Sign</button>
+      <button class="tab-btn" data-cat="convert">Convert</button>
+      <button class="tab-btn" data-cat="image">Images</button>
+      <button class="tab-btn" data-cat="optimize">Optimize</button>
+      <button class="tab-btn" data-cat="security">Security</button>
+      <button class="tab-btn" data-cat="ai">Read &amp; Compare</button>
+    </div>
+
+    <!-- Tools Grid -->
+    <div class="tools-grid" id="toolsGrid">
+      <!-- Injected by JavaScript -->
+    </div>
+  </div>
+
+  <!-- FAQ (filled in by site.js from the tool list) -->
+  <section class="faq" id="faq">
+    <div class="container">
+      <div class="faq-head">
+        <h2>Frequently asked questions</h2>
+        <p>Everything about privacy, file limits, formats and how each tool works.</p>
+        <input type="search" class="form-input faq-search" id="faqSearch" placeholder="Search the answers…" aria-label="Search the answers">
+      </div>
+      <div class="faq-body" id="faqBody"></div>
+      <p class="faq-more">Still stuck? <a href="#" data-feedback="problem">Ask us</a> and we'll answer.</p>
+    </div>
+  </section>
+
+  <!-- About, privacy, terms... (text in site.js) -->
+  <div class="modal-backdrop" id="infoModal">
+    <div class="modal-card info-card">
+      <div class="modal-header">
+        <div class="modal-title-wrap"><h3 class="modal-title" id="infoTitle"></h3></div>
+        <button class="modal-close" id="infoClose" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body info-body" id="infoBody"></div>
+    </div>
+  </div>
+
+  <!-- Universal Modal for Single Tool Execution -->
+  <div class="modal-backdrop" id="universalModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <span class="modal-icon" id="mIcon"></span>
+          <div>
+            <h3 class="modal-title" id="mTitle">Tool Name</h3>
+            <p class="modal-desc" id="mDesc">Description of action</p>
+          </div>
+        </div>
+        <button class="modal-close" onclick="closeModal('universalModal')">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- File Drop Zone -->
+        <div class="drop-zone" id="dropZone">
+          <input type="file" id="fileInput" class="file-input-hidden" multiple>
+          <div class="drop-content">
+            <span class="drop-icon" data-ico="upload"></span>
+            <p class="drop-text">Drag & drop your files here, or <span class="browse-link">browse</span></p>
+            <p class="drop-hint" id="dropHint">Supports PDF documents</p>
+          </div>
+          <div class="selected-files-list" id="selectedFilesList"></div>
+        </div>
+
+        <p class="privacy-note" id="privacyNote"></p>
+
+        <!-- Page grid for organize tools -->
+        <div class="board-area" id="boardArea"></div>
+
+        <!-- Tool Configuration Controls (dynamically injected) -->
+        <div class="tool-config-container" id="toolConfig"></div>
+
+        <!-- Processing Feedback -->
+        <div class="processing-state" id="processingState" style="display:none;" role="status" aria-live="polite">
+          <div class="progress-head">
+            <span class="progress-spark" aria-hidden="true"></span>
+            <span class="processing-label" id="processingLabel">Working…</span>
+            <span class="progress-pct" id="progressPct">0%</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+          <ol class="progress-steps" id="progressSteps"></ol>
+          <div class="progress-foot">
+            <span id="progressTime"></span>
+            <button type="button" class="btn btn-xs" id="progressCancel" onclick="Progress.cancel()">Cancel</button>
+          </div>
+        </div>
+
+        <!-- Result Card / AI Output Box -->
+        <div class="result-box" id="resultBox" style="display:none;"></div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('universalModal')">Close</button>
+        <button class="btn btn-primary" id="btnExecute" onclick="executeCurrentTool()">
+          <span class="btn-text">Save &amp; download</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pipeline Modal (Chained Workflow Builder) -->
+  <div class="modal-backdrop" id="pipelineModal">
+    <div class="modal-card modal-wide">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <span class="modal-icon" data-ico="chain"></span>
+          <div>
+            <h3 class="modal-title">Chained Batch Pipeline</h3>
+            <p class="modal-desc">Combine multiple operations into a single execution pass with zero intermediate downloads.</p>
+          </div>
+        </div>
+        <button class="modal-close" onclick="closeModal('pipelineModal')">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="pipeline-workflow">
+          <!-- Step 1: Input Document -->
+          <div class="pipeline-section">
+            <label class="section-title">1. Source Document</label>
+            <div class="drop-zone drop-zone-sm" id="pipelineDropZone">
+              <input type="file" id="pipelineFileInput" class="file-input-hidden" accept=".pdf">
+              <p id="pipelineFileLabel">Drop PDF file or click to select</p>
+            </div>
+          </div>
+
+          <!-- Step 2: Configure Recipe -->
+          <div class="pipeline-section">
+            <div class="section-header-flex">
+              <label class="section-title">2. Processing Recipe</label>
+              <div class="recipe-add-btns">
+                <button class="btn btn-xs" onclick="addPipelineStep('watermark')">+ Watermark</button>
+                <button class="btn btn-xs" onclick="addPipelineStep('page_numbers')">+ Page Numbers</button>
+                <button class="btn btn-xs" onclick="addPipelineStep('rotate')">+ Rotate</button>
+                <button class="btn btn-xs" onclick="addPipelineStep('redact')">+ Redact</button>
+                <button class="btn btn-xs" onclick="addPipelineStep('compress')">+ Compress</button>
+              </div>
+            </div>
+
+            <div class="pipeline-steps-list" id="pipelineStepsList">
+              <!-- Default sample steps -->
+              <div class="step-card" data-action="watermark">
+                <span class="step-num">Step 1</span>
+                <span class="step-badge">Watermark</span>
+                <input type="text" class="input-sm step-arg" data-param="text" value="INTERNAL USE ONLY">
+                <button class="btn-remove-step" onclick="this.parentElement.remove()">&times;</button>
+              </div>
+              <div class="step-card" data-action="page_numbers">
+                <span class="step-num">Step 2</span>
+                <span class="step-badge">Page Numbers</span>
+                <input type="text" class="input-sm step-arg" data-param="format" value="Page {n} of {total}">
+                <button class="btn-remove-step" onclick="this.parentElement.remove()">&times;</button>
+              </div>
+              <div class="step-card" data-action="compress">
+                <span class="step-num">Step 3</span>
+                <span class="step-badge">Compress</span>
+                <select class="select-sm step-arg" data-param="level">
+                  <option value="low">Low (lossless)</option>
+                  <option value="medium" selected>Recommended</option>
+                  <option value="extreme">Extreme</option>
+                </select>
+                <button class="btn-remove-step" onclick="this.parentElement.remove()">&times;</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="processing-state" id="pipelineProcessing" style="display:none;">
+          <div class="spinner"></div>
+          <p class="processing-label">Running your steps...</p>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('pipelineModal')">Close</button>
+        <button class="btn btn-primary" onclick="executePipeline()">
+          <span class="icon" data-ico="rocket"></span> Run Pipeline
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Footer -->
+  <!-- Feedback form -->
+  <div class="modal-backdrop" id="feedbackModal">
+    <div class="modal-card" style="max-width:480px;">
+      <div class="modal-header">
+        <div class="modal-title-wrap"><span class="modal-icon" data-ico="chat"></span>
+          <div><h3 class="modal-title" id="fbTitle">Feedback</h3><p class="modal-desc" id="fbIntro"></p></div></div>
+        <button class="modal-close" id="fbCancel" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group"><select id="fbTool" class="form-select"></select></div>
+        <div class="form-group"><textarea id="fbComment" class="form-input" rows="5" maxlength="2000" placeholder="Your message"></textarea></div>
+        <div class="form-group"><input type="email" id="fbContact" class="form-input" maxlength="200" placeholder="Email, if you'd like a reply (optional)"></div>
+      </div>
+      <div class="modal-footer"><button class="btn btn-primary" id="fbSend">Send</button></div>
+    </div>
+  </div>
+
+  <!-- Support -->
+  <section class="support" id="support">
+    <div class="container">
+      <div class="support-card">
+        <div class="support-text">
+          <h2>Keep FileDost AI free for everyone</h2>
+          <p>No ads, no sign-up, no watermarks, and the code is open source. If it saved you time, a small donation or a sponsorship pays for the server and new tools.</p>
+        </div>
+        <div class="support-actions" id="supportLinks"></div>
+        <p class="support-sponsor">Companies and coaching institutes: <a href="#" id="sponsorLink">become a sponsor</a> and get your logo here.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a class="brand" href="/"><div class="brand-icon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M13.5 2 4.5 13.5H11L10 22l9-11.5h-6.5z" fill="currentColor"/></svg></div><span class="brand-title">FileDost <strong>AI</strong></span></a>
+          <p>Free, open-source tools for PDFs, images and every kind of file. No sign-up, no watermarks, and most tools never upload your files.</p>
+        </div>
+        <div>
+          <h4>Product</h4>
+          <a href="/">Home</a>
+          <a href="/#toolsGrid">All tools</a>
+          <a href="/faq" data-page="faq">FAQ</a>
+          <a href="#" onclick="openPipelineModal(); return false;">Chained pipeline</a>
+          <a href="/pdf-insights" data-tool="ai-analyze">Document insights</a>
+        </div>
+        <div>
+          <h4>Popular tools</h4>
+          <div id="footerTools"></div>
+        </div>
+        <div>
+          <h4>Resources</h4>
+          <a href="#" data-feedback="problem">Report a problem</a>
+          <a href="#" data-feedback="request">Request a tool</a>
+          <a href="#" id="sourceLink" target="_blank" rel="noopener">Source code</a>
+          <a href="/#support">Donate</a>
+        </div>
+        <div>
+          <h4>Legal</h4>
+          <a href="/privacy" data-page="privacy">Privacy policy</a>
+          <a href="/terms" data-page="terms">Terms of use</a>
+          <a href="/security" data-page="security">Security</a>
+          <a href="/cookies" data-page="cookies">Cookies</a>
+        </div>
+        <div>
+          <h4>Company</h4>
+          <a href="/about" data-page="about">About us</a>
+          <a href="/contact" data-page="contact">Contact us</a>
+          <a href="/#support">Sponsor</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span><span data-ico="lock"></span> marks tools that run on your device</span>
+        <span id="footerCopy">© FileDost AI. Open source under AGPL-3.0.</span>
+      </div>
+    </div>
+  </footer>
+
+  <script type="module" src="/static/pdfjs-loader.mjs?v=24"></script>
+  <script src="/static/vendor/pdf-lib.min.js?v=24"></script>
+  <script src="/static/vendor/jszip.min.js?v=24"></script>
+  <script src="/static/icons.js?v=24"></script>
+  <script src="/static/client-tools.js?v=24"></script>
+  <script src="/static/worker-client.js?v=24"></script>
+  <script src="/static/render-tools.js?v=24"></script>
+  <script src="/static/page-board.js?v=24"></script>
+  <script src="/static/sign-tool.js?v=24"></script>
+  <script src="/static/edit-tool.js?v=24"></script>
+  <script src="/static/scan-tool.js?v=24"></script>
+  <script src="/static/crop-tool.js?v=24"></script>
+  <script src="/static/compare-tool.js?v=24"></script>
+  <script src="/static/read-tools.js?v=24"></script>
+  <script src="/static/privacy-view.js?v=24"></script>
+  <script src="/static/image-tools.js?v=24"></script>
+  <script src="/static/photo-tool.js?v=24"></script>
+  <script src="/static/tile-art.js?v=24"></script>
+  <script src="/static/image-order.js?v=24"></script>
+  <script src="/static/tools.js?v=24"></script>
+  <script src="/static/form-kit.js?v=24"></script>
+  <script src="/static/pdf-extras.js?v=24"></script>
+  <script src="/static/form-fill.js?v=24"></script>
+  <script src="/static/qr-tool.js?v=24"></script>
+  <script src="/static/zip-tool.js?v=24"></script>
+  <script src="/static/media-tool.js?v=24"></script>
+  <script src="/static/chains.js?v=24"></script>
+  <script src="/static/app.js?v=24"></script>
+  <script src="/static/depth.js?v=24"></script>
+  <script src="/static/bg-fx.js?v=24"></script>
+  <script src="/static/feedback.js?v=24"></script>
+  <script src="/static/support.js?v=24"></script>
+  <script src="/static/theme.js?v=24"></script>
+  <script src="/static/site.js?v=24"></script>
+  <script src="/static/home-plus.js?v=24"></script>
+</body>
+</html>

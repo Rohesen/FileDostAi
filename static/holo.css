@@ -1,0 +1,99 @@
+/* Hologram stage on every tool card (tile-art.js): the tool's glowing icon floats over a
+   spinning neon ring. Animations only run while the card is on screen (.in-view). */
+
+.tool-card .tile-stage.holo-stage,
+:root[data-theme="light"] .tool-card .tile-stage.holo-stage {
+  background:
+    radial-gradient(60% 75% at 50% 100%, color-mix(in srgb, var(--c1) 34%, transparent), transparent 70%),
+    radial-gradient(50% 60% at 50% 30%, color-mix(in srgb, var(--c2) 12%, transparent), transparent 70%),
+    #06070d;
+  border-bottom: 1px solid color-mix(in srgb, var(--c1) 30%, transparent);
+  padding: 0;
+}
+:root[data-theme="light"] .tool-card .tile-stage.holo-stage { background-color: #0c0f1e; }
+
+.holo { position: absolute; inset: 0; perspective: 420px; overflow: hidden; z-index: 1; }
+
+/* A neon grid floor running toward the viewer. */
+.h-floor {
+  position: absolute; left: -40%; right: -40%; bottom: -40px; height: 110px;
+  background:
+    linear-gradient(color-mix(in srgb, var(--c1) 50%, transparent) 1px, transparent 1px) 0 0 / 24px 24px,
+    linear-gradient(90deg, color-mix(in srgb, var(--c1) 50%, transparent) 1px, transparent 1px) 0 0 / 24px 24px;
+  transform: perspective(220px) rotateX(66deg);
+  -webkit-mask-image: linear-gradient(to top, #000 10%, transparent 80%);
+  mask-image: linear-gradient(to top, #000 10%, transparent 80%);
+  opacity: 0.35;
+  animation: h-run 2.6s linear infinite;
+}
+.h-ring {
+  position: absolute; left: 50%; bottom: -34px; width: 116px; height: 116px; margin-left: -58px;
+  border-radius: 50%; transform: rotateX(76deg);
+  border: 2px solid var(--c1);
+  box-shadow: 0 0 18px var(--c1), inset 0 0 18px var(--c1);
+}
+.h-ring.r2 {
+  width: 80px; height: 80px; margin-left: -40px; bottom: -16px;
+  border-style: dashed; border-color: color-mix(in srgb, var(--c1) 60%, #fff); opacity: 0.75;
+  animation: h-spin 6s linear infinite;
+}
+.h-beam {
+  position: absolute; left: 50%; bottom: 20px; width: 96px; height: 80px; margin-left: -48px;
+  clip-path: polygon(32% 0, 68% 0, 100% 100%, 0 100%);
+  background: linear-gradient(to top, color-mix(in srgb, var(--c1) 55%, transparent), transparent);
+  opacity: 0.5;
+  animation: h-pulse 2.4s ease-in-out infinite;
+}
+.h-ico {
+  position: absolute; left: 50%; top: 16px; width: 56px; height: 56px; margin-left: -28px;
+  color: color-mix(in srgb, var(--c1) 35%, #fff);
+  filter: drop-shadow(0 0 5px var(--c1)) drop-shadow(0 0 14px var(--c1));
+  animation: h-float 3.2s ease-in-out infinite;
+}
+.h-ico svg, .h-ico .ico { width: 100%; height: 100%; stroke-width: 1.8; vertical-align: 0; }
+.h-scan {
+  position: absolute; left: 0; right: 0; top: 0; height: 2px; z-index: 2;
+  background: linear-gradient(90deg, transparent, var(--c1), transparent);
+  opacity: 0.8;
+  animation: h-scan 2.8s linear infinite;
+}
+.h-dot {
+  position: absolute; width: 4px; height: 4px; border-radius: 50%;
+  background: #fff; box-shadow: 0 0 8px 1px var(--c1);
+  animation: h-twinkle 2.2s ease-in-out infinite;
+}
+.h-dot.d1 { left: 26%; top: 42%; }
+.h-dot.d2 { right: 25%; top: 26%; animation-delay: -0.8s; }
+.h-dot.d3 { right: 33%; top: 62%; width: 3px; height: 3px; animation-delay: -1.5s; }
+
+@keyframes h-run { to { background-position: 0 24px, 0 0; } }
+@keyframes h-spin { to { transform: rotateX(76deg) rotateZ(360deg); } }
+@keyframes h-pulse { 50% { opacity: 0.22; } }
+@keyframes h-float { 50% { transform: translateY(-6px) rotateY(20deg); } }
+@keyframes h-scan { to { top: 100%; } }
+@keyframes h-twinkle { 50% { opacity: 0.25; transform: scale(0.6); } }
+
+/* Paused while off screen; faster and brighter on hover. */
+.holo > span { animation-play-state: paused; }
+.holo.in-view > span { animation-play-state: running; }
+.tool-card:hover .h-ico { animation-duration: 1.6s; filter: drop-shadow(0 0 6px var(--c1)) drop-shadow(0 0 22px var(--c1)); }
+.tool-card:hover .h-ring.r2 { animation-duration: 2.2s; }
+.tool-card:hover .h-beam { opacity: 0.75; }
+
+/* The hologram speaks for itself; the description below says what the tool does. */
+.holo-stage .ts-cap { display: none; }
+
+/* Phones: the hologram becomes the row's square thumbnail. */
+@media (max-width: 640px) {
+  .holo { transform: scale(0.7); transform-origin: 50% 45%; overflow: visible; }
+  .tool-card .tile-stage.holo-stage { overflow: hidden; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .holo > span { animation: none !important; }
+}
+
+/* While a tool is open, everything behind it holds still so the tool gets the whole CPU. */
+body:has(#universalModal.open, #pipelineModal.open) :is(.holo > span, .paper, .scene-chip, .scene-orb, .aurora i) {
+  animation-play-state: paused !important;
+}

@@ -1,0 +1,308 @@
+/* 3D tool-card scenes (tile-art.js). Each kind acts out what its tool does. */
+
+.tile3d {
+  width: 84px; height: 84px;
+  perspective: 260px;
+  flex-shrink: 0;
+}
+.t3-rig {
+  position: relative; width: 100%; height: 100%;
+  transform-style: preserve-3d;
+  transform: rotateX(18deg) rotateY(-22deg);
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.tool-card:hover .t3-rig { transform: rotateX(8deg) rotateY(-8deg) translateZ(10px) scale(1.08); }
+
+.t3-sheet {
+  position: absolute; left: 50%; top: 50%;
+  width: 36px; height: 46px; margin: -23px 0 0 -18px;
+  border-radius: 3px;
+  background:
+    linear-gradient(var(--c1), var(--c1)) 4px 5px / 12px 3px no-repeat,
+    repeating-linear-gradient(to bottom, transparent 0 11px, rgba(15, 23, 42, 0.18) 11px 12px, transparent 12px 14px) 4px 0 / 18px 100% no-repeat,
+    #f8fafc;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.45);
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+}
+.t3-sheet.b {
+  background:
+    linear-gradient(var(--c2), var(--c2)) 4px 5px / 12px 3px no-repeat,
+    repeating-linear-gradient(to bottom, transparent 0 11px, rgba(15, 23, 42, 0.18) 11px 12px, transparent 12px 14px) 4px 0 / 18px 100% no-repeat,
+    #e2e8f0;
+}
+.t3-sheet[data-l]::after {
+  content: attr(data-l);
+  position: absolute; left: 0; right: 0; bottom: 4px;
+  font: 800 9px/1 var(--font-sans); text-align: center; letter-spacing: 0.3px;
+  color: #fff; background: var(--c1); margin: 0 3px; padding: 2px 0; border-radius: 2px;
+}
+.t3-sheet.b[data-l]::after { background: var(--c2); }
+.t3-icon {
+  position: absolute; right: 0; top: 2px;
+  font-size: 22px; line-height: 1;
+  transform: translateZ(26px);
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.5));
+}
+.t3-fx { position: absolute; inset: 0; pointer-events: none; transform: translateZ(14px); }
+
+/* Everything loops while visible; hovering a card plays it faster. */
+.tile3d .t3-sheet, .tile3d .t3-fx, .tile3d .t3-icon {
+  animation-duration: 3.2s; animation-iteration-count: infinite;
+  animation-timing-function: cubic-bezier(0.45, 0, 0.25, 1);
+  animation-delay: var(--delay, 0s);
+  animation-play-state: paused;
+}
+.tile3d.in-view .t3-sheet, .tile3d.in-view .t3-fx, .tile3d.in-view .t3-icon { animation-play-state: running; }
+.t3-sheet.c { display: none; }
+.tool-card:hover .tile3d .t3-sheet, .tool-card:hover .tile3d .t3-fx, .tool-card:hover .tile3d .t3-icon { animation-duration: 1.8s; }
+
+/* float (default) */
+.k-float .a { animation-name: t3-float; }
+.k-float .b { transform: translate3d(5px, 4px, -10px); }
+.k-float .t3-icon { animation-name: t3-bob; }
+@keyframes t3-float { 50% { transform: translate3d(0, -4px, 8px) rotateY(12deg); } }
+@keyframes t3-bob { 50% { transform: translateZ(30px) translateY(-3px); } }
+
+/* merge: three pages slide in from the sides and stack into one */
+.k-merge .a { animation-name: t3-merge-a; }
+.k-merge .b { animation-name: t3-merge-b; }
+.k-merge .c { display: block; animation-name: t3-merge-c; }
+@keyframes t3-merge-c { 0%, 15% { transform: translate3d(0, -16px, -14px) rotateX(30deg); opacity: 0.6; } 55%, 100% { transform: translate3d(6px, 6px, -8px); opacity: 1; } }
+@keyframes t3-merge-a { 0%, 15% { transform: translate3d(-15px, 0, 0) rotateY(25deg); } 55%, 100% { transform: translate3d(0, 0, 2px); } }
+@keyframes t3-merge-b { 0%, 15% { transform: translate3d(15px, 0, 0) rotateY(-25deg); } 55%, 100% { transform: translate3d(3px, 3px, -4px); } }
+
+/* split: one page tears into two that drift apart */
+.k-split .a { animation-name: t3-split-a; clip-path: inset(0 0 50% 0); }
+.k-split .b { animation-name: t3-split-b; clip-path: inset(50% 0 0 0); background-color: #f8fafc; }
+@keyframes t3-split-a { 0%, 25% { transform: none; } 60%, 85% { transform: translate3d(-6px, -6px, 6px) rotateZ(-10deg); } }
+@keyframes t3-split-b { 0%, 25% { transform: none; } 60%, 85% { transform: translate3d(6px, 6px, -2px) rotateZ(10deg); } }
+
+/* shuffle: pages swap places in depth */
+.k-shuffle .a { animation-name: t3-shuf-a; }
+.k-shuffle .b { animation-name: t3-shuf-b; }
+@keyframes t3-shuf-a { 0%, 100% { transform: translate3d(-5px, -3px, 8px); } 50% { transform: translate3d(6px, 4px, -8px); } }
+@keyframes t3-shuf-b { 0%, 100% { transform: translate3d(6px, 4px, -8px); } 50% { transform: translate3d(-5px, -3px, 8px); } }
+
+/* remove: the top page falls away */
+.k-remove .a { animation-name: t3-remove; }
+.k-remove .b { transform: translate3d(4px, 3px, -6px); }
+@keyframes t3-remove { 0%, 20% { transform: translateZ(4px); opacity: 1; } 70% { transform: translate3d(8px, 24px, 10px) rotateZ(35deg) rotateX(40deg); opacity: 0; } 71%, 100% { opacity: 0; transform: translateZ(4px); } }
+
+/* rotate: the page turns a quarter at a time */
+.k-rotate .a { animation-name: t3-rotate; }
+.k-rotate .b { display: none; }
+@keyframes t3-rotate { 0%, 15% { transform: rotateZ(0); } 40%, 60% { transform: rotateZ(90deg); } 85%, 100% { transform: rotateZ(180deg); } }
+
+/* squash: the file gets pressed thinner, then springs back a bit */
+.k-squash .a { animation-name: t3-squash; }
+.k-squash .b { display: none; }
+.k-squash .t3-fx { animation-name: t3-press; background: linear-gradient(var(--c2), var(--c2)) 50% 0 / 46px 5px no-repeat; }
+@keyframes t3-squash { 0%, 20% { transform: none; } 45%, 70% { transform: scale(1.12, 0.55); } 85% { transform: scale(0.95, 0.75); } 100% { transform: none; } }
+@keyframes t3-press { 0%, 20% { background-position: 50% 6px; } 45%, 70% { background-position: 50% 26px; } 100% { background-position: 50% 6px; } }
+
+/* flip: one format turns over into the other */
+.k-flip .a { animation-name: t3-flip-a; }
+.k-flip .b { animation-name: t3-flip-b; }
+@keyframes t3-flip-a { 0%, 30% { transform: rotateY(0); } 50%, 80% { transform: rotateY(180deg); } 100% { transform: rotateY(360deg); } }
+@keyframes t3-flip-b { 0%, 30% { transform: rotateY(-180deg); } 50%, 80% { transform: rotateY(0); } 100% { transform: rotateY(180deg); } }
+.k-flip .t3-icon { animation-name: t3-bob; }
+
+/* scan: a light beam sweeps down the page */
+.k-scan .b { display: none; }
+.k-scan .t3-fx { animation-name: t3-beam; background: linear-gradient(to bottom, transparent, var(--c2), transparent) 50% 0 / 48px 7px no-repeat; filter: drop-shadow(0 0 4px var(--c2)); }
+@keyframes t3-beam { 0% { background-position: 50% 18px; } 50% { background-position: 50% 64px; } 100% { background-position: 50% 18px; } }
+
+/* repair: the page shakes, the tool spins */
+.k-repair .a { animation-name: t3-shake; }
+.k-repair .b { display: none; }
+.k-repair .t3-icon { animation-name: t3-spin; }
+@keyframes t3-shake { 0%, 30%, 100% { transform: none; } 35% { transform: rotateZ(-6deg); } 40% { transform: rotateZ(6deg); } 45% { transform: rotateZ(-3deg); } 50% { transform: none; } }
+@keyframes t3-spin { 0%, 40% { transform: translateZ(26px) rotate(0); } 70%, 100% { transform: translateZ(26px) rotate(360deg); } }
+
+/* sign / write: the pen glides along a line that draws itself */
+.k-sign .b, .k-write .b { display: none; }
+.k-sign .t3-fx, .k-write .t3-fx { animation-name: t3-ink; background: linear-gradient(var(--c1), var(--c1)) 26px 52px / 0 2px no-repeat; }
+.k-sign .t3-icon, .k-write .t3-icon { animation-name: t3-pen; }
+@keyframes t3-ink { 0%, 10% { background-size: 0 2px; } 60%, 85% { background-size: 32px 2px; } 100% { background-size: 0 2px; } }
+@keyframes t3-pen { 0%, 10% { transform: translate3d(-24px, -14px, 26px) rotate(-10deg); } 30% { transform: translate3d(-14px, -18px, 26px) rotate(5deg); } 60%, 85% { transform: translate3d(0, -14px, 26px) rotate(-5deg); } 100% { transform: translate3d(-24px, -14px, 26px); } }
+
+/* lock / unlock: the padlock drops onto the page or lifts off */
+.k-lock .b, .k-unlock .b { display: none; }
+.k-lock .t3-icon { animation-name: t3-lockdrop; }
+.k-unlock .t3-icon { animation-name: t3-lift; }
+@keyframes t3-lockdrop { 0%, 10% { transform: translate3d(-12px, -30px, 40px); opacity: 0; } 40%, 85% { transform: translate3d(-12px, -10px, 26px); opacity: 1; } 100% { opacity: 0; transform: translate3d(-12px, -10px, 26px); } }
+@keyframes t3-lift { 0%, 30% { transform: translate3d(-12px, -10px, 26px); opacity: 1; } 70%, 100% { transform: translate3d(-12px, -32px, 46px) rotate(-20deg); opacity: 0; } }
+
+/* redact: black bars wipe across the lines */
+.k-redact .b { display: none; }
+.k-redact .t3-fx { animation-name: t3-redact; background: linear-gradient(#0f172a, #0f172a) 30px 36px / 0 5px no-repeat, linear-gradient(#0f172a, #0f172a) 30px 46px / 0 5px no-repeat; }
+@keyframes t3-redact { 0%, 15% { background-size: 0 5px, 0 5px; } 45% { background-size: 24px 5px, 0 5px; } 70%, 90% { background-size: 24px 5px, 18px 5px; } 100% { background-size: 0 5px, 0 5px; } }
+
+/* flatten: layers press into one */
+.k-flatten .a { animation-name: t3-flat-a; }
+.k-flatten .b { animation-name: t3-flat-b; }
+@keyframes t3-flat-a { 0%, 15% { transform: translateZ(18px) translateY(-6px); } 55%, 100% { transform: translateZ(1px); } }
+@keyframes t3-flat-b { 0%, 100% { transform: translateZ(0); } }
+
+/* stamp: the stamp thumps down and leaves a mark */
+.k-stamp .b { display: none; }
+.k-stamp .t3-icon { animation-name: t3-thump; }
+.k-stamp .t3-fx { animation-name: t3-mark; background: radial-gradient(circle, color-mix(in srgb, var(--c1) 70%, transparent) 0 6px, transparent 7px) 50% 50% / 0 0 no-repeat; }
+@keyframes t3-thump { 0%, 10% { transform: translate3d(-12px, -24px, 44px); } 35% { transform: translate3d(-12px, -12px, 18px); } 45%, 100% { transform: translate3d(-12px, -24px, 44px); } }
+@keyframes t3-mark { 0%, 34% { background-size: 0 0; } 36%, 90% { background-size: 100% 100%; } 100% { background-size: 0 0; } }
+
+/* number: page numbers tick by on a stack */
+.k-number .a { animation-name: t3-shuf-a; }
+.k-number .b { animation-name: t3-shuf-b; }
+.k-number .t3-fx::after { content: "1"; position: absolute; left: 0; right: 0; bottom: 22px; text-align: center; font: 800 10px var(--font-sans); color: var(--c1); animation: t3-count 3.2s steps(1) infinite var(--delay, 0s); }
+@keyframes t3-count { 0% { content: "1"; } 33% { content: "2"; } 66% { content: "3"; } }
+
+/* crop / resize: a frame closes in, or the page grows and shrinks */
+.k-crop .b { display: none; }
+.k-crop .t3-fx { animation-name: t3-crop; border: 2px dashed var(--c2); border-radius: 3px; inset: 18px 24px; }
+@keyframes t3-crop { 0%, 15% { inset: 16px 22px; } 50%, 85% { inset: 28px 30px 24px 28px; } 100% { inset: 16px 22px; } }
+.k-resize .b { display: none; }
+.k-resize .a { animation-name: t3-resize; }
+@keyframes t3-resize { 0%, 15% { transform: scale(0.75); } 50%, 80% { transform: scale(1.15); } 100% { transform: scale(0.75); } }
+
+/* invert: the page turns dark and back */
+.k-invert .b { display: none; }
+.k-invert .a { animation-name: t3-invert; }
+@keyframes t3-invert { 0%, 30% { filter: none; } 50%, 80% { filter: invert(1) hue-rotate(180deg); transform: rotateY(12deg); } 100% { filter: none; } }
+
+/* tag: a label swings on the page */
+.k-tag .b { transform: translate3d(4px, 3px, -6px); }
+.k-tag .t3-icon { animation-name: t3-swing; transform-origin: 50% 0; }
+@keyframes t3-swing { 0%, 100% { transform: translateZ(26px) rotate(-14deg); } 50% { transform: translateZ(26px) rotate(14deg); } }
+
+/* compare: two pages side by side, a difference lights up */
+.k-compare .a { transform: translate3d(-9px, 0, 0) rotateY(18deg); }
+.k-compare .b { transform: translate3d(9px, 0, 0) rotateY(-18deg); }
+.k-compare .t3-fx { animation-name: t3-diff; background: linear-gradient(#f87171, #f87171) 50px 40px / 13px 3px no-repeat, linear-gradient(#34d399, #34d399) 24px 48px / 13px 3px no-repeat; }
+@keyframes t3-diff { 0%, 25%, 100% { opacity: 0; } 40%, 85% { opacity: 1; } }
+
+/* read / audio: sparkles orbit, or sound waves ripple out */
+.k-read .b { transform: translate3d(4px, 3px, -6px); }
+.k-read .t3-fx::before, .k-read .t3-fx::after { content: "✦"; position: absolute; color: var(--c2); font-size: 9px; left: 38px; top: 38px; animation: t3-orbit 3.2s linear infinite var(--delay, 0s); }
+.k-read .t3-fx::after { animation-delay: calc(var(--delay, 0s) - 1.6s); color: var(--c1); }
+@keyframes t3-orbit { from { transform: rotate(0) translateX(32px) rotate(0); } to { transform: rotate(360deg) translateX(32px) rotate(-360deg); } }
+.k-audio .b { display: none; }
+.k-audio .t3-fx { animation-name: t3-wave; border: 2px solid var(--c2); border-radius: 50%; inset: 30px; opacity: 0; }
+@keyframes t3-wave { 0% { inset: 32px; opacity: 0.9; } 100% { inset: -2px; opacity: 0; } }
+
+/* ocr: the beam passes and letters appear on the scanned page */
+.k-ocr .b { display: none; }
+.k-ocr .t3-fx { animation-name: t3-beam; background: linear-gradient(to bottom, transparent, var(--c2), transparent) 50% 0 / 48px 7px no-repeat; }
+.k-ocr .t3-fx::after { content: "Aa"; position: absolute; left: 0; right: 0; top: 34px; text-align: center; font: 800 13px var(--font-sans); color: var(--c1); animation: t3-appear 3.2s infinite var(--delay, 0s); }
+@keyframes t3-appear { 0%, 45% { opacity: 0; transform: scale(0.6); } 60%, 90% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+
+/* check: a scan finds hidden data, then a tick lands */
+.k-check .b { display: none; }
+.k-check .t3-fx { animation-name: t3-beam; background: linear-gradient(to bottom, transparent, var(--c2), transparent) 50% 0 / 48px 7px no-repeat; }
+.k-check .t3-fx::after { content: "✓"; position: absolute; left: 47px; top: 44px; width: 16px; height: 16px; border-radius: 50%; background: #10b981; color: #fff; font: 900 11px/16px var(--font-sans); text-align: center; animation: t3-appear 3.2s infinite var(--delay, 0s); }
+
+/* summary: a long page squeezes down into three bullet points */
+.k-summary .a { animation-name: t3-summary; }
+.k-summary .b { display: none; }
+.k-summary .t3-fx::after { content: "• • •"; position: absolute; left: 0; right: 0; top: 36px; text-align: center; font: 900 12px var(--font-sans); color: var(--c1); letter-spacing: 2px; animation: t3-appear 3.2s infinite var(--delay, 0s); }
+@keyframes t3-summary { 0%, 25% { transform: scaleY(1); } 50%, 90% { transform: scaleY(0.55) translateY(4px); } 100% { transform: scaleY(1); } }
+
+/* ---------- The stage across the top of every tool card ---------- */
+.tile-stage {
+  position: relative; overflow: hidden; isolation: isolate;
+  height: 140px; margin: -24px -24px 16px; padding-top: 22px;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex; align-items: center; justify-content: center;
+  background:
+    radial-gradient(120% 90% at 78% 8%, color-mix(in srgb, var(--c1) 34%, transparent), transparent 62%),
+    radial-gradient(90% 80% at 8% 100%, color-mix(in srgb, var(--c2) 26%, transparent), transparent 60%),
+    rgba(var(--ink), 0.03);
+}
+.tile-stage .tile3d { transform: scale(1.28); transform-origin: 50% 50%; z-index: 2; }
+.tile-stage .t3-rig { transform: rotateX(20deg) rotateY(-24deg); }
+.tool-card:hover .tile-stage .t3-rig { transform: rotateX(6deg) rotateY(-6deg) translateZ(12px) scale(1.06); }
+
+/* A perspective floor that keeps moving toward you, like the hero's grid. */
+.ts-floor {
+  position: absolute; left: -30%; right: -30%; bottom: -46px; height: 120px; z-index: 0;
+  background:
+    linear-gradient(color-mix(in srgb, var(--c1) 45%, transparent) 1px, transparent 1px) 0 0 / 22px 22px,
+    linear-gradient(90deg, color-mix(in srgb, var(--c1) 45%, transparent) 1px, transparent 1px) 0 0 / 22px 22px;
+  transform: perspective(240px) rotateX(64deg);
+  -webkit-mask-image: linear-gradient(to top, #000 10%, transparent 85%);
+  mask-image: linear-gradient(to top, #000 10%, transparent 85%);
+  opacity: 0.55;
+  animation: ts-run 2.8s linear infinite paused;
+}
+@keyframes ts-run { to { background-position: 0 22px, 0 0; } }
+.ts-orb {
+  position: absolute; width: 90px; height: 90px; border-radius: 50%; z-index: 0;
+  left: 58%; top: -10px; filter: blur(26px); opacity: 0.55;
+  background: var(--c2);
+  animation: ts-drift 7s ease-in-out infinite paused;
+}
+@keyframes ts-drift { 50% { transform: translate(-60px, 26px) scale(1.25); } }
+.ts-spark {
+  position: absolute; bottom: 10px; width: 5px; height: 5px; border-radius: 50%; z-index: 1;
+  background: var(--c1); box-shadow: 0 0 8px var(--c1); opacity: 0;
+  animation: ts-rise 3.6s ease-in infinite paused;
+}
+.ts-spark.s1 { left: 18%; }
+.ts-spark.s2 { left: 76%; background: var(--c2); box-shadow: 0 0 8px var(--c2); animation-delay: -1.2s; }
+.ts-spark.s3 { left: 34%; animation-delay: -2.4s; width: 4px; height: 4px; }
+@keyframes ts-rise { 0% { transform: translateY(0); opacity: 0; } 20% { opacity: 0.9; } 100% { transform: translateY(-110px); opacity: 0; } }
+.tile-stage.in-view .ts-floor, .tile-stage.in-view .ts-orb, .tile-stage.in-view .ts-spark { animation-play-state: running; }
+.tool-card:hover .ts-floor { animation-duration: 1.2s; }
+
+.tile-stage .card-badge {
+  position: absolute; top: 12px; right: 12px; z-index: 3;
+  background: rgba(8, 10, 20, 0.55); color: #e2e8f0; border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+}
+.tile-stage .card-badge.badge-ai { color: #67e8f9; }
+.tile-stage .card-badge.badge-sec { color: #fcd34d; }
+:root[data-theme="light"] .tile-stage .card-badge { background: rgba(255, 255, 255, 0.85); color: #334155; border-color: rgba(15, 23, 42, 0.1); }
+:root[data-theme="light"] .tile-stage .card-badge.badge-ai { color: #0e7490; }
+:root[data-theme="light"] .tile-stage .card-badge.badge-sec { color: #b45309; }
+.ts-cap {
+  position: absolute; left: 12px; bottom: 10px; z-index: 3; max-width: calc(100% - 24px);
+  font-size: 11px; font-weight: 700; letter-spacing: 0.2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  padding: 3px 9px; border-radius: 999px;
+  color: var(--text-strong); background: color-mix(in srgb, var(--c1) 22%, rgba(var(--ink), 0.06));
+  border: 1px solid color-mix(in srgb, var(--c1) 40%, transparent);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+}
+:root[data-theme="light"] .tile-stage { background:
+    radial-gradient(120% 90% at 78% 8%, color-mix(in srgb, var(--c1) 22%, transparent), transparent 62%),
+    radial-gradient(90% 80% at 8% 100%, color-mix(in srgb, var(--c2) 18%, transparent), transparent 60%),
+    #f6f7fb; }
+:root[data-theme="light"] .ts-floor { opacity: 0.35; }
+:root[data-theme="light"] .ts-orb { opacity: 0.3; }
+
+.card-body { display: flex; flex-direction: column; flex: 1; }
+.card-body .runs-on { margin-top: 0; margin-bottom: 10px; }
+.card-desc { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.tool-card { justify-content: flex-start; }
+.tool-card .card-footer { margin-top: auto; }
+
+/* Phones: two compact cards per row so people see many tools at once. */
+@media (max-width: 640px) {
+  .tools-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .tool-card { padding: 12px; }
+  .tile-stage { height: 104px; margin: -12px -12px 10px; padding-top: 4px; padding-bottom: 14px; }
+  .tile-stage .tile3d { transform: scale(0.92); }
+  .tile-stage .card-badge { display: none; }
+  .ts-cap { left: 8px; bottom: 6px; font-size: 9.5px; padding: 2px 7px; }
+  .card-title { font-size: 14.5px; margin-bottom: 4px; line-height: 1.25; }
+  .card-desc { font-size: 12px; -webkit-line-clamp: 2; margin-bottom: 8px; }
+  .card-body .runs-on { font-size: 10px; padding: 2px 6px; margin-bottom: 6px; }
+  .card-footer > span:first-child { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tile3d .t3-sheet, .tile3d .t3-fx, .tile3d .t3-icon, .tile3d .t3-fx::before, .tile3d .t3-fx::after,
+  .ts-floor, .ts-orb, .ts-spark { animation: none !important; }
+}
+:root[data-theme="light"] .t3-sheet { box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.1), 0 8px 16px -4px rgba(15, 23, 42, 0.35); }

@@ -1,0 +1,24 @@
+# Adds the Cloudflare Tunnel to the app's docker-compose.yml. Docker reads this file
+# automatically when it sits next to docker-compose.yml (deploy.sh copies it there).
+# Values in ${...} come from the .env file next to docker-compose.yml.
+services:
+  app:
+    environment:
+      # Only traffic from the tunnel reaches the app, so Cloudflare's visitor-IP header can be trusted.
+      ULTRAPDF_TRUST_PROXY: "cloudflare"
+      ULTRAPDF_HTTPS: "1"
+      # 127.0.0.1 and localhost keep Docker's own health check working.
+      ULTRAPDF_ALLOWED_HOSTS: "${DOMAIN},www.${DOMAIN},127.0.0.1,localhost"
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: "${TUNNEL_TOKEN}"
+    depends_on:
+      - app
+    read_only: true
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true

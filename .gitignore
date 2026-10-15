@@ -1,0 +1,12 @@
+.env
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+.pytest_cache/
+node_modules/
+data/
+*.log
+*.zip
+test_write.txt
