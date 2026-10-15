@@ -120,4 +120,4 @@ def test_brand_name_comes_from_brand_json(monkeypatch):
     monkeypatch.setattr(main, "BRAND_NAME", "AiDocs")
     monkeypatch.setattr(main, "HOME_TITLE", "AiDocs: Free PDF, Image and File Tools That Keep Your Files Private")
     page = main._index_html()
-    assert "Ai <strong>Docs</strong>" in page and "FileDost" not in page
+    assert "Ai <strong>Docs</strong>" in page and "FileDost AI" not in page and "FileDost <strong>" not in page
