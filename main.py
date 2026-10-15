@@ -32,6 +32,7 @@ from pdf_engine import PDFEngine, ToolUnavailableError, MAX_PAGE_LIST
 from guards import UploadLimitMiddleware, RateLimitMiddleware
 import feedback
 import converters
+import image_ocr
 import sandbox
 
 log = logging.getLogger("ultrapdf")
@@ -526,6 +527,28 @@ async def ocr_pdf_endpoint(
     result = await _run("OCR processing", PDFEngine.ocr_searchable, await file.read(), language, force)
     return _pdf(result, "searchable_ocr_document.pdf")
 
+async def _images(files: List[UploadFile]):
+    if not files:
+        raise HTTPException(status_code=400, detail="Add at least one picture.")
+    if len(files) > image_ocr.MAX_IMAGES:
+        raise HTTPException(status_code=400, detail=f"Up to {image_ocr.MAX_IMAGES} pictures at a time, please.")
+    return [(f.filename or "picture", d) for f, d in zip(files, await _read_all(files))]
+
+
+@app.post("/api/image-to-text")
+async def image_to_text(files: List[UploadFile] = File(...), language: str = Form("eng", max_length=60)):
+    images = await _images(files)
+    return JSONResponse(content=await _run("Reading text", image_ocr.images_to_text, images, language))
+
+
+@app.post("/api/image-to-word")
+async def image_to_word(files: List[UploadFile] = File(...), language: str = Form("eng", max_length=60)):
+    images = await _images(files)
+    data = await _run("Word conversion", image_ocr.images_to_docx, images, language)
+    name = _stem(files[0].filename, "picture") if len(files) == 1 else "pictures"
+    return _download(data, f"{name}.docx", DOCX_MIME)
+
+
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
@@ -583,6 +606,21 @@ TOOL_PAGES = {
     "pdf-bookmarks": ("Add Bookmarks & Table of Contents to PDF", "Add a clickable contents page and bookmarks to a PDF. Type your chapters or find headings automatically. Free, runs in your browser."),
     "split-by-bookmarks": ("Split PDF by Chapters (Bookmarks)", "Split a big PDF into one file per chapter using its bookmarks, with a page-range preview. Free, runs in your browser."),
     "fill-pdf-form": ("Fill PDF Form", "Type into the boxes of a fillable PDF form, tick check boxes, pick options and save. Lock the answers if you like."),
+    "remove-exif": ("Remove Photo Location & EXIF Data", "See and remove the GPS location, phone model, date and other hidden data in photos. Free, private, the picture is not changed."),
+    "blur-face": ("Blur Faces & Text in Photos", "Blur, pixelate or black out faces, number plates and text in a photo. Faces are found for you. Free, runs on your device."),
+    "watermark-image": ("Watermark Images", "Add a text or logo watermark to many photos at once, in a corner or tiled across. Free and private."),
+    "video-to-gif": ("Video to GIF (MP4 to GIF)", "Turn part of a video into a GIF. Choose start, length, size and smoothness. Free, runs on your device."),
+    "compress-gif": ("Compress GIF", "Make animated GIFs smaller for WhatsApp, Discord and email. Free, runs on your device, nothing is uploaded."),
+    "resize-video-for-reels": ("Resize Video for Reels & Shorts (9:16)", "Fit any video into 9:16 for Reels, Shorts and Status, or 1:1 and 4:5, with a blurred background or bars. Free and private."),
+    "change-video-speed": ("Change Video or Audio Speed", "Speed up or slow down videos, songs and voice notes from 0.25x to 4x, with natural-sounding voices. Free, runs on your device."),
+    "volume-booster": ("Volume Booster", "Make quiet videos, songs and voice notes louder without crackling. Free, runs on your device, nothing is uploaded."),
+    "audio-joiner": ("Audio Joiner", "Join MP3s, voice notes and audio clips into one MP3, with optional crossfade. Free, runs on your device."),
+    "diff-checker": ("Diff Checker: Compare Two Texts", "Compare two texts or code files and see what was added, removed and changed, side by side. Free and private."),
+    "image-to-text": ("Image to Text Converter", "Copy text from a photo, screenshot or scanned page free with OCR. Works with Hindi, Marathi, Tamil and other Indian languages. Files are never stored."),
+    "jpg-to-word": ("JPG to Word Converter", "Convert a photo or scan (JPG, PNG) into an editable Word document free with OCR. Paragraphs are kept. Files are never stored."),
+    "image-upscaler": ("Image Upscaler", "Make small or blurry photos 2x or 4x bigger and sharper with free on-device AI. Nothing is uploaded."),
+    "signature-maker": ("Signature Maker", "Draw or type your signature, or clean up a photo of one, and download a transparent PNG for forms and documents. Free and private."),
+    "remove-background": ("Background Remover", "Remove the background from a photo free: save it see-through (PNG), on white or on any colour for passport and exam photos. Runs on your device, nothing is uploaded."),
     "qr-code": ("QR Code Maker & Reader", "Make a QR code for a link, text, Wi-Fi, UPI payment or contact card, or read a QR code from a photo, PDF or your camera."),
     "zip-tools": ("ZIP Maker & Opener", "Pack any files into one ZIP, or open a ZIP, RAR, 7z or TAR to see what's inside and take out the files you need."),
     "compress-video": ("Compress Video", "Shrink a video to fit WhatsApp (16 MB), email (25 MB) or any size. Runs in your browser, nothing uploaded. Free."),
@@ -686,6 +724,32 @@ TOOL_ALIASES = {
     "add-bookmarks-to-pdf": "pdf-bookmarks", "pdf-table-of-contents": "pdf-bookmarks",
     "split-pdf-by-chapters": "split-by-bookmarks", "split-by-chapters": "split-by-bookmarks",
     "qr-code-scanner": "qr-code", "upi-qr-code": "qr-code",
+    "image-to-text-converter": "image-to-text", "photo-to-text": "image-to-text", "extract-text-from-image": "image-to-text",
+    "ocr-image": "image-to-text", "jpg-to-text": "image-to-text", "picture-to-text": "image-to-text",
+    "image-to-word": "jpg-to-word", "jpeg-to-word": "jpg-to-word", "png-to-word": "jpg-to-word", "photo-to-word": "jpg-to-word",
+    "jpg-to-word-converter": "jpg-to-word",
+    "upscale-image": "image-upscaler", "image-enhancer": "image-upscaler", "enhance-photo": "image-upscaler",
+    "unblur-image": "image-upscaler", "increase-image-resolution": "image-upscaler", "ai-upscale": "image-upscaler",
+    "signature-creator": "signature-maker", "signature-generator": "signature-maker", "online-signature": "signature-maker",
+    "transparent-signature": "signature-maker", "digital-signature-maker": "signature-maker",
+    "exif-remover": "remove-exif", "remove-location-from-photo": "remove-exif", "remove-metadata-from-photo": "remove-exif",
+    "exif-viewer": "remove-exif", "photo-metadata-remover": "remove-exif", "remove-gps-from-photo": "remove-exif",
+    "blur-faces": "blur-face", "blur-image": "blur-face", "pixelate-image": "blur-face", "blur-number-plate": "blur-face",
+    "censor-photo": "blur-face", "blur-text-in-image": "blur-face",
+    "add-watermark-to-photo": "watermark-image", "image-watermark": "watermark-image", "photo-watermark": "watermark-image",
+    "add-logo-to-photo": "watermark-image",
+    "mp4-to-gif": "video-to-gif", "gif-maker": "video-to-gif", "make-gif": "video-to-gif", "mov-to-gif": "video-to-gif",
+    "gif-compressor": "compress-gif", "reduce-gif-size": "compress-gif", "optimize-gif": "compress-gif",
+    "video-to-9-16": "resize-video-for-reels", "reels-size": "resize-video-for-reels", "youtube-shorts-size": "resize-video-for-reels",
+    "instagram-video-size": "resize-video-for-reels", "video-aspect-ratio": "resize-video-for-reels", "square-video": "resize-video-for-reels",
+    "speed-up-video": "change-video-speed", "slow-down-video": "change-video-speed", "audio-speed-changer": "change-video-speed",
+    "change-audio-speed": "change-video-speed", "slow-motion-video": "change-video-speed",
+    "increase-volume": "volume-booster", "make-audio-louder": "volume-booster", "increase-video-volume": "volume-booster",
+    "audio-amplifier": "volume-booster", "mp3-volume-booster": "volume-booster",
+    "merge-audio": "audio-joiner", "join-mp3": "audio-joiner", "combine-audio": "audio-joiner", "mp3-joiner": "audio-joiner", "merge-mp3": "audio-joiner",
+    "text-compare": "diff-checker", "compare-text": "diff-checker", "text-diff": "diff-checker", "compare-two-texts": "diff-checker", "code-diff": "diff-checker",
+    "background-remover": "remove-background", "remove-bg": "remove-background",
+    "transparent-background": "remove-background", "passport-photo-background": "remove-background",
     "unzip-files": "zip-tools", "extract-rar": "zip-tools",
     "video-compressor": "compress-video", "reduce-video-size": "compress-video", "compress-video-for-whatsapp": "compress-video",
     "mp4-to-mp3": "video-to-mp3", "extract-audio": "video-to-mp3", "convert-to-mp3": "video-to-mp3",

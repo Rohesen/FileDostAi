@@ -2,11 +2,11 @@
 
 ![FileDost AI system design](SYSTEM-DESIGN.png)
 
-FileDost AI is a free, open-source (AGPL-3.0) web app with 57 file tools for PDFs, images, Office files, archives, audio and video. It is built so that as much work as possible happens **inside the visitor's browser**, and only the jobs that need heavy desktop-class engines (LibreOffice, Tesseract, Ghostscript, PyMuPDF) go to the server.
+FileDost AI is a free, open-source (AGPL-3.0) web app with 72 file tools for PDFs, images, Office files, archives, audio and video. It is built so that as much work as possible happens **inside the visitor's browser**, and only the jobs that need heavy desktop-class engines (LibreOffice, Tesseract, Ghostscript, PyMuPDF) go to the server.
 
 | Where it runs | Tools | What happens to the file |
 | :--- | ---: | :--- |
-| Browser only | 38 | Read with FileReader, processed in JavaScript or WebAssembly, saved as a download. Never uploaded. |
+| Browser only | 48 | Read with FileReader, processed in JavaScript or WebAssembly, saved as a download. Never uploaded. |
 | Server | 17 | Uploaded over HTTPS, processed in memory inside a sandboxed job process, sent back, then discarded. |
 | Hybrid | 2 | Browser does most of the work and calls the server for one step (PDF compression). |
 
@@ -17,7 +17,7 @@ FileDost AI is a free, open-source (AGPL-3.0) web app with 57 file tools for PDF
 | Language | Where | What it is used for |
 | :--- | :--- | :--- |
 | **Python 3.11** | `main.py`, `pdf_engine.py`, `converters.py`, `sandbox.py`, `guards.py`, `feedback.py`, `office_com_worker.py` (about 3,900 lines) | Web server (FastAPI), every server tool, security guards, the job sandbox |
-| **JavaScript (ES2020, plain, no framework, no build step)** | `static/*.js` (about 14,600 lines) | The whole user interface and the 38 in-browser tools, Web Workers, service worker |
+| **JavaScript (ES2020, plain, no framework, no build step)** | `static/*.js` (about 14,600 lines) | The whole user interface and the 51 in-browser tools, Web Workers, service worker |
 | **HTML + CSS** | `static/index.html`, `static/*.css` (about 4,700 lines of CSS) | Page layout, themes (dark/light), hologram 3D tool cards, glass navigation |
 | **WebAssembly** | `static/vendor/ffmpeg`, `libarchive`, `libheif-bundle.js`, pdf.js | Ready-made engines compiled from C/C++ that run in the browser (video, HEIC photos, RAR/7z) |
 | **Dockerfile, YAML, shell** | `Dockerfile`, `docker-compose.yml`, `run.sh` | Packaging and deployment |
@@ -33,11 +33,13 @@ FileDost AI is a free, open-source (AGPL-3.0) web app with 57 file tools for PDF
 | **pdf.js** (Mozilla) | 4.10.38, Apache-2.0 | Drawing pages (thumbnails, previews, PDF to JPG), reading text, finding images |
 | **JSZip** | 3.10.1, MIT | Making and opening ZIP files; shrinking pictures inside .docx/.xlsx/.pptx |
 | **fontkit** | MIT | Embedding real fonts so form filling works with Hindi and other non-Latin letters |
-| **ffmpeg.wasm** | single-thread core, GPL-2.0+ | Compress video, video to MP3, trim audio/video (31 MB, downloaded only on first use) |
+| **ffmpeg.wasm** | single-thread core, GPL-2.0+ | Compress video, video to MP3, trim, video to GIF, GIF compressor, reels resizer, speed, volume booster, audio joiner (31 MB, downloaded only on first use) |
 | **libheif-js** | 1.19.8, LGPL-3.0 | Decoding iPhone HEIC/HEIF photos |
 | **libarchive.js** | MIT | Opening RAR, 7z, TAR and GZ archives |
 | **qrcode-generator** | MIT | Making QR codes (links, Wi-Fi, UPI, contact cards) |
 | **jsQR** | Apache-2.0 | Reading QR codes from photos, PDFs or the camera |
+| **ONNX Runtime Web** + **silueta** model | 1.22.0, MIT; model MIT/Apache-2.0 (U²-Net) | Background Remover (55 MB in all) and Image Upscaler (Real-ESRGAN, BSD-3-Clause, 4.9 MB), each downloaded only on first use |
+| **UltraFace** RFB-640 face model | MIT (Linzaer) | Blur Faces & Text finds faces (1.6 MB, downloaded on first use) |
 | **Browser APIs** | built in | Canvas/OffscreenCanvas (image work), getUserMedia (camera), Web Speech (read aloud), Chrome's on-device Translator and Summarizer, Service Worker + Cache Storage (offline), localStorage (theme, recipes, recent tools) |
 
 ### On the server (`requirements.txt` and the Docker image)
@@ -123,6 +125,7 @@ A request to a server tool passes through these steps:
 | OCR PDF | Server `/api/ocr` | OCRmyPDF runs Tesseract on scanned pages and adds an invisible, selectable text layer; falls back to PyMuPDF's built-in Tesseract if Ghostscript is missing | OCRmyPDF, Tesseract, Ghostscript, PyMuPDF |
 | Repair PDF | Server `/api/repair` | Rebuilds the file's structure with pikepdf (qpdf), falls back to PyMuPDF, and reports what was fixed and how many pages were saved | pikepdf, PyMuPDF |
 | ZIP Maker & Opener | Browser | Packs files (keeps folders) into a ZIP, or lists and extracts ZIP, RAR, 7z, TAR and GZ, including ZIPs inside ZIPs | JSZip, libarchive.js (wasm) |
+| Compress GIF | Browser | ffmpeg.wasm rebuilds the GIF with fewer colours (light/medium/strong) and a lower frame rate where needed; keeps the result only if it is smaller | ffmpeg.wasm |
 | Compress Video | Browser | Re-encodes with ffmpeg.wasm to a size target (WhatsApp 16 MB, email 25 MB, custom) | ffmpeg.wasm |
 
 ### Convert
@@ -138,10 +141,12 @@ A request to a server tool passes through these steps:
 | PDF to JPG | Browser | Renders each page with pdf.js at 72, 150 or 300 dpi to JPG or PNG; several pages come as a ZIP | pdf.js, JSZip |
 | PDF to Text | Browser | Extracts text with pdf.js and rebuilds headings and paragraphs as Markdown | pdf.js |
 | PDF to Word | Server `/api/pdf-to-docx` | pdf2docx rebuilds layout, tables and images in a .docx; falls back to text-only python-docx | pdf2docx, python-docx |
+| JPG to Word | Server `/api/image-to-word` | Tesseract (through PyMuPDF) reads each photo; lines are regrouped into paragraphs, wrapped lines joined, big lines made bold; one page per picture in a .docx | PyMuPDF, Tesseract, python-docx, Pillow |
 | PDF to Excel | Server `/api/pdf-to-excel` | Finds tables with PyMuPDF (then pdfplumber), writes one sheet per page with numbers stored as numbers | PyMuPDF, pdfplumber, openpyxl |
 | PDF to PowerPoint | Server `/api/pdf-to-powerpoint` | Each page becomes a full-slide picture, with its text in the speaker notes | PyMuPDF, python-pptx |
 | PDF to PDF/A | Server `/api/pdf-to-pdfa` | Ghostscript converts to PDF/A-2b with an sRGB colour profile | Ghostscript |
 | Extract Images from PDF | Browser | Walks each page's drawing commands with pdf.js to find pictures, saves them at original quality (JPEGs copied untouched) in a ZIP | pdf.js, pdf-lib, JSZip |
+| Video to GIF | Browser | ffmpeg.wasm makes a two-pass colour palette (palettegen/paletteuse) for clean GIF colours; pick start, length, frame rate and width | ffmpeg.wasm |
 | Video to MP3 | Browser | ffmpeg.wasm pulls out the audio track (also converts M4A, WAV, etc.) | ffmpeg.wasm |
 
 ### Image
@@ -152,6 +157,10 @@ A request to a server tool passes through these steps:
 | Exam Photo & Signature Resizer | Browser | Crop box plus presets (JEE, NEET, SSC, UPSC...) for exact pixels, DPI and KB range; finds the quality that fits by binary search | Canvas |
 | Exam & Govt Form Kit | Browser | One screen that prepares every photo, signature, thumb impression and certificate a form asks for, each to its own size rules | Canvas, pdf-lib, JSZip |
 | HEIC to JPG | Browser | Decodes iPhone HEIC/HEIF with libheif (WebAssembly) and saves JPG or PNG, many at once | libheif-js, Canvas |
+| Background Remover | Browser | A small U²-Net model ("silueta", 44 MB, downloaded once) finds the subject in a worker; saves see-through PNG, on white or any colour, with soft or sharp edges and optional trim | ONNX Runtime Web, Canvas |
+| Image to Text | Server `/api/image-to-text` | Photo is turned upright (EXIF), small ones enlarged, then Tesseract reads it in the chosen language; text shown to edit, copy or save as .txt | PyMuPDF, Tesseract, Pillow |
+| Image Upscaler | Browser | Real-ESRGAN general x4 v3 (4.9 MB) runs in a worker on 128 px tiles with overlap; 2× is the 4× result scaled down; photos over 2 MP get a sharpened resize instead; transparency kept | ONNX Runtime Web, Canvas |
+| Watermark Images | Browser | Text (with a soft outline so it reads on any photo) or a logo, in one of 9 positions or tiled across, with size, opacity, angle and colour; many photos at once into a ZIP | Canvas, JSZip |
 | QR Code Maker & Reader | Browser | Makes QR codes for links, text, Wi-Fi, UPI and contact cards; reads codes from a photo, PDF page or live camera | qrcode-generator, jsQR, pdf.js |
 
 ### Edit
@@ -159,6 +168,7 @@ A request to a server tool passes through these steps:
 | Tool | Runs | How it works | Main libraries |
 | :--- | :--- | :--- | :--- |
 | Sign PDF | Browser | Draw, type (handwriting fonts) or upload a signature, click where it goes; stamped as an image, correct on rotated pages | Canvas, pdf-lib |
+| Signature Maker | Browser | Draw (smooth, pressure-aware strokes, undo), type in 3 handwriting fonts, or clean a photo of a signature (paper brightness measured locally, so shadows vanish); trimmed see-through PNG or JPG on white, optional exam form sizes | Canvas |
 | Edit PDF | Browser | pdf.js shows the page; you add or change text, images, shapes, highlights, white-out and drawings; the worker draws them into the PDF | pdf.js, pdf-lib |
 | Watermark PDF | Browser | Text stamp with opacity, angle and size on every page | pdf-lib |
 | Page Numbers | Browser | Labels like `Page {n} of {total}` in one of 6 positions | pdf-lib |
@@ -170,6 +180,10 @@ A request to a server tool passes through these steps:
 | Bookmarks & Contents | Browser | You type chapters (or it finds headings with pdf.js), it adds a clickable contents page and PDF bookmarks | pdf.js, pdf-lib |
 | Fill PDF Form | Browser | Lists the form's fields; type, tick and pick; optionally lock (flatten) the answers; fontkit for non-Latin letters | pdf-lib, fontkit, pdf.js |
 | Trim Audio or Video | Browser | Preview and drag sliders; ffmpeg.wasm cuts the start and end without re-encoding where possible | ffmpeg.wasm |
+| Resize Video for Reels & Shorts | Browser | Fits any video into 9:16, 1:1, 4:5 or 16:9 at 720p or 1080p, with a blurred, black or white fill, or crops to fill | ffmpeg.wasm |
+| Change Video or Audio Speed | Browser | 0.25× to 4× for video or audio; chained atempo keeps the voice pitch natural | ffmpeg.wasm |
+| Volume Booster | Browser | Auto-level (loudnorm) or a fixed boost with a limiter so it doesn't crackle; video picture copied untouched | ffmpeg.wasm |
+| Audio Joiner | Browser | Joins songs or clips in your order into one MP3, straight cut or with a crossfade | ffmpeg.wasm |
 
 ### Security
 
@@ -179,6 +193,8 @@ A request to a server tool passes through these steps:
 | Unlock PDF | Server `/api/unlock` | Decrypts with the password you supply and saves an unlocked copy | pypdf |
 | Redact PDF | Server `/api/redact` | Finds emails, phone numbers and your keywords, marks them as redactions and applies them, which **deletes** the text underneath and draws black boxes; also scrubs matches from metadata | PyMuPDF |
 | Privacy Check | Server `/api/privacy-scan` | Scores the file for hidden data: author names, old saved versions, emails, phones, card/IBAN numbers (Luhn/IBAN checks), hidden text, scripts and attachments; one-click fixes call `/api/strip-private`, `/api/redact` or `/api/flatten` | PyMuPDF, pikepdf |
+| Remove Photo Location & EXIF | Browser | Reads and shows the hidden data (GPS place, camera, date, serial), then deletes it without re-compressing JPEG, PNG or WebP (orientation kept); other formats re-encoded; many photos into a ZIP | JavaScript, Canvas, JSZip |
+| Blur Faces & Text | Browser | UltraFace finds faces in a worker (big photos also searched in tiles); add boxes over number plates or text; blur, pixelate or black box | ONNX Runtime Web, Canvas |
 | Flatten PDF | Server `/api/flatten` | Burns form-field values and annotations into the page content so they can't be edited | PyMuPDF |
 
 ### Read and AI
@@ -186,6 +202,7 @@ A request to a server tool passes through these steps:
 | Tool | Runs | How it works | Main libraries |
 | :--- | :--- | :--- | :--- |
 | Compare PDFs | Browser | Extracts words from both files and runs a Myers diff for added/removed words side by side, plus a page-by-page pixel difference view | pdf.js, Canvas |
+| Diff Checker | Browser | Paste or open two texts; line-level Myers diff with changed words marked, side by side, with ignore capitals/spaces and only-changes options | JavaScript |
 | Summarize PDF | Browser | Uses Chrome's on-device Summarizer if already downloaded; otherwise an offline extractive summary that picks the key sentences | pdf.js, Chrome Summarizer API |
 | Translate PDF | Browser | Chrome's on-device Translator into 25 languages including Hindi and other Indian languages | pdf.js, Chrome Translator API |
 | Read PDF Aloud | Browser | Splits text into sentences (Latin, CJK, Devanagari and Urdu marks) and speaks them with the browser's voices; click a sentence to jump | pdf.js, Web Speech API |

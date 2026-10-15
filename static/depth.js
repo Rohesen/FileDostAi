@@ -24,6 +24,12 @@
     }, { passive: true });
   }
 
+  // The hero's floating pages stop moving once the hero is scrolled out of sight.
+  const hero = document.querySelector(".hero");
+  if (hero && "IntersectionObserver" in window) {
+    new IntersectionObserver(([e]) => document.documentElement.classList.toggle("hero-off", !e.isIntersecting)).observe(hero);
+  }
+
   // Tool cards: tilt toward the pointer with a moving highlight. Cards are re-created
   // whenever the grid is filtered, so listen on the grid instead of each card.
   const grid = document.getElementById("toolsGrid");

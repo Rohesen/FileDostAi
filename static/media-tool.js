@@ -497,6 +497,8 @@ const MediaTool = (() => {
   return {
     VIDEO_ACCEPT, AUDIO_ACCEPT, compressConfig, compressRun, compressInput, mp3Config, mp3Run,
     trimConfig, createTrimmer, trimRun, stopEngine, fmt, parseTime,
+    // shared with media-extra.js
+    withInput, exec, probe, readOut, engine, checkSize, cancelled, baseName, extOf, mb, isAudioFile, PHONE_NOTE,
   };
 })();
 

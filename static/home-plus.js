@@ -10,11 +10,11 @@ const HomePlus = (() => {
   const FIRST = {
     pdf: ["compress", "merge", "split", "pdf-to-docx", "pdf-to-jpg", "sign", "edit", "compress-to-size", "organize", "ocr", "protect", "page-numbers"],
     pdfs: ["merge", "compress", "compare", "compress-any", "zip-tools"],
-    image: ["img-to-pdf", "photo-resize", "image-convert", "compress-any", "exam-form-kit", "scan", "qr-code"],
-    images: ["img-to-pdf", "image-convert", "scan", "compress-any", "exam-form-kit", "zip-tools"],
-    heic: ["heic-to-jpg", "img-to-pdf", "photo-resize", "image-convert"],
+    image: ["img-to-pdf", "photo-resize", "image-convert", "compress-any", "exam-form-kit", "remove-bg", "image-to-text", "upscale-image", "jpg-to-word", "remove-exif", "blur-image", "watermark-image", "scan", "qr-code"],
+    images: ["img-to-pdf", "image-to-text", "jpg-to-word", "remove-exif", "watermark-image", "image-convert", "scan", "compress-any", "exam-form-kit", "zip-tools"],
+    heic: ["heic-to-jpg", "img-to-pdf", "photo-resize", "image-convert", "remove-bg"],
     word: ["word-to-pdf"], excel: ["excel-to-pdf"], slides: ["powerpoint-to-pdf"], text: ["markdown-to-pdf", "word-to-pdf"],
-    video: ["compress-video", "video-to-mp3", "trim-media"], audio: ["trim-media", "video-to-mp3"],
+    video: ["compress-video", "video-to-mp3", "trim-media", "reels-resizer", "video-to-gif", "media-speed", "volume-booster"], audio: ["trim-media", "video-to-mp3", "audio-joiner", "volume-booster", "media-speed"],
     other: ["zip-tools", "compress-any"],
   };
   const LAST = new Set(["recipes", "compress-any", "zip-tools"]);

@@ -12,6 +12,9 @@
   document.body.prepend(canvas);
   const g = canvas.getContext("2d");
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
+  // Phones, tablets and weak computers (fx-lite, set in index.html): the cards are drawn once and
+  // stay still, so scrolling never waits on the background.
+  const still = () => reduced.matches || document.documentElement.classList.contains("fx-lite");
   const KINDS = [
     { t: "PDF", c: "#ef4444" }, { t: "JPG", c: "#ec4899" }, { t: "PNG", c: "#a855f7" },
     { t: "DOC", c: "#3b82f6" }, { t: "XLS", c: "#10b981" }, { t: "PPT", c: "#f97316" },
@@ -25,7 +28,7 @@
     W = window.innerWidth; H = window.innerHeight;
     canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
     g.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const want = Math.round(Math.min(W < 700 ? 12 : 34, Math.max(10, (W * H) / 42000)));
+    const want = Math.round(Math.min(W < 700 ? (still() ? 9 : 12) : 34, Math.max(10, (W * H) / 42000)));
     while (items.length < want) items.push(spawn(true));
     items.length = want;
   }
@@ -123,13 +126,19 @@
 
   function start() {
     if (running) return;
-    if (reduced.matches) { running = true; frame(performance.now()); running = false; return; }
+    if (still()) { running = true; drawn = -1e9; frame(performance.now()); running = false; return; }
     running = true; last = 0;
     requestAnimationFrame(frame);
   }
   function stop() { running = false; }
 
-  window.addEventListener("resize", () => { resize(); if (!running) start(); }, { passive: true });
+  // Phones fire resize when the address bar slides in and out; only redraw when the width changes.
+  let lastW = 0;
+  window.addEventListener("resize", () => {
+    if (still() && window.innerWidth === lastW) return;
+    lastW = window.innerWidth;
+    resize(); if (!running) start();
+  }, { passive: true });
   window.addEventListener("pointermove", (e) => { pointer.x = e.clientX; pointer.y = e.clientY; }, { passive: true });
   document.addEventListener("pointerleave", () => { pointer.x = pointer.y = -9999; });
   document.addEventListener("visibilitychange", () => (document.hidden ? stop() : start()));
@@ -137,6 +146,7 @@
   const readTheme = () => { light = document.documentElement.dataset.theme === "light"; if (!running) start(); };
   document.addEventListener("themechange", readTheme);
   readTheme();
+  lastW = window.innerWidth;
   resize();
   start();
 })();

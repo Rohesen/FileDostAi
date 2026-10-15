@@ -1,0 +1,53 @@
+/* Background Remover (static/bg-remove.js). Uses the theme tokens from style.css. */
+
+.bgr { display: flex; flex-direction: column; gap: 14px; font-size: 13px; color: var(--text-main); }
+.bgr-wrap { display: grid; grid-template-columns: minmax(0, 1fr) 250px; gap: 18px; align-items: start; }
+.bgr-wrap[hidden] { display: none; }
+
+.bgr-stage {
+  position: relative; display: flex; align-items: center; justify-content: center; min-height: 220px;
+  border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); overflow: hidden;
+  /* checkerboard, so see-through parts are easy to spot */
+  background-color: #fff;
+  background-image: linear-gradient(45deg, #e3e5ea 25%, transparent 25%, transparent 75%, #e3e5ea 75%),
+    linear-gradient(45deg, #e3e5ea 25%, transparent 25%, transparent 75%, #e3e5ea 75%);
+  background-size: 18px 18px; background-position: 0 0, 9px 9px;
+}
+.bgr-stage canvas { display: block; max-width: 100%; max-height: 420px; }
+.bgr-stage .bgr-before { position: absolute; inset: 0; margin: auto; opacity: 0; transition: opacity .15s; pointer-events: none; }
+.bgr-stage.show-before .bgr-before { opacity: 1; }
+.bgr-busy {
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+  background: rgba(10, 12, 24, 0.62); color: #fff; font-weight: 600; text-align: center; padding: 16px;
+}
+.bgr-busy[hidden] { display: none; }
+.bgr-busy progress { width: min(260px, 80%); height: 8px; accent-color: var(--primary); }
+.bgr-spin { width: 28px; height: 28px; border-radius: 50%; border: 3px solid rgba(255, 255, 255, 0.3); border-top-color: #fff; animation: bgr-spin 0.9s linear infinite; }
+@keyframes bgr-spin { to { transform: rotate(360deg); } }
+
+.bgr-side { display: flex; flex-direction: column; gap: 12px; }
+.bgr-bgs { display: flex; flex-wrap: wrap; gap: 6px; }
+.bgr-bg { position: relative; cursor: pointer; }
+.bgr-bg input { position: absolute; opacity: 0; pointer-events: none; }
+.bgr-bg span {
+  display: inline-block; padding: 7px 12px; border-radius: 999px; font-weight: 600; font-size: 13px;
+  border: 1px solid var(--border-subtle); background: rgba(var(--ink), 0.04); color: var(--text-muted);
+}
+.bgr-bg input:checked + span { border-color: var(--primary); background: var(--primary-light); color: var(--text-strong); }
+.bgr-bg input:focus-visible + span { outline: 2px solid var(--primary); outline-offset: 2px; }
+.bgr-colours { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.bgr-colours[hidden] { display: none; }
+.bgr-sw {
+  width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--border-subtle); cursor: pointer; padding: 0;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.5);
+}
+.bgr-sw[aria-pressed="true"] { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary); }
+.bgr-pick { width: 44px; height: 30px; padding: 2px; border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); background: transparent; cursor: pointer; }
+.bgr-side .form-select { width: 100%; }
+.bgr-info { font-size: 13px; color: var(--text-muted); }
+.bgr-info.bad { color: #f87171; }
+
+@media (max-width: 640px) {
+  .bgr-wrap { grid-template-columns: 1fr; }
+  .bgr-stage canvas { max-height: 320px; }
+}

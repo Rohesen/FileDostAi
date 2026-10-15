@@ -1155,7 +1155,8 @@ a.tool-card:focus-visible, .page-card:focus-visible, button:focus-visible {
 .sign-tab.active {
   background: var(--primary-light);
   border-color: var(--primary);
-  color: #fff;
+  color: var(--text-strong);
+  font-weight: 600;
 }
 
 .sig-pad {

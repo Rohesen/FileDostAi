@@ -142,7 +142,7 @@ const Site = (() => {
     combine: "merge", join: "merge", unite: "merge", jpeg: "jpg", photo: "image", photos: "image",
     picture: "image", pictures: "image", pics: "image", pic: "image", images: "image", imgs: "image", img: "image",
     pdfs: "pdf", shrink: "compress", reduce: "compress", smaller: "compress", minimize: "compress",
-    divide: "split", separate: "split", turn: "rotate", sign: "sign", signature: "sign", erase: "remove",
+    divide: "split", separate: "split", turn: "rotate", sign: "sign", signature: "sign", erase: "remove", bg: "background", backdrop: "background",
   };
   const STOP = new Set(["to", "into", "a", "an", "the", "my", "and", "of", "in", "file", "files", "make", "how", "i", "can", "with", "for", "multiple", "many", "all"]);
   const norm = (w) => SYNONYMS[w] || w;

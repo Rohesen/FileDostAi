@@ -2,7 +2,7 @@
 // Pages and static files: network first, falling back to the cached copy when offline,
 // so an update never mixes old and new files.
 // The API is never cached, and no user file ever passes through here.
-const VERSION = "filedost-v24";
+const VERSION = "filedost-v27";
 const CORE = [
   "/",
   "/static/style.css",
@@ -31,6 +31,20 @@ const CORE = [
   "/static/pdf-extras.js",
   "/static/form-fill.js",
   "/static/qr-tool.js",
+  "/static/bg-remove.js",
+  "/static/bg-remove-worker.js",
+  "/static/bg-remove.css",
+  "/static/image-text.js",
+  "/static/upscale-tool.js",
+  "/static/upscale-worker.js",
+  "/static/signature-maker.js",
+  "/static/new-tools.css",
+  "/static/exif-tool.js",
+  "/static/blur-tool.js",
+  "/static/face-worker.js",
+  "/static/watermark-image.js",
+  "/static/text-diff.js",
+  "/static/media-extra.js",
   "/static/zip-tool.js",
   "/static/media-tool.js",
   "/static/chains.js",
@@ -54,6 +68,7 @@ const CORE = [
   "/static/home-plus.css",
   "/static/redesign.css",
   "/static/holo.css",
+  "/static/lite.css",
   "/static/icons.js",
   "/static/icons.css",
   "/static/fonts.css",
@@ -87,6 +102,8 @@ self.addEventListener("fetch", (event) => {
   if (req.method !== "GET" || url.origin !== location.origin || url.pathname.startsWith("/api/")) return;
   // ffmpeg's 31 MB engine is loaded only by the video tools; don't keep a copy in the offline cache.
   if (url.pathname.includes("/vendor/ffmpeg/")) return;
+  // Same for the AI runtime and models (background remover, upscaler).
+  if (url.pathname.includes("/vendor/bg-remove/") || url.pathname.includes("/vendor/upscale/") || url.pathname.includes("/vendor/faces/")) return;
 
   if (req.mode === "navigate") {
     event.respondWith(

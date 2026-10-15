@@ -1,0 +1,37 @@
+/* Lite mode for phones, tablets and weak computers (the fx-lite class is set in index.html
+   before the first paint). The look stays the same, but it is drawn once and kept still:
+   - no live blur behind glass panels, which made the phone re-blur every card on each frame;
+   - no animation on the card holograms, background glow or headline;
+   - cards far off screen are not drawn until they come near, so the phone keeps few layers. */
+
+.fx-lite {
+  --glass: rgba(24, 26, 38, 0.86);
+}
+:root.fx-lite[data-theme="light"] { --glass: rgba(255, 255, 255, 0.9); }
+:root.fx-lite[data-theme="light"] { --glass-strong: rgba(255, 255, 255, 0.94); }
+:root.fx-lite:not([data-theme="light"]) { --glass-strong: rgba(18, 20, 30, 0.92); }
+
+.fx-lite :is(.nav-container, .tool-card, .hp-ask, .hp-chip, .category-tabs, .hero-badge, .hp-drop.has-files,
+  .faq-item, .tile-stage .card-badge, .ts-cap, .modal-backdrop, .navbar) {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Background glow: still, and softer blur (it is drawn once). */
+.fx-lite .aurora i, .fx-lite .bg-grid, .fx-lite .gradient-text, .fx-lite .hero-title .gradient-text { animation: none !important; }
+.fx-lite .aurora { filter: blur(40px); }
+
+/* Card holograms: a still picture of the same scene, with flat (2D) rings so no extra layers. */
+.fx-lite .holo > span { animation: none !important; }
+.fx-lite .holo { perspective: none; }
+.fx-lite .h-scan, .fx-lite .h-dot.d3 { display: none; }
+.fx-lite .h-ring { transform: scaleY(0.24); }
+.fx-lite .h-ico { filter: drop-shadow(0 0 6px var(--c1)); }
+.fx-lite .tool-card:hover .h-ico { filter: drop-shadow(0 0 6px var(--c1)); }
+
+/* Only draw cards that are on screen or close to it. */
+.fx-lite .tool-card { content-visibility: auto; contain-intrinsic-size: auto 150px; transition: none; }
+@media (min-width: 641px) { .fx-lite .tool-card { contain-intrinsic-size: auto 300px; } }
+
+/* The hero's floating pages hold still once scrolled past (depth.js sets hero-off). */
+.hero-off :is(.paper, .scene-chip, .scene-orb) { animation-play-state: paused !important; }
