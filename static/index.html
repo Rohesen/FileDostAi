@@ -125,6 +125,7 @@
     <p class="hero-subtitle">
       PDFs, photos and Office files: convert, compress, sign and resize to the exact KB, right in your browser. Most tools never upload your file.
     </p>
+    <div class="hp-go" id="hpGo"></div>
   </section>
 
   <!-- Category Filter Bar -->
@@ -140,10 +141,8 @@
       <button class="tab-btn" data-cat="ai">Read &amp; Compare</button>
     </div>
 
-    <!-- Tools Grid -->
-    <div class="tools-grid" id="toolsGrid">
-      <!-- Injected by JavaScript -->
-    </div>
+    <!-- Tools Grid (cards are added by app.js; keep the div empty so :empty reserves its space) -->
+    <div class="tools-grid" id="toolsGrid"></div>
   </div>
 
   <!-- FAQ (filled in by site.js from the tool list) -->
@@ -396,48 +395,48 @@
   </footer>
 
   <script type="module" src="/static/pdfjs-loader.mjs?v=27"></script>
-  <script src="/static/vendor/pdf-lib.min.js?v=27"></script>
-  <script src="/static/vendor/jszip.min.js?v=27"></script>
-  <script src="/static/icons.js?v=27"></script>
-  <script src="/static/client-tools.js?v=27"></script>
-  <script src="/static/worker-client.js?v=27"></script>
-  <script src="/static/render-tools.js?v=27"></script>
-  <script src="/static/page-board.js?v=27"></script>
-  <script src="/static/sign-tool.js?v=27"></script>
-  <script src="/static/edit-tool.js?v=27"></script>
-  <script src="/static/scan-tool.js?v=27"></script>
-  <script src="/static/crop-tool.js?v=27"></script>
-  <script src="/static/compare-tool.js?v=27"></script>
-  <script src="/static/read-tools.js?v=27"></script>
-  <script src="/static/privacy-view.js?v=27"></script>
-  <script src="/static/image-tools.js?v=27"></script>
-  <script src="/static/photo-tool.js?v=27"></script>
-  <script src="/static/tile-art.js?v=27"></script>
-  <script src="/static/image-order.js?v=27"></script>
-  <script src="/static/tools.js?v=27"></script>
-  <script src="/static/form-kit.js?v=27"></script>
-  <script src="/static/pdf-extras.js?v=27"></script>
-  <script src="/static/form-fill.js?v=27"></script>
-  <script src="/static/qr-tool.js?v=27"></script>
-  <script src="/static/bg-remove.js?v=27"></script>
-  <script src="/static/image-text.js?v=27"></script>
-  <script src="/static/upscale-tool.js?v=27"></script>
-  <script src="/static/signature-maker.js?v=27"></script>
-  <script src="/static/exif-tool.js?v=27"></script>
-  <script src="/static/blur-tool.js?v=27"></script>
-  <script src="/static/watermark-image.js?v=27"></script>
-  <script src="/static/text-diff.js?v=27"></script>
-  <script src="/static/zip-tool.js?v=27"></script>
-  <script src="/static/media-tool.js?v=27"></script>
-  <script src="/static/media-extra.js?v=27"></script>
-  <script src="/static/chains.js?v=27"></script>
-  <script src="/static/app.js?v=27"></script>
-  <script src="/static/depth.js?v=27"></script>
-  <script src="/static/bg-fx.js?v=27"></script>
-  <script src="/static/feedback.js?v=27"></script>
-  <script src="/static/support.js?v=27"></script>
-  <script src="/static/theme.js?v=27"></script>
-  <script src="/static/site.js?v=27"></script>
-  <script src="/static/home-plus.js?v=27"></script>
+  <script defer src="/static/vendor/pdf-lib.min.js?v=27"></script>
+  <script defer src="/static/vendor/jszip.min.js?v=27"></script>
+  <script defer src="/static/icons.js?v=27"></script>
+  <script defer src="/static/client-tools.js?v=27"></script>
+  <script defer src="/static/worker-client.js?v=27"></script>
+  <script defer src="/static/render-tools.js?v=27"></script>
+  <script defer src="/static/page-board.js?v=27"></script>
+  <script defer src="/static/sign-tool.js?v=27"></script>
+  <script defer src="/static/edit-tool.js?v=27"></script>
+  <script defer src="/static/scan-tool.js?v=27"></script>
+  <script defer src="/static/crop-tool.js?v=27"></script>
+  <script defer src="/static/compare-tool.js?v=27"></script>
+  <script defer src="/static/read-tools.js?v=27"></script>
+  <script defer src="/static/privacy-view.js?v=27"></script>
+  <script defer src="/static/image-tools.js?v=27"></script>
+  <script defer src="/static/photo-tool.js?v=27"></script>
+  <script defer src="/static/tile-art.js?v=27"></script>
+  <script defer src="/static/image-order.js?v=27"></script>
+  <script defer src="/static/tools.js?v=27"></script>
+  <script defer src="/static/form-kit.js?v=27"></script>
+  <script defer src="/static/pdf-extras.js?v=27"></script>
+  <script defer src="/static/form-fill.js?v=27"></script>
+  <script defer src="/static/qr-tool.js?v=27"></script>
+  <script defer src="/static/bg-remove.js?v=27"></script>
+  <script defer src="/static/image-text.js?v=27"></script>
+  <script defer src="/static/upscale-tool.js?v=27"></script>
+  <script defer src="/static/signature-maker.js?v=27"></script>
+  <script defer src="/static/exif-tool.js?v=27"></script>
+  <script defer src="/static/blur-tool.js?v=27"></script>
+  <script defer src="/static/watermark-image.js?v=27"></script>
+  <script defer src="/static/text-diff.js?v=27"></script>
+  <script defer src="/static/zip-tool.js?v=27"></script>
+  <script defer src="/static/media-tool.js?v=27"></script>
+  <script defer src="/static/media-extra.js?v=27"></script>
+  <script defer src="/static/chains.js?v=27"></script>
+  <script defer src="/static/app.js?v=27"></script>
+  <script defer src="/static/depth.js?v=27"></script>
+  <script defer src="/static/bg-fx.js?v=27"></script>
+  <script defer src="/static/feedback.js?v=27"></script>
+  <script defer src="/static/support.js?v=27"></script>
+  <script defer src="/static/theme.js?v=27"></script>
+  <script defer src="/static/site.js?v=27"></script>
+  <script defer src="/static/home-plus.js?v=27"></script>
 </body>
 </html>

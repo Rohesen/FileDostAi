@@ -369,7 +369,9 @@ const Site = (() => {
   function route(slug) {
     if (slug === "faq") {
       closeInfo(false);
-      requestAnimationFrame(() => document.getElementById("faq").scrollIntoView());
+      // Two frames later: the tool cards above the FAQ have been laid out by then, so the FAQ
+      // doesn't count as moving (layout shift) when the page jumps to it.
+      requestAnimationFrame(() => requestAnimationFrame(() => document.getElementById("faq").scrollIntoView()));
       return true;
     }
     if (PAGES[slug]) return openInfo(slug);

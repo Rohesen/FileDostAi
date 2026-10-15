@@ -225,3 +225,7 @@
 .io-move .btn-xs:disabled { opacity: .3; cursor: default; }
 .file-summary .file-clear { margin-left: .5rem; }
 .search-note { padding: 8px 12px 2px; font-size: 12px; color: var(--text-muted); }
+
+/* The tool cards are drawn by JavaScript. Until then the grid keeps a screen-and-a-half of room,
+   so the FAQ, donate section and footer don't flash into view and then jump down (layout shift). */
+.tools-grid:empty { min-height: 150vh; }

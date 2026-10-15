@@ -223,3 +223,12 @@
 .hp-veil-ico .ico { width: 52px; height: 52px; stroke-width: 1.5; }
 .hp-chip .ti { box-shadow: 0 3px 8px -3px var(--ti-a); }
 .faq-group h3 .ci { margin-right: 4px; }
+
+/* Room for the "What do you want to do?" box before home-plus.js fills it (no layout shift).
+   Heights match the filled box, whose popular chips wrap onto more lines on narrow screens. */
+.hp-go:empty { min-height: 150px; }
+@media (max-width: 999px) { .hp-go:empty { min-height: 192px; } }
+@media (max-width: 659px) { .hp-go:empty { min-height: 217px; } }
+@media (max-width: 619px) { .hp-go:empty { min-height: 266px; } }
+@media (max-width: 539px) { .hp-go:empty { min-height: 308px; } }
+@media (max-width: 340px) { .hp-go:empty { min-height: 350px; } }

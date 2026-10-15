@@ -76,3 +76,8 @@
 .tile3d .t3-icon { right: auto; left: -16px; top: -2px; }
 .t3-icon .ti { width: 28px; height: 28px; border-radius: 8px; }
 .donate-ico { display: inline-flex; font-style: normal; }
+
+/* Icon placeholders take their final size before icons.js fills them, so nothing moves on load. */
+[data-ico]:empty { display: inline-block; width: 1.15em; height: 1.15em; vertical-align: -0.2em; }
+.icon-btn [data-ico]:empty { width: 19px; height: 19px; }
+.btn-donate [data-ico]:empty { width: 16px; height: 16px; }

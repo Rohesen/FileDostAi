@@ -68,9 +68,10 @@ const HomePlus = (() => {
     const hero = document.querySelector(".hero");
     const sub = hero && hero.querySelector(".hero-subtitle");
     if (!sub) return;
-    const box = document.createElement("div");
-    box.className = "hp-go";
-    box.id = "hpGo";
+    // index.html already has an empty #hpGo holding the box's space (no layout shift on load).
+    let box = document.getElementById("hpGo");
+    const placed = !!box;
+    if (!box) { box = document.createElement("div"); box.className = "hp-go"; box.id = "hpGo"; }
     box.innerHTML = `
       <div class="hp-ask">
         <span class="hp-ask-ico" aria-hidden="true">${Icons.ui("search")}</span>
@@ -87,7 +88,7 @@ const HomePlus = (() => {
         <span class="hp-label">Popular:</span>
         ${POPULAR.map(byId).filter(Boolean).map((t) => chip(t, "hp-chip-sm")).join("")}
       </div>`;
-    sub.after(box);
+    if (!placed) sub.after(box);
 
     const ask = box.querySelector("#hpAsk");
     const popular = box.querySelector("#hpPopular");
