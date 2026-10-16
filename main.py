@@ -250,6 +250,12 @@ async def compress_pdf(
     return _pdf(await _run("Compression", PDFEngine.compress, await file.read(), level), "compressed_doc.pdf")
 
 
+@app.post("/api/compress-to-size")
+async def compress_pdf_to_size(file: UploadFile = File(...), target: int = Form(..., ge=1024)):
+    data, level, fits = await _run("Compression", PDFEngine.compress_to_size, await file.read(), target)
+    return _pdf(data, "compressed_doc.pdf", **{"X-Compress-Level": level, "X-Fits": "1" if fits else "0"})
+
+
 @app.post("/api/watermark")
 async def watermark_pdf(
     file: UploadFile = File(...),

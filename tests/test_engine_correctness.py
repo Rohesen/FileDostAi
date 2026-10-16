@@ -230,6 +230,18 @@ def test_compress_never_grows_file():
     assert len(PDFEngine.compress(src, "extreme")) <= len(src)
 
 
+def test_compress_to_size_picks_gentlest_level_that_fits():
+    src = photo_pdf()
+    low, med, ext = (len(PDFEngine.compress(src, lv)) for lv in ("low", "medium", "extreme"))
+    out, level, fits = PDFEngine.compress_to_size(src, med + 10)
+    assert (level, fits) == ("medium", True) and len(out) <= med + 10
+    out, level, fits = PDFEngine.compress_to_size(src, low + 10)
+    assert (level, fits) == ("low", True)
+    out, level, fits = PDFEngine.compress_to_size(src, ext // 2)
+    assert (level, fits) == ("extreme", False) and len(out) == ext
+    assert "Caption text must survive" in all_text(out)
+
+
 def test_compress_rejects_unknown_level():
     with pytest.raises(ValueError):
         PDFEngine.compress(text_pdf(1), "ultra")

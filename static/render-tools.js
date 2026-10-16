@@ -47,6 +47,13 @@ const PdfRender = (() => {
   }
 
   function canvasToBytes(canvas, type, quality) {
+    // JPEG goes through toDataURL: Chrome runs toBlob in idle time, so on a busy page (the
+    // progress bar animates) each encode can wait seconds, while toDataURL takes ~20 ms.
+    if (type === "image/jpeg") {
+      const url = canvas.toDataURL(type, quality);
+      if (!url.startsWith("data:image/jpeg")) return Promise.reject(new Error("Couldn't encode the image."));
+      return Promise.resolve(Uint8Array.from(atob(url.slice(url.indexOf(",") + 1)), (c) => c.charCodeAt(0)));
+    }
     return new Promise((resolve, reject) => canvas.toBlob(async (blob) => {
       if (!blob) return reject(new Error("Couldn't encode the image."));
       resolve(new Uint8Array(await blob.arrayBuffer()));

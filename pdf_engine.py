@@ -1,5 +1,5 @@
 """
-UltraPDF Engine - High-Performance In-Memory PDF Processing Library.
+FileDost AI engine - High-Performance In-Memory PDF Processing Library.
 Provides robust operations using PyPDF, PyMuPDF, ReportLab, Pillow, and python-docx.
 OCR uses OCRmyPDF + Tesseract when they are installed.
 """
@@ -255,6 +255,25 @@ class PDFEngine:
                              deflate_fonts=True, use_objstms=1, clean=True)
         doc.close()
         return result if len(result) < len(pdf_bytes) else pdf_bytes
+
+    @staticmethod
+    def compress_to_size(pdf_bytes: bytes, target: int):
+        """
+        Gentlest compression level that gets the file under target bytes, from one upload.
+        Tries lossless first, then extreme: if even extreme doesn't fit nothing will, so medium is
+        only tried when extreme fits (it keeps images sharper). Returns (bytes, level, fits); when
+        nothing fits, the smallest file.
+        """
+        low = PDFEngine.compress(pdf_bytes, "low")
+        if len(low) <= target:
+            return low, "low", True
+        extreme = PDFEngine.compress(pdf_bytes, "extreme")
+        if len(extreme) > target:
+            return (extreme, "extreme", False) if len(extreme) < len(low) else (low, "low", False)
+        medium = PDFEngine.compress(pdf_bytes, "medium")
+        if len(medium) <= target:
+            return medium, "medium", True
+        return extreme, "extreme", True
 
     @staticmethod
     def watermark(pdf_bytes: bytes, text: str, opacity: float = 0.3, angle: float = 45.0, font_size: int = 40) -> bytes:

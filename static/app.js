@@ -492,7 +492,7 @@ async function executeCurrentTool({ keep = false } = {}) {
  */
 function serverRequest(url, formData, ctx, { expectMs = 3000, uploadShare = 0.25, label = "Processing on the server…", quiet = false } = {}) {
   // quiet: called from inside a browser tool that runs its own progress steps.
-  const P = quiet ? { set: () => {}, step: () => {}, setLabel: (t) => Progress.set(null, t) } : Progress;
+  const P = quiet ? { set: (f, t) => Progress.set(null, t), step: () => {}, setLabel: (t) => Progress.set(null, t) } : Progress;
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open("POST", url);

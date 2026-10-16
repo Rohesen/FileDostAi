@@ -43,6 +43,13 @@ const PdfExtras = (() => {
   }
 
   function canvasBytes(canvas, type, quality) {
+    // JPEG goes through toDataURL: Chrome runs toBlob in idle time, so on a busy page (the
+    // progress bar animates) each encode can wait seconds, while toDataURL takes ~20 ms.
+    if (type === "image/jpeg") {
+      const url = canvas.toDataURL(type, quality);
+      if (!url.startsWith("data:image/jpeg")) return Promise.reject(new UserError("This page is too large for your browser to turn into a picture."));
+      return Promise.resolve(Uint8Array.from(atob(url.slice(url.indexOf(",") + 1)), (c) => c.charCodeAt(0)));
+    }
     return new Promise((resolve, reject) => canvas.toBlob(async (blob) => {
       if (!blob) return reject(new UserError("This page is too large for your browser to turn into a picture."));
       resolve(new Uint8Array(await blob.arrayBuffer()));
@@ -179,15 +186,14 @@ const PdfExtras = (() => {
   }
 
   /**
-   * Turns every page into a JPEG and searches the quality ladder for the best step that fits.
-   * A few sample pages estimate the file size at every step, so we can jump straight to the
-   * likely step; full passes then confirm it, moving down the ladder until the file fits or the
-   * lowest step is reached. Returns { bytes, fits, dpi, q } (the smallest file when nothing fits).
+   * Opens the PDF and estimates the file size at every step of the quality ladder from a few
+   * sample pages. Each sample page is rendered once at the top dpi and scaled down for the lower
+   * ones, since rendering (not JPEG encoding) is the slow part on big scanned files.
+   * Returns { pdf, n, sizes, est }. onStep(done, total) reports progress when given.
    */
-  async function rasterFit(ctx, bytes, target, from, to) {
+  async function measureRaster(ctx, bytes, onStep) {
     const pdf = await PdfRender.open(bytes);
     const n = pdf.numPages;
-    const canvas = document.createElement("canvas");
     const sizes = [];
     for (let i = 1; i <= n; i++) {
       const pg = await pdf.getPage(i);
@@ -196,58 +202,93 @@ const PdfExtras = (() => {
     }
     const overhead = 2048 + n * 420;
     const px = (p, dpi) => { const s = scaleFor(p, dpi); return p.w * p.h * s * s; };
-
-    ctx.progress(from, "Measuring how small the pages can get…");
     const sample = [...new Set([0, Math.floor(n / 3), Math.floor((2 * n) / 3), n - 1])];
+    const dpis = [...new Set(LADDER.map((s) => s[0]))].sort((a, b) => b - a);
+    const sum = {};
+    const samplePx = Object.fromEntries(dpis.map((d) => [d, 0]));
+    const big = document.createElement("canvas");
+    const small = document.createElement("canvas");
+    for (let k = 0; k < sample.length; k++) {
+      const i = sample[k];
+      checkCancel(ctx);
+      const pg = await pdf.getPage(i + 1);
+      await PdfRender.renderPage(pg, big, { scale: scaleFor(sizes[i], dpis[0]) });
+      pg.cleanup();
+      for (const dpi of dpis) {
+        let c = big;
+        const s = scaleFor(sizes[i], dpi);
+        const w = Math.max(1, Math.round(sizes[i].w * s)), h = Math.max(1, Math.round(sizes[i].h * s));
+        if (w < big.width) {
+          small.width = w; small.height = h;
+          const g = small.getContext("2d");
+          g.imageSmoothingQuality = "high";
+          g.drawImage(big, 0, 0, w, h);
+          c = small;
+        }
+        samplePx[dpi] += px(sizes[i], dpi);
+        for (const [d, q] of LADDER) {
+          if (d !== dpi) continue;
+          checkCancel(ctx);
+          sum[`${d}/${q}`] = (sum[`${d}/${q}`] || 0) + (await canvasBytes(c, "image/jpeg", q)).length;
+        }
+      }
+      if (onStep) onStep(k + 1, sample.length);
+    }
+    big.width = big.height = small.width = small.height = 0;
     const est = {};
-    const dpis = [...new Set(LADDER.map((s) => s[0]))];
-    for (let d = 0; d < dpis.length; d++) {
-      const dpi = dpis[d];
-      const qs = LADDER.filter((s) => s[0] === dpi).map((s) => s[1]);
-      let samplePx = 0;
-      const sum = Object.fromEntries(qs.map((q) => [q, 0]));
-      for (const i of sample) {
-        checkCancel(ctx);
-        const pg = await pdf.getPage(i + 1);
-        const jp = await renderJpegs(pg, sizes[i], dpi, qs, canvas);
-        pg.cleanup();
-        samplePx += px(sizes[i], dpi);
-        qs.forEach((q) => { sum[q] += jp[q].length; });
-      }
-      const totalPx = sizes.reduce((a, p) => a + px(p, dpi), 0);
-      qs.forEach((q) => { est[`${dpi}/${q}`] = (sum[q] * totalPx) / samplePx + overhead; });
-      ctx.progress(from + (to - from) * 0.15 * ((d + 1) / dpis.length));
+    for (const [d, q] of LADDER) {
+      const totalPx = sizes.reduce((a, p) => a + px(p, d), 0);
+      est[`${d}/${q}`] = (sum[`${d}/${q}`] * totalPx) / samplePx[d] + overhead;
     }
+    return { pdf, n, sizes, est };
+  }
 
-    let step = LADDER.findIndex(([d, q]) => est[`${d}/${q}`] <= target * 0.93);
-    if (step < 0) step = LADDER.findIndex(([d]) => d === LADDER[LADDER.length - 1][0]);
-    let best = null;
-    for (let pass = 0; pass < 4 && step >= 0 && step < LADDER.length; pass++) {
-      const dpi = LADDER[step][0];
-      // One render pass per dpi; encode the chosen quality and up to 3 lower ones at the same dpi.
-      const qs = LADDER.slice(step).filter((s) => s[0] === dpi).map((s) => s[1]).slice(0, 4);
-      const pages = [];
-      for (let i = 0; i < n; i++) {
-        checkCancel(ctx);
-        ctx.progress(from + (to - from) * (0.15 + 0.85 * ((pass + i / n) / 4)), `Saving pages as pictures (${dpi} dpi): page ${i + 1} of ${n}`);
-        const pg = await pdf.getPage(i + 1);
-        const jp = await renderJpegs(pg, sizes[i], dpi, qs, canvas);
-        pg.cleanup();
-        pages.push({ w: sizes[i].w, h: sizes[i].h, jp });
+  /**
+   * Turns every page into a JPEG and searches the quality ladder for the best step that fits.
+   * The estimates from measureRaster let us jump straight to the likely step; full passes then
+   * confirm it, moving down the ladder until the file fits or the lowest step is reached.
+   * measured: a measureRaster() promise already started (it runs while the server works).
+   * Returns { bytes, fits, dpi, q } (the smallest file when nothing fits).
+   */
+  async function rasterFit(ctx, bytes, target, from, to, measured) {
+    ctx.progress(from, "Checking a few sample pages to pick the right picture quality…");
+    const { pdf, n, sizes, est } = await (measured || measureRaster(ctx, bytes, (k, t) =>
+      ctx.progress(from + (to - from) * 0.15 * (k / t), `Checking sample page ${k} of ${t} to pick the right picture quality…`)));
+    const canvas = document.createElement("canvas");
+    try {
+      let step = LADDER.findIndex(([d, q]) => est[`${d}/${q}`] <= target * 0.93);
+      if (step < 0) step = LADDER.findIndex(([d]) => d === LADDER[LADDER.length - 1][0]);
+      let best = null;
+      for (let pass = 0; pass < 4 && step >= 0 && step < LADDER.length; pass++) {
+        const dpi = LADDER[step][0];
+        // One render pass per dpi; encode the chosen quality and up to 3 lower ones at the same dpi.
+        const qs = LADDER.slice(step).filter((s) => s[0] === dpi).map((s) => s[1]).slice(0, 4);
+        const pages = [];
+        const again = pass ? ", trying a bit smaller" : "";
+        for (let i = 0; i < n; i++) {
+          checkCancel(ctx);
+          ctx.progress(from + (to - from) * (0.15 + 0.85 * ((pass + i / n) / 4)), `Saving page ${i + 1} of ${n} as a picture (${dpi} dpi${again})…`);
+          const pg = await pdf.getPage(i + 1);
+          const jp = await renderJpegs(pg, sizes[i], dpi, qs, canvas);
+          pg.cleanup();
+          pages.push({ w: sizes[i].w, h: sizes[i].h, jp });
+        }
+        for (const q of qs) {
+          const out = await buildImagePdf(pages.map((p) => ({ w: p.w, h: p.h, jpg: p.jp[q] })));
+          if (!best || out.length < best.bytes.length) best = { bytes: out, dpi, q, fits: out.length <= target };
+          if (out.length <= target) return best;
+        }
+        // Jump to a lower dpi, corrected by how far the estimate was off.
+        const off = Math.max(1, best.bytes.length / Math.max(1, est[`${dpi}/${qs[qs.length - 1]}`]));
+        let next = LADDER.findIndex(([d, q], k) => k > step && d < dpi && est[`${d}/${q}`] * off <= target * 0.95);
+        if (next < 0) next = LADDER.findIndex(([d], k) => k > step && d < dpi && d === LADDER[LADDER.length - 1][0]);
+        step = next;
       }
-      for (const q of qs) {
-        const out = await buildImagePdf(pages.map((p) => ({ w: p.w, h: p.h, jpg: p.jp[q] })));
-        if (!best || out.length < best.bytes.length) best = { bytes: out, dpi, q, fits: out.length <= target };
-        if (out.length <= target) { await pdf.destroy(); return best; }
-      }
-      // Jump to a lower dpi, corrected by how far the estimate was off.
-      const off = Math.max(1, best.bytes.length / Math.max(1, est[`${dpi}/${qs[qs.length - 1]}`]));
-      let next = LADDER.findIndex(([d, q], k) => k > step && d < dpi && est[`${d}/${q}`] * off <= target * 0.95);
-      if (next < 0) next = LADDER.findIndex(([d], k) => k > step && d < dpi && d === LADDER[LADDER.length - 1][0]);
-      step = next;
+      return best;
+    } finally {
+      canvas.width = canvas.height = 0;
+      await pdf.destroy();
     }
-    await pdf.destroy();
-    return best;
   }
 
   async function compressToSize(ctx) {
@@ -266,37 +307,46 @@ const PdfExtras = (() => {
         `<strong>Already small enough:</strong> ${kb(original.length)} (target ${kb(target)}). Nothing needed changing.`);
     }
 
-    // Step 1: the server's compressor, gentlest first. Text and drawings stay sharp.
+    // Step 1: the server's compressor, which keeps text sharp. One upload; the server tries its
+    // levels gentlest first. When pictures are allowed and the target is far below the file size,
+    // the sample pages are measured in the browser meanwhile, so the fallback can start at once.
     let best = { bytes: original, how: "unchanged" };
     let serverFailed = "";
-    const levels = [["low", "lossless clean-up"], ["medium", "images at 150 dpi"], ["extreme", "images at 72 dpi"]];
-    for (let i = 0; i < levels.length; i++) {
-      const [level, label] = levels[i];
-      checkCancel(ctx);
-      ctx.progress(0.04 + i * 0.12, `Trying ${label}…`);
-      let out;
-      try {
-        out = await serverCompress(ctx, level, label);
-      } catch (e) {
-        if (e && e.cancelled) throw e;
-        serverFailed = e.message || "the server couldn't be reached";
-        break;
+    const allowRaster = ctx.checked("pxAllowRaster");
+    let measured = null;
+    if (allowRaster && target < original.length / 4) {
+      measured = measureRaster(ctx, original);
+      measured.catch(() => {});
+    }
+    const dropMeasure = () => measured && measured.then((m) => m.pdf.destroy(), () => {});
+    const labels = { low: "lossless clean-up", medium: "images at 150 dpi", extreme: "images at 72 dpi" };
+    checkCancel(ctx);
+    ctx.progress(0.04, "Compressing on the server (text stays sharp)…");
+    try {
+      const fd = new FormData();
+      fd.append("file", ctx.files[0]);
+      fd.append("target", String(target));
+      const r = await serverRequest("/api/compress-to-size", fd, ctx, { quiet: true, label: "Compressing on the server (text stays sharp)…" });
+      const label = labels[r.header("X-Compress-Level")] || "normal compression";
+      if (r.bytes.length < best.bytes.length) best = { bytes: r.bytes, how: `normal compression, ${label}` };
+      if (r.header("X-Fits") === "1" && r.bytes.length <= target) {
+        dropMeasure();
+        return done(r.bytes, `Done! ${kb(original.length)} → ${kb(r.bytes.length)}, under your ${kb(target)} limit. Text is still sharp and selectable.`,
+          `<strong>Fits: ${kb(r.bytes.length)}</strong> (target ${kb(target)}, was ${kb(original.length)}).<br>Compressed with ${label}; text is still sharp and selectable.`);
       }
-      if (out.length < best.bytes.length) best = { bytes: out, how: `normal compression, ${label}` };
-      if (out.length <= target) {
-        return done(out, `Done! ${kb(original.length)} → ${kb(out.length)}, under your ${kb(target)} limit. Text is still sharp and selectable.`,
-          `<strong>Fits: ${kb(out.length)}</strong> (target ${kb(target)}, was ${kb(original.length)}).<br>Compressed with ${label}; text is still sharp and selectable.`);
-      }
+    } catch (e) {
+      if (e && e.cancelled) { dropMeasure(); throw e; }
+      serverFailed = e.message || "the server couldn't be reached";
     }
 
-    if (!ctx.checked("pxAllowRaster")) {
+    if (!allowRaster) {
       return done(best.bytes,
         `Couldn't get under ${kb(target)} without turning pages into pictures. The smallest was ${kb(best.bytes.length)}; downloaded that.`,
         `<strong>Not under ${kb(target)}.</strong> Normal compression got it to ${kb(best.bytes.length)} (from ${kb(original.length)}), and that's the file you downloaded.<br>Tick "turn pages into pictures" to go smaller, or remove some pages first.`, "warn");
     }
 
     // Step 2: pages as pictures, in the browser.
-    const raster = await rasterFit(ctx, original, target, 0.4, 0.97);
+    const raster = await rasterFit(ctx, original, target, 0.4, 0.97, measured);
     const note = serverFailed ? `<br><span class="px-dim">The server compressor wasn't available (${esc(serverFailed)}), so this was done on your device.</span>` : "";
     if (raster && raster.fits) {
       return done(raster.bytes,
