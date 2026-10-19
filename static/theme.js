@@ -1,9 +1,8 @@
-// Light/dark theme: follows the device setting until the visitor picks one, then remembers it.
+// Light/dark theme: dark (night look) by default on every device; once the visitor picks one, it is remembered.
 // (The first lines run in <head> as well, so the page never flashes the wrong theme.)
 const Theme = (() => {
   const KEY = "filedost-theme";
   const OLD_KEYS = ["mypdfdost-theme", "ultrapdf-theme"]; // earlier names; still read so nobody loses their choice
-  const media = window.matchMedia("(prefers-color-scheme: light)");
   const saved = () => { try { return localStorage.getItem(KEY) || OLD_KEYS.map((k) => localStorage.getItem(k)).find(Boolean) || null; } catch (e) { return null; } };
   const current = () => document.documentElement.dataset.theme || "dark";
 
@@ -30,9 +29,8 @@ const Theme = (() => {
     apply(next, true);
   }
 
-  media.addEventListener("change", (e) => { if (!saved()) apply(e.matches ? "light" : "dark", true); });
   document.addEventListener("DOMContentLoaded", () => {
-    apply(saved() || (media.matches ? "light" : "dark"), false);
+    apply(saved() === "light" ? "light" : "dark", false);
     const btn = document.getElementById("themeToggle");
     if (btn) btn.addEventListener("click", toggle);
   });
