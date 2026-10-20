@@ -24,6 +24,8 @@
 
 > **Free, open-source PDF tools. No sign-up, no watermarks, no limits on use.**
 
+**72 tools** for PDFs, images, Office files, archives, audio and video: 50 run entirely in your browser, 20 use the server, 2 are hybrid. The table below covers the core PDF tools; the [full tool guide](docs/TOOLS-README.md) lists all 72.
+
 <table>
 <tr>
 <td width="50%" valign="top">
@@ -44,6 +46,20 @@ The app is **installable** and, after the first visit, the browser tools **work 
 </td>
 </tr>
 </table>
+
+## 📸 Screenshots
+
+<p align="center"><img src="docs/screenshots/home.webp" alt="FileDost AI home page" width="900"></p>
+
+| 72 tools, each marked where it runs | Drop a file, get suggested tools |
+|:--:|:--:|
+| ![Tool grid](docs/screenshots/tools.webp) | ![Suggested tools for a PDF](docs/screenshots/pdf2word.webp) |
+| **JPG & PNG to PDF: 50 images, drag to reorder** | **"Keep going" chains the result into the next tool** |
+| ![JPG and PNG to PDF](docs/screenshots/jpg2pdf.webp) | ![Keep going bar](docs/screenshots/keepgoing.webp) |
+| **Compress PDF to Exact Size: 20.6 MB to 170 KB** | **Background Remover** |
+| ![Compress PDF to exact size](docs/screenshots/compresssize.webp) | ![Background remover](docs/screenshots/bgremove.webp) |
+| **Exam Photo & Signature Resizer** | **On a phone** |
+| ![Exam photo resizer](docs/screenshots/examphoto.webp) | <img src="docs/screenshots/phone_home.webp" width="190" alt="Home on a phone"> <img src="docs/screenshots/phone_done.webp" width="190" alt="Result on a phone"> |
 
 ## 🏗️ System design
 
