@@ -2,7 +2,7 @@
 // Pages and static files: network first, falling back to the cached copy when offline,
 // so an update never mixes old and new files.
 // The API is never cached, and no user file ever passes through here.
-const VERSION = "filedost-v31";
+const VERSION = "filedost-v32";
 const CORE = [
   "/",
   "/static/style.css",

@@ -92,7 +92,7 @@ print(json.dumps({"w": p.width, "h": p.height, "size": len(raw), "jpeg": raw[:2]
   await page.waitForSelector("#megaConvert a[data-tool='word-to-pdf']", { state: "visible" });
   await page.waitForTimeout(250); // let the drop-down finish sliding in
   await page.click("#megaConvert a[data-tool='word-to-pdf']");
-  check("menu link opens the tool", (await page.textContent("#mTitle")) === "Word to PDF" && page.url().endsWith("/word-to-pdf"));
+  check("menu link opens the tool", (await page.textContent("#mTitle")) === "Word (DOC) to PDF" && page.url().endsWith("/word-to-pdf"));
   await page.keyboard.press("Escape");
   check("All Tools menu has every tool", await page.locator("#megaAll a[data-tool]").count() === cards);
   const faqs = await page.locator(".faq-item").count();
