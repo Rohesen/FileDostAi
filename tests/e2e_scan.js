@@ -94,7 +94,7 @@ async function main() {
 
   let server = null;
   if (!process.env.BASE_URL) {
-    server = spawn("python3", ["-m", "uvicorn", "main:app", "--port", PORT], { cwd: ROOT, stdio: "ignore" });
+    server = spawn("python3", ["-m", "uvicorn", "main:app", "--app-dir", "server", "--port", PORT], { cwd: ROOT, stdio: "ignore" });
   }
   let browser, camBrowser;
   try {

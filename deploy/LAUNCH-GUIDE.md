@@ -81,7 +81,7 @@ On your PC, open the app folder (`Downloads\ultra_pdf\ultra_pdf`).
 
    Delete the line of any donation method you don't use. Buttons still showing `REPLACE_ME` say "not set up yet" instead of breaking.
 3. Copy this `launch` folder into the app folder and rename the copy to **`deploy`**. You should then have `ultra_pdf\ultra_pdf\deploy\deploy.sh` and the other files.
-4. Rename `deploy\gitignore.txt` to `.gitignore` and move it up one level, into the app folder itself, next to `main.py`.
+4. Rename `deploy\gitignore.txt` to `.gitignore` and move it up one level, into the app folder itself, next to `README.md`.
 
 ## Step 2. Put the code on GitHub
 

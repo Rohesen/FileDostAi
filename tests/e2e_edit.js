@@ -1,6 +1,6 @@
 // End-to-end check of the Edit PDF tool in Chromium against the real app.
 //
-//   python3 -m uvicorn main:app --port 8781 &
+//   python3 -m uvicorn main:app --app-dir server --port 8781 &
 //   BASE_URL=http://localhost:8781 node tests/e2e_edit.js
 //
 // Env: BASE_URL (default http://localhost:8781), CHROMIUM_PATH (optional browser binary),

@@ -2,7 +2,7 @@
 // per-tool addresses, offline mode and the upload limit.
 //
 //   npm install            (once, installs Playwright from package.json)
-//   ULTRAPDF_MAX_UPLOAD_MB=1 python3 -m uvicorn main:app --port 8765 &
+//   ULTRAPDF_MAX_UPLOAD_MB=1 python3 -m uvicorn main:app --app-dir server --port 8765 &
 //   node tests/e2e_browser.js
 //
 // Env: BASE_URL (default http://localhost:8765), CHROMIUM_PATH (optional browser binary).

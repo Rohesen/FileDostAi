@@ -1,6 +1,6 @@
 // End-to-end checks for the Background Remover, in Chromium against a running server.
 // By default the server finds the subject; the "This device" choice downloads the models (90 MB).
-//   ULTRAPDF_DATA_DIR=$(mktemp -d) python3 -m uvicorn main:app --port 8806 &
+//   ULTRAPDF_DATA_DIR=$(mktemp -d) python3 -m uvicorn main:app --app-dir server --port 8806 &
 //   BASE_URL=http://localhost:8806 node tests/e2e_bgremove.js
 const fs = require("fs");
 const os = require("os");

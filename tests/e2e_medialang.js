@@ -1,7 +1,7 @@
 // End-to-end checks for the video/audio tools (Compress Video, Video to MP3, Trim Audio or Video,
 // all on ffmpeg.wasm in the browser), Indian languages in OCR, Read aloud and Translate.
 // Needs ffmpeg/ffprobe on this machine to make and check the test clips.
-//   ULTRAPDF_DATA_DIR=$(mktemp -d) python3 -m uvicorn main:app --port 8804 &
+//   ULTRAPDF_DATA_DIR=$(mktemp -d) python3 -m uvicorn main:app --app-dir server --port 8804 &
 //   BASE_URL=http://localhost:8804 node tests/e2e_medialang.js
 const fs = require("fs");
 const os = require("os");

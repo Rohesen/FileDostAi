@@ -14,7 +14,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "server"))
 
 import converters  # noqa: E402
 import sandbox  # noqa: E402
@@ -260,6 +260,6 @@ def test_allowed_hosts_still_lets_the_health_check_in(tmp_path):
         "    assert r.status_code == want, (host, r.status_code)\n"
     )
     env = dict(os.environ, ULTRAPDF_ALLOWED_HOSTS="example.com", ULTRAPDF_DATA_DIR=str(tmp_path))
-    root = os.path.join(os.path.dirname(__file__), "..")
+    root = os.path.join(os.path.dirname(__file__), "..", "server")
     r = subprocess.run([sys.executable, "-c", code], cwd=root, env=env, capture_output=True, text=True, timeout=120)
     assert r.returncode == 0, r.stderr[-2000:]

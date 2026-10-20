@@ -1,6 +1,6 @@
 // End-to-end checks for Fill PDF Form, QR Code Maker & Reader and ZIP Maker & Opener,
 // in Chromium against a running server.
-//   ULTRAPDF_DATA_DIR=$(mktemp -d) python3 -m uvicorn main:app --port 8803 &
+//   ULTRAPDF_DATA_DIR=$(mktemp -d) python3 -m uvicorn main:app --app-dir server --port 8803 &
 //   BASE_URL=http://localhost:8803 node tests/e2e_formsqrzip.js
 // Set SCREENS=1 to also save screenshots to ../screens/formsqrzip-*.png.
 const fs = require("fs");

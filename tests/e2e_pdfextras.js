@@ -1,6 +1,6 @@
 // End-to-end checks for pdf-extras.js: Compress PDF to Exact Size, Extract Images, N-up,
 // Booklet, Bookmarks & Contents and Split by Chapters, in Chromium against a running server.
-//   ULTRAPDF_DATA_DIR=$(mktemp -d) python3 -m uvicorn main:app --port 8802 &
+//   ULTRAPDF_DATA_DIR=$(mktemp -d) python3 -m uvicorn main:app --app-dir server --port 8802 &
 //   BASE_URL=http://localhost:8802 node tests/e2e_pdfextras.js
 const fs = require("fs");
 const os = require("os");

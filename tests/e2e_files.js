@@ -1,6 +1,6 @@
 // End-to-end checks for the image and file tools, the progress bar, tile scenes and the
 // donate section, in Chromium against a running server.
-//   ULTRAPDF_DATA_DIR=$(mktemp -d) python3 -m uvicorn main:app --port 8791 &
+//   ULTRAPDF_DATA_DIR=$(mktemp -d) python3 -m uvicorn main:app --app-dir server --port 8791 &
 //   BASE_URL=http://localhost:8791 node tests/e2e_files.js
 const fs = require("fs");
 const os = require("os");

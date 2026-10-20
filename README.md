@@ -102,7 +102,7 @@ Needs **Python 3.11+**, plus `tesseract-ocr` and `ghostscript` for OCR (`apt ins
 
 ```bash
 pip install -r requirements.txt
-./run.sh            # or: python3 -m uvicorn main:app --port 8000
+./run.sh            # or: python3 -m uvicorn main:app --app-dir server --port 8000
 ```
 
 Open http://localhost:8000. API docs are at http://localhost:8000/docs.
@@ -129,11 +129,11 @@ docker build -t filedost . && docker run -p 8000:8000 filedost
 
 ```bash
 python3 -m pytest tests     # correctness tests (engine + in-browser tools; the latter need Node)
-python3 test_suite.py       # original end-to-end API smoke test
+python3 tests/test_suite.py # original end-to-end API smoke test
 
 # Real-browser check (page grid, sign, offline, size limit, phone layout):
 npm install
-ULTRAPDF_MAX_UPLOAD_MB=1 python3 -m uvicorn main:app --port 8765 &
+ULTRAPDF_MAX_UPLOAD_MB=1 python3 -m uvicorn main:app --app-dir server --port 8765 &
 npm run test:e2e
 ```
 
@@ -152,9 +152,16 @@ The correctness tests check **results, not just that a file came back**:
 <summary><b>Show the layout</b></summary>
 
 ```text
-main.py                  FastAPI routes, per-tool pages, sitemap, static files
-guards.py                Upload size limit and per-IP rate limit
-pdf_engine.py            Server-side engine (pypdf, PyMuPDF, OCRmyPDF, ReportLab, Pillow, python-docx)
+server/                  Python backend (FastAPI)
+  main.py                Routes, per-tool pages, sitemap, static files
+  guards.py              Upload size limit and per-IP rate limit
+  sandbox.py             Runs each server job in its own memory- and time-limited process
+  pdf_engine.py          PDF engine (pypdf, PyMuPDF, OCRmyPDF, ReportLab, Pillow)
+  converters.py          Office, Markdown and HTML to PDF; PDF to Word, Excel, PowerPoint, PDF/A
+  image_ocr.py           Text from images (Tesseract)
+  bg_remove.py           Background remover (ONNX model)
+  feedback.py            Ratings and feedback store
+  office_com_worker.py   Windows-only Microsoft Office converter
 static/tools.js          Tool catalogue: each tool's options and handler
 static/app.js            App shell: tool grid, modal, routing, downloads
 static/client-tools.js   In-browser PDF operations (pdf-lib, JSZip), also loadable from Node for tests
@@ -165,6 +172,9 @@ static/sign-tool.js      Signature pad and placement
 static/sw.js             Service worker for offline use
 static/vendor/           pdf-lib 1.17.1, JSZip 3.10.1 (MIT), pdf.js 4.10.38 (Apache-2.0), served locally
 tests/                   pytest tests, the Node harness for browser tools, and the Playwright check
+deploy/                  Server setup, Caddy config, backups, launch guide
+docs/                    Screenshots, system design, tool guide
+brand.json               App name, logo and site URL in one place
 ```
 
 </details>

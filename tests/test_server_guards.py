@@ -10,7 +10,7 @@ import pytest
 from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "server"))
 
 from guards import RateLimitMiddleware, UploadLimitMiddleware  # noqa: E402
 from main import BRAND, TOOL_PAGES, app  # noqa: E402

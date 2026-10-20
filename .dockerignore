@@ -9,7 +9,6 @@ __pycache__
 data
 node_modules
 tests
-test_suite.py
 test_write.txt
 *.log
 .env

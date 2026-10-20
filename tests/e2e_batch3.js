@@ -1,7 +1,7 @@
 // End-to-end checks for Remove Photo Location & EXIF, Blur Faces & Text, Watermark Images,
 // Video to GIF, Compress GIF, Resize Video for Reels, Change Speed, Volume Booster, Audio Joiner
 // and Diff Checker, in Chromium against a running server. Needs ffmpeg/ffprobe on this machine.
-//   ULTRAPDF_DATA_DIR=$(mktemp -d) python3 -m uvicorn main:app --port 8808 &
+//   ULTRAPDF_DATA_DIR=$(mktemp -d) python3 -m uvicorn main:app --app-dir server --port 8808 &
 //   BASE_URL=http://localhost:8808 node tests/e2e_batch3.js
 const fs = require("fs");
 const os = require("os");

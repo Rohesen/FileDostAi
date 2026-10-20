@@ -10,7 +10,7 @@ import unicodedata
 
 import pytest
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "server"))
 
 import pymupdf  # noqa: E402
 from pypdf import PdfReader  # noqa: E402

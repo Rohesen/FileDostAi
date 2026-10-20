@@ -1,6 +1,6 @@
 // End-to-end checks for crop, resize, headers & footers, dark mode, compare, summarize,
 // read aloud and ratings, in Chromium against a running server.
-//   ULTRAPDF_DATA_DIR=$(mktemp -d) python3 -m uvicorn main:app --port 8790 &
+//   ULTRAPDF_DATA_DIR=$(mktemp -d) python3 -m uvicorn main:app --app-dir server --port 8790 &
 //   BASE_URL=http://localhost:8790 node tests/e2e_more_tools.js
 const fs = require("fs");
 const os = require("os");

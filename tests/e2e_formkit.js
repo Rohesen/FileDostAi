@@ -1,6 +1,6 @@
 // End-to-end checks for the Exam & Govt Form Kit and HEIC support (HEIC to JPG, and HEIC in the
 // image converter and photo resizer), in Chromium against a running server.
-//   ULTRAPDF_DATA_DIR=$(mktemp -d) python3 -m uvicorn main:app --port 8801 &
+//   ULTRAPDF_DATA_DIR=$(mktemp -d) python3 -m uvicorn main:app --app-dir server --port 8801 &
 //   BASE_URL=http://localhost:8801 node tests/e2e_formkit.js
 // Needs Pillow and pymupdf; the HEIC fixture needs pillow-heif (skipped with a note if missing).
 const fs = require("fs");

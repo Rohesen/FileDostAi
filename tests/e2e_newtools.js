@@ -1,6 +1,6 @@
 // End-to-end checks for Image to Text, JPG to Word, Image Upscaler and Signature Maker,
 // in Chromium against a running server (OCR needs Tesseract on that server).
-//   ULTRAPDF_DATA_DIR=$(mktemp -d) python3 -m uvicorn main:app --port 8807 &
+//   ULTRAPDF_DATA_DIR=$(mktemp -d) python3 -m uvicorn main:app --app-dir server --port 8807 &
 //   BASE_URL=http://localhost:8807 node tests/e2e_newtools.js
 const fs = require("fs");
 const os = require("os");

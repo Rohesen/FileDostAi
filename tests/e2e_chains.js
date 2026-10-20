@@ -1,5 +1,5 @@
 // End-to-end checks for tool chains ("Keep going" after a result) and saved recipes.
-//   ULTRAPDF_DATA_DIR=$(mktemp -d) python3 -m uvicorn main:app --port 8805 &
+//   ULTRAPDF_DATA_DIR=$(mktemp -d) python3 -m uvicorn main:app --app-dir server --port 8805 &
 //   BASE_URL=http://localhost:8805 node tests/e2e_chains.js
 const fs = require("fs");
 const os = require("os");

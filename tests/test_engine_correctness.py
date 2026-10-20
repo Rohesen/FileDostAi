@@ -15,7 +15,7 @@ from PIL import Image
 from pypdf import PdfReader
 from reportlab.pdfgen import canvas
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "server"))
 
 from pdf_engine import PDFEngine  # noqa: E402
 
