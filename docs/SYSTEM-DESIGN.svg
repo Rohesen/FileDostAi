@@ -1,185 +1,170 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1720" height="1240" viewBox="0 0 1720 1240" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" xmlns:c2pa="http://c2pa.org/manifest"><defs><marker id="ah475569" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#475569"/></marker><marker id="ah475569s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#475569"/></marker><marker id="ah16a34a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ah16a34as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker><marker id="ah2563eb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#2563eb"/></marker><marker id="ah2563ebs" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#2563eb"/></marker><marker id="ahea580c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#ea580c"/></marker><marker id="ahea580cs" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#ea580c"/></marker><marker id="ah7c3aed" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#7c3aed"/></marker><marker id="ah7c3aeds" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#7c3aed"/></marker><marker id="ahdc2626" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker><marker id="ahdc2626s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker></defs><rect width="100%" height="100%" fill="#ffffff"/><text x="30" y="44" font-size="26" font-weight="800" fill="#0f172a" text-anchor="start">FileDost AI system design</text>
-<text x="30" y="68" font-size="13.5" font-weight="400" fill="#475569" text-anchor="start">72 file tools: 50 run entirely in the browser (the file never leaves the device), 20 send the file to the server (processed in a sandboxed job, nothing kept), 2 are hybrid.</text>
-<rect x="30" y="90" width="560" height="990" rx="14" fill="#f6fef9" stroke="#16a34a" stroke-width="1.6"/>
-<text x="46" y="116" font-size="15" font-weight="800" fill="#14532d" text-anchor="start">USER&#x27;S BROWSER  (desktop or phone, installable PWA)</text>
-<rect x="46" y="130" width="528" height="104" rx="10" fill="#ecfdf3" stroke="#16a34a" stroke-width="1.6"/>
-<text x="58" y="152" font-size="15" font-weight="700" fill="#14532d">UI shell  (HTML + CSS + vanilla JavaScript, no framework, no build)</text>
-<text xml:space="preserve" x="58" y="171" font-size="12.5" fill="#334155">index.html, app.js (tool modal, progress, downloads, routing /merge-pdf ...)</text>
-<text xml:space="preserve" x="58" y="188.5" font-size="12.5" fill="#334155">tools.js = catalogue of all 72 tools (options, accept types, run handler)</text>
-<text xml:space="preserve" x="58" y="206.0" font-size="12.5" fill="#334155">site.js search + nav, home-plus.js, theme.js, icons.js (own SVG icons),</text>
-<text xml:space="preserve" x="58" y="223.5" font-size="12.5" fill="#334155">tile-art.js + holo.css (3D cards), chains.js (&quot;Keep going&quot; + My Recipes)</text>
-<rect x="46" y="246" width="528" height="104" rx="10" fill="#ecfdf3" stroke="#16a34a" stroke-width="1.6"/>
-<text x="58" y="268" font-size="15" font-weight="700" fill="#14532d">Tool modules on the page</text>
-<text xml:space="preserve" x="58" y="287" font-size="12.5" fill="#334155">page-board (thumbnail grid), sign-tool, edit-tool, scan-tool, crop-tool,</text>
-<text xml:space="preserve" x="58" y="304.5" font-size="12.5" fill="#334155">compare-tool, read-tools, image-tools, photo-tool, image-order, form-kit,</text>
-<text xml:space="preserve" x="58" y="322.0" font-size="12.5" fill="#334155">pdf-extras, form-fill, qr-tool, zip-tool, media-tool, privacy-view, feedback</text>
-<text xml:space="preserve" x="58" y="339.5" font-size="12.5" fill="#334155">Each tool either runs locally (below) or calls serverRequest(/api/...)</text>
-<rect x="46" y="362" width="528" height="104" rx="10" fill="#ecfdf3" stroke="#16a34a" stroke-width="1.6"/>
-<text x="58" y="384" font-size="15" font-weight="700" fill="#14532d">PDF Web Worker  (pdf-worker.js + client-tools.js + edit-ops.js)</text>
-<text xml:space="preserve" x="58" y="403" font-size="12.5" fill="#334155">pdf-lib 1.17.1: merge, split, organize, rotate, remove pages,</text>
-<text xml:space="preserve" x="58" y="420.5" font-size="12.5" fill="#334155">watermark, page numbers, headers/footers, crop, resize, dark mode, sign,</text>
-<text xml:space="preserve" x="58" y="438.0" font-size="12.5" fill="#334155">edit, metadata, images to PDF, scan to PDF, n-up, booklet, bookmarks</text>
-<text xml:space="preserve" x="58" y="455.5" font-size="12.5" fill="#334155">JSZip 3.10: ZIP output. Runs off the main thread so the page never freezes</text>
-<rect x="46" y="478" width="528" height="86" rx="10" fill="#ecfdf3" stroke="#16a34a" stroke-width="1.6"/>
-<text x="58" y="500" font-size="15" font-weight="700" fill="#14532d">pdf.js 4.10.38  (own worker)</text>
-<text xml:space="preserve" x="58" y="519" font-size="12.5" fill="#334155">Thumbnails and previews, PDF to JPG/PNG, PDF to text (Markdown),</text>
-<text xml:space="preserve" x="58" y="536.5" font-size="12.5" fill="#334155">Compare PDFs (Myers word diff + pixel diff), extract images, find headings</text>
-<text xml:space="preserve" x="58" y="554.0" font-size="12.5" fill="#334155">Text source for Read Aloud, Summarize and Translate</text>
-<rect x="46" y="576" width="528" height="86" rx="10" fill="#ecfdf3" stroke="#16a34a" stroke-width="1.6"/>
-<text x="58" y="598" font-size="15" font-weight="700" fill="#14532d">WebAssembly engines  (downloaded only when a tool needs them)</text>
-<text xml:space="preserve" x="58" y="617" font-size="12.5" fill="#334155">ffmpeg.wasm (31 MB): Compress Video, Video to MP3, Trim Audio/Video</text>
-<text xml:space="preserve" x="58" y="634.5" font-size="12.5" fill="#334155">libheif-js: HEIC/HEIF photos  |  libarchive.js: open RAR, 7z, TAR, GZ</text>
-<text xml:space="preserve" x="58" y="652.0" font-size="12.5" fill="#334155">Allowed by CSP &quot;wasm-unsafe-eval&quot; (no plain eval anywhere)</text>
-<rect x="46" y="674" width="528" height="104" rx="10" fill="#ecfdf3" stroke="#16a34a" stroke-width="1.6"/>
-<text x="58" y="696" font-size="15" font-weight="700" fill="#14532d">Built-in browser APIs</text>
-<text xml:space="preserve" x="58" y="715" font-size="12.5" fill="#334155">Canvas / OffscreenCanvas: image convert, resize to KB, exam photos, scan cleanup</text>
-<text xml:space="preserve" x="58" y="732.5" font-size="12.5" fill="#334155">Camera (getUserMedia): Scan to PDF, QR reader  |  jsQR + qrcode-generator, fontkit</text>
-<text xml:space="preserve" x="58" y="750.0" font-size="12.5" fill="#334155">Web Speech: Read Aloud  |  Chrome Translator + Summarizer: on-device AI</text>
-<text xml:space="preserve" x="58" y="767.5" font-size="12.5" fill="#334155">(Summarize falls back to an offline extractive summary in other browsers)</text>
-<rect x="46" y="790" width="528" height="86" rx="10" fill="#ecfdf3" stroke="#16a34a" stroke-width="1.6"/>
-<text x="58" y="812" font-size="15" font-weight="700" fill="#14532d">Offline + saved preferences</text>
-<text xml:space="preserve" x="58" y="831" font-size="12.5" fill="#334155">sw.js service worker + Cache Storage: browser tools work offline</text>
-<text xml:space="preserve" x="58" y="848.5" font-size="12.5" fill="#334155">localStorage: theme, My Recipes, recently used tools</text>
-<text xml:space="preserve" x="58" y="866.0" font-size="12.5" fill="#334155">Nothing about your files is stored</text>
-<rect x="46" y="890" width="528" height="72" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="1.6"/>
-<text x="60" y="918" font-size="13" font-weight="700" fill="#14532d" text-anchor="start">Privacy rule: browser tools read the file with FileReader and</text>
-<text x="60" y="938" font-size="13" font-weight="700" fill="#14532d" text-anchor="start">write the result to a Blob download. No network request carries it.</text>
-<rect x="46" y="974" width="528" height="92" rx="10" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.6"/>
-<text x="58" y="996" font-size="14" font-weight="700" fill="#0f172a">Hybrid tools  (browser first, server only for one step)</text>
-<text xml:space="preserve" x="58" y="1014" font-size="12" fill="#334155">Compress Any File: images + Office files in browser, PDFs via /api/compress</text>
-<text xml:space="preserve" x="58" y="1031" font-size="12" fill="#334155">Compress PDF to Exact Size: server levels, then browser JPEG re-render</text>
-<text xml:space="preserve" x="58" y="1048" font-size="12" fill="#334155">Results can flow into the next tool with the &quot;Keep going&quot; bar (chains.js)</text>
-<text x="815.0" y="116" font-size="15" font-weight="800" fill="#7c2d12" text-anchor="middle">INTERNET EDGE + HOST</text>
-<rect x="690" y="140" width="250" height="170" rx="10" fill="#fff7ed" stroke="#ea580c" stroke-width="1.6"/>
-<text x="702" y="162" font-size="15" font-weight="700" fill="#7c2d12">Cloudflare</text>
-<text xml:space="preserve" x="702" y="181" font-size="12.5" fill="#334155">DNS + HTTPS certificate</text>
-<text xml:space="preserve" x="702" y="198.5" font-size="12.5" fill="#334155">CDN cache for /static (JS, CSS,</text>
-<text xml:space="preserve" x="702" y="216.0" font-size="12.5" fill="#334155">fonts, wasm); /api is never cached</text>
-<text xml:space="preserve" x="702" y="233.5" font-size="12.5" fill="#334155">DDoS shield, WAF rules</text>
-<text xml:space="preserve" x="702" y="251.0" font-size="12.5" fill="#334155">Adds CF-Connecting-IP header</text>
-<text xml:space="preserve" x="702" y="268.5" font-size="12.5" fill="#334155">(rate limit trusts it)</text>
-<rect x="690" y="370" width="250" height="128" rx="10" fill="#fff7ed" stroke="#ea580c" stroke-width="1.6"/>
-<text x="702" y="392" font-size="15" font-weight="700" fill="#7c2d12">Reverse proxy  (optional)</text>
-<text xml:space="preserve" x="702" y="411" font-size="12.5" fill="#334155">Caddy or nginx on the host,</text>
-<text xml:space="preserve" x="702" y="428.5" font-size="12.5" fill="#334155">or Cloudflare Tunnel straight to</text>
-<text xml:space="preserve" x="702" y="446.0" font-size="12.5" fill="#334155">the container. Container port is</text>
-<text xml:space="preserve" x="702" y="463.5" font-size="12.5" fill="#334155">bound to 127.0.0.1:8000 only</text>
-<rect x="690" y="560" width="250" height="150" rx="10" fill="#fff7ed" stroke="#ea580c" stroke-width="1.6"/>
-<text x="702" y="582" font-size="15" font-weight="700" fill="#7c2d12">Host VM</text>
-<text xml:space="preserve" x="702" y="601" font-size="12.5" fill="#334155">Recommended: Oracle Cloud</text>
-<text xml:space="preserve" x="702" y="618.5" font-size="12.5" fill="#334155">Always Free (Mumbai/Hyderabad),</text>
-<text xml:space="preserve" x="702" y="636.0" font-size="12.5" fill="#334155">fallback Hetzner. Also runs on</text>
-<text xml:space="preserve" x="702" y="653.5" font-size="12.5" fill="#334155">Render, Railway, Fly.io, Cloud Run</text>
-<text xml:space="preserve" x="702" y="671.0" font-size="12.5" fill="#334155">(they set $PORT)</text>
-<rect x="690" y="770" width="250" height="140" rx="10" fill="#fff7ed" stroke="#ea580c" stroke-width="1.4" stroke-dasharray="6 4"/>
-<text x="702" y="792" font-size="15" font-weight="700" fill="#7c2d12">docker compose up -d</text>
-<text xml:space="preserve" x="702" y="811" font-size="12.5" fill="#334155">restart: unless-stopped</text>
-<text xml:space="preserve" x="702" y="828.5" font-size="12.5" fill="#334155">healthcheck /api/health</text>
-<text xml:space="preserve" x="702" y="846.0" font-size="12.5" fill="#334155">volume feedback-data -&gt; /app/data</text>
-<text xml:space="preserve" x="702" y="863.5" font-size="12.5" fill="#334155">Windows dev: run.sh / uvicorn</text>
-<text xml:space="preserve" x="702" y="881.0" font-size="12.5" fill="#334155">(no sandbox fork, MS Office COM)</text>
-<rect x="1010" y="90" width="690" height="1060" rx="14" fill="#f7faff" stroke="#2563eb" stroke-width="1.6"/>
-<text x="1026" y="116" font-size="15" font-weight="800" fill="#1e3a8a" text-anchor="start">DOCKER CONTAINER  python:3.11-slim-trixie</text>
-<text x="1026" y="136" font-size="12" font-weight="500" fill="#1e3a8a" text-anchor="start">non-root uid 10001 | read-only filesystem | tmpfs /tmp 2 GB | cap_drop ALL | no-new-privileges | 6 GB RAM | 512 pids</text>
-<rect x="1026" y="150" width="658" height="58" rx="10" fill="#eff6ff" stroke="#2563eb" stroke-width="1.6"/>
-<text x="1038" y="172" font-size="15" font-weight="700" fill="#1e3a8a">Uvicorn  +  FastAPI  (main.py, Python 3.11)</text>
-<text xml:space="preserve" x="1038" y="191" font-size="12.5" fill="#334155">Async web server; --limit-concurrency 200, no server header</text>
-<rect x="1026" y="220" width="658" height="80" rx="10" fill="#eff6ff" stroke="#2563eb" stroke-width="1.6"/>
-<text x="1038" y="242" font-size="15" font-weight="700" fill="#1e3a8a">Middleware (runs before the body is read)</text>
-<text xml:space="preserve" x="1038" y="261" font-size="12.5" fill="#334155">UploadLimit: 413 above 100 MB  -&gt;  RateLimit: 60 server jobs / IP / hour (guards.py)</text>
-<text xml:space="preserve" x="1038" y="278.5" font-size="12.5" fill="#334155">-&gt;  TrustedHost + CORS allow-list  -&gt;  security headers, CSP, HSTS, /api no-store</text>
-<rect x="1026" y="312" width="400" height="124" rx="10" fill="#eff6ff" stroke="#2563eb" stroke-width="1.6"/>
-<text x="1038" y="334" font-size="15" font-weight="700" fill="#1e3a8a">Routes</text>
-<text xml:space="preserve" x="1038" y="353" font-size="12.5" fill="#334155">GET / and /{tool-slug}: per-tool HTML page,</text>
-<text xml:space="preserve" x="1038" y="370.5" font-size="12.5" fill="#334155">    title + description for search engines</text>
-<text xml:space="preserve" x="1038" y="388.0" font-size="12.5" fill="#334155">GET /sitemap.xml, /robots.txt, /sw.js, /static/*</text>
-<text xml:space="preserve" x="1038" y="405.5" font-size="12.5" fill="#334155">POST /api/*: 32 tool endpoints (file in,</text>
-<text xml:space="preserve" x="1038" y="423.0" font-size="12.5" fill="#334155">    file or JSON out)  |  GET /api/health</text>
-<rect x="1440" y="312" width="244" height="124" rx="10" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.6"/>
-<text x="1452" y="334" font-size="15" font-weight="700" fill="#4c1d95">Feedback  (feedback.py)</text>
-<text xml:space="preserve" x="1452" y="353" font-size="12.5" fill="#334155">POST /api/feedback</text>
-<text xml:space="preserve" x="1452" y="370.5" font-size="12.5" fill="#334155">GET /api/ratings</text>
-<text xml:space="preserve" x="1452" y="388.0" font-size="12.5" fill="#334155">Stars + reports as JSONL in</text>
-<text xml:space="preserve" x="1452" y="405.5" font-size="12.5" fill="#334155">/app/data volume. No IP, no files</text>
-<rect x="1026" y="448" width="658" height="62" rx="10" fill="#eff6ff" stroke="#2563eb" stroke-width="1.6"/>
-<text x="1038" y="470" font-size="15" font-weight="700" fill="#1e3a8a">await _run(label, fn, *args)  -&gt;  sandbox.run_job()</text>
-<text xml:space="preserve" x="1038" y="489" font-size="12.5" fill="#334155">Job slots = CPU count; waits up to 90 s for a slot, else 503 &quot;server busy&quot;. Maps errors to 400/503/500</text>
-<rect x="1026" y="522" width="658" height="262" rx="10" fill="#fffafa" stroke="#dc2626" stroke-width="1.4" stroke-dasharray="6 4"/>
-<text x="1040" y="544" font-size="14" font-weight="700" fill="#7f1d1d" text-anchor="start">Sandboxed job process  (one per upload, forked from a preloaded forkserver)</text>
-<text x="1040" y="562" font-size="12" font-weight="400" fill="#7f1d1d" text-anchor="start">RLIMIT_AS 3 GB memory, 300 s CPU and wall clock, no core dumps. A hostile file can only crash its own job.</text>
-<rect x="1040" y="574" width="315" height="200" rx="10" fill="#eff6ff" stroke="#2563eb" stroke-width="1.6"/>
-<text x="1052" y="596" font-size="15" font-weight="700" fill="#1e3a8a">pdf_engine.py  PDFEngine</text>
-<text xml:space="preserve" x="1052" y="615" font-size="12" fill="#334155">compress (PyMuPDF image rewrite:</text>
-<text xml:space="preserve" x="1052" y="632" font-size="12" fill="#334155">   lossless / 150 dpi q75 / 72 dpi q45)</text>
-<text xml:space="preserve" x="1052" y="649" font-size="12" fill="#334155">ocr_searchable (OCRmyPDF, else</text>
-<text xml:space="preserve" x="1052" y="666" font-size="12" fill="#334155">   PyMuPDF + Tesseract)</text>
-<text xml:space="preserve" x="1052" y="683" font-size="12" fill="#334155">redact (PyMuPDF apply_redactions)</text>
-<text xml:space="preserve" x="1052" y="700" font-size="12" fill="#334155">flatten (PyMuPDF bake), protect/unlock</text>
-<text xml:space="preserve" x="1052" y="717" font-size="12" fill="#334155">   (AES-256), analyze_ai (statistics),</text>
-<text xml:space="preserve" x="1052" y="734" font-size="12" fill="#334155">pipeline, sign, metadata, compare</text>
-<rect x="1365" y="574" width="305" height="200" rx="10" fill="#eff6ff" stroke="#2563eb" stroke-width="1.6"/>
-<text x="1377" y="596" font-size="15" font-weight="700" fill="#1e3a8a">converters.py</text>
-<text xml:space="preserve" x="1377" y="615" font-size="12" fill="#334155">office_to_pdf (LibreOffice or MS Office)</text>
-<text xml:space="preserve" x="1377" y="632" font-size="12" fill="#334155">markdown / HTML / CSV / text -&gt; PDF</text>
-<text xml:space="preserve" x="1377" y="649" font-size="12" fill="#334155">   (pymupdf.Story, table_pdf)</text>
-<text xml:space="preserve" x="1377" y="666" font-size="12" fill="#334155">pdf_to_docx (pdf2docx), pdf_to_excel</text>
-<text xml:space="preserve" x="1377" y="683" font-size="12" fill="#334155">   (PyMuPDF/pdfplumber tables, openpyxl)</text>
-<text xml:space="preserve" x="1377" y="700" font-size="12" fill="#334155">pdf_to_pptx (python-pptx), pdf_to_pdfa</text>
-<text xml:space="preserve" x="1377" y="717" font-size="12" fill="#334155">   (Ghostscript), repair_pdf (pikepdf),</text>
-<text xml:space="preserve" x="1377" y="734" font-size="12" fill="#334155">privacy_scan, strip_private_data</text>
-<rect x="1026" y="796" width="658" height="86" rx="10" fill="#eff6ff" stroke="#2563eb" stroke-width="1.6"/>
-<text x="1038" y="818" font-size="15" font-weight="700" fill="#1e3a8a">Python libraries (in-process)</text>
-<text xml:space="preserve" x="1038" y="837" font-size="12.5" fill="#334155">PyMuPDF (fitz)  |  pypdf  |  pikepdf (qpdf)  |  ReportLab  |  Pillow  |  pdfplumber</text>
-<text xml:space="preserve" x="1038" y="854.5" font-size="12.5" fill="#334155">pdf2docx  |  python-docx  |  openpyxl  |  python-pptx  |  markdown  |  python-multipart</text>
-<text xml:space="preserve" x="1038" y="872.0" font-size="12.5" fill="#334155">Zip and image bomb limits on every input; linked images in Office files are blocked</text>
-<rect x="1026" y="894" width="658" height="128" rx="10" fill="#eff6ff" stroke="#2563eb" stroke-width="1.6"/>
-<text x="1038" y="916" font-size="15" font-weight="700" fill="#1e3a8a">External programs  (subprocess with timeouts)</text>
-<text xml:space="preserve" x="1038" y="935" font-size="12.5" fill="#334155">Tesseract OCR: English, German, French, Spanish + 12 Indian languages</text>
-<text xml:space="preserve" x="1038" y="952.5" font-size="12.5" fill="#334155">OCRmyPDF (Python) drives Tesseract + Ghostscript for searchable PDFs</text>
-<text xml:space="preserve" x="1038" y="970.0" font-size="12.5" fill="#334155">Ghostscript: PDF/A-2b archival output</text>
-<text xml:space="preserve" x="1038" y="987.5" font-size="12.5" fill="#334155">LibreOffice headless (soffice): Word, Excel, PowerPoint, ODF -&gt; PDF, two warm profiles</text>
-<text xml:space="preserve" x="1038" y="1005.0" font-size="12.5" fill="#334155">Windows only: Microsoft Office via COM in office_com_worker.py, 180 s limit</text>
-<rect x="1026" y="1034" width="658" height="100" rx="10" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.6"/>
-<text x="1038" y="1056" font-size="15" font-weight="700" fill="#0f172a">Scratch space and storage</text>
-<text xml:space="preserve" x="1038" y="1075" font-size="12.5" fill="#334155">Converters write to a private temp folder in tmpfs /tmp, deleted when the job ends</text>
-<text xml:space="preserve" x="1038" y="1092.5" font-size="12.5" fill="#334155">Uploads and results live in memory only; responses carry Cache-Control: no-store</text>
-<text xml:space="preserve" x="1038" y="1110.0" font-size="12.5" fill="#334155">No database, no accounts, no file storage. Only feedback is persisted</text>
-<text xml:space="preserve" x="1038" y="1127.5" font-size="12.5" fill="#334155">Code is read-only inside the container</text>
-<path d="M590,200 L690,200" fill="none" stroke="#ea580c" stroke-width="2" marker-end="url(#ahea580c)"/>
-<text x="640" y="168" font-size="12" font-weight="600" fill="#ea580c" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="4">GET pages,</text>
-<text x="640" y="183" font-size="12" font-weight="600" fill="#ea580c" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="4">JS, wasm</text>
-<path d="M690,265 L590,265" fill="none" stroke="#2563eb" stroke-width="2" marker-end="url(#ah2563eb)"/>
-<path d="M590,245 L690,245" fill="none" stroke="#2563eb" stroke-width="2" marker-end="url(#ah2563eb)"/>
-<text x="640" y="290" font-size="12" font-weight="600" fill="#2563eb" text-anchor="middle" paint-order="stroke" stroke="#ffffff" stroke-width="4">POST /api/*</text>
-<text x="640" y="305" font-size="12" font-weight="600" fill="#2563eb" text-anchor="middle">file upload</text>
-<text x="640" y="320" font-size="12" font-weight="600" fill="#2563eb" text-anchor="middle">result back</text>
-<path d="M815.0,310 L815.0,370" fill="none" stroke="#ea580c" stroke-width="2" marker-end="url(#ahea580c)"/>
-<path d="M815.0,498 L815.0,560" fill="none" stroke="#ea580c" stroke-width="2" marker-end="url(#ahea580c)"/>
-<path d="M815.0,710 L815.0,770" fill="none" stroke="#ea580c" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#ahea580c)"/>
-<path d="M940,420 L990,420 L990,180 L1026,180" fill="none" stroke="#2563eb" stroke-width="2" marker-end="url(#ah2563eb)"/>
-<text x="983" y="330" font-size="12" font-weight="600" fill="#2563eb" text-anchor="middle" transform="rotate(-90 983 330)" paint-order="stroke" stroke="#ffffff" stroke-width="4">request to :8000</text>
-<path d="M1026,262 L960,262 L960,470 L940,470" fill="none" stroke="#2563eb" stroke-width="2" marker-end="url(#ah2563eb)"/>
-<text x="953" y="370" font-size="12" font-weight="600" fill="#2563eb" text-anchor="middle" transform="rotate(-90 953 370)" paint-order="stroke" stroke="#ffffff" stroke-width="4">result (no-store)</text>
-<path d="M1210,208 L1210,220" fill="none" stroke="#2563eb" stroke-width="2" marker-end="url(#ah2563eb)"/>
-<path d="M1210,300 L1210,312" fill="none" stroke="#2563eb" stroke-width="2" marker-end="url(#ah2563eb)"/>
-<path d="M1210,436 L1210,448" fill="none" stroke="#2563eb" stroke-width="2" marker-end="url(#ah2563eb)"/>
-<path d="M1210,510 L1210,522" fill="none" stroke="#2563eb" stroke-width="2" marker-end="url(#ah2563eb)"/>
-<path d="M1210,774 L1210,796" fill="none" stroke="#2563eb" stroke-width="2" marker-end="url(#ah2563eb)"/>
-<path d="M1210,882 L1210,894" fill="none" stroke="#2563eb" stroke-width="2" marker-end="url(#ah2563eb)"/>
-<path d="M1210,1022 L1210,1034" fill="none" stroke="#2563eb" stroke-width="2" marker-end="url(#ah2563eb)"/>
-<path d="M310,234 L310,246" fill="none" stroke="#16a34a" stroke-width="2" marker-end="url(#ah16a34a)"/>
-<path d="M310,350 L310,362" fill="none" stroke="#16a34a" stroke-width="2" marker-end="url(#ah16a34a)"/>
-<path d="M310,466 L310,478" fill="none" stroke="#16a34a" stroke-width="2" marker-end="url(#ah16a34a)"/>
-<path d="M310,562 L310,576" fill="none" stroke="#16a34a" stroke-width="2" marker-end="url(#ah16a34a)"/>
-<text x="30" y="1180" font-size="13" font-weight="800" fill="#0f172a" text-anchor="start">Legend</text>
-<rect x="100" y="1167" width="18" height="16" rx="4" fill="#ecfdf3" stroke="#16a34a" stroke-width="1.6"/>
-<text x="126" y="1180" font-size="12.5" font-weight="400" fill="#334155" text-anchor="start">Runs in the browser, file stays on device</text>
-<rect x="400" y="1167" width="18" height="16" rx="4" fill="#eff6ff" stroke="#2563eb" stroke-width="1.6"/>
-<text x="426" y="1180" font-size="12.5" font-weight="400" fill="#334155" text-anchor="start">Runs on the server</text>
-<rect x="700" y="1167" width="18" height="16" rx="4" fill="#fef2f2" stroke="#dc2626" stroke-width="1.6"/>
-<text x="726" y="1180" font-size="12.5" font-weight="400" fill="#334155" text-anchor="start">Sandboxed per-upload job</text>
-<rect x="1000" y="1167" width="18" height="16" rx="4" fill="#fff7ed" stroke="#ea580c" stroke-width="1.6"/>
-<text x="1026" y="1180" font-size="12.5" font-weight="400" fill="#334155" text-anchor="start">Edge and hosting</text>
-<rect x="1300" y="1167" width="18" height="16" rx="4" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.6"/>
-<text x="1326" y="1180" font-size="12.5" font-weight="400" fill="#334155" text-anchor="start">Stored data (feedback only)</text>
-<text x="30" y="1210" font-size="12.5" font-weight="500" fill="#475569" text-anchor="start">Languages: Python 3.11 (server), JavaScript ES2020 (browser, no build step), HTML + CSS, WebAssembly (vendored engines), Dockerfile + YAML (deploy). Licence AGPL-3.0.</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1060" viewBox="0 0 1600 1060" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" xmlns:c2pa="http://c2pa.org/manifest"><metadata><c2pa:manifest>AAAWgmp1bWIAAAAeanVtZGMycGEAEQAQgAAAqgA4m3EDYzJwYQAAABZcanVtYgAAAEdqdW1kYzJtYQARABCAAACqADibcQN1cm46YzJwYTozNGZlMGIxMS04M2RhLTQ2ZGUtODZjOC01ODc3NWM3YjExNjAAAAADl2p1bWIAAAApanVtZGMyYXMAEQAQgAAAqgA4m3EDYzJwYS5hc3NlcnRpb25zAAAAALxqdW1iAAAARGp1bWRjYm9yABEAEIAAAKoAOJtxE2MycGEuaW5ncmVkaWVudC52MwAAAAAYYzJzaEIQYW9v/zy0LwYKIS5PsH0AAABwY2JvcqNpZGM6Zm9ybWF0bWltYWdlL3N2Zyt4bWxqaW5zdGFuY2VJRHgseG1wOmlpZDpiNDIwOTdiMS05OGQ5LTRiNWUtYTY0ZS02NjNhNmIyYmIwYTNscmVsYXRpb25zaGlwaHBhcmVudE9mAAAB4mp1bWIAAABBanVtZGNib3IAEQAQgAAAqgA4m3ETYzJwYS5hY3Rpb25zLnYyAAAAABhjMnNoEcQ9YGGuaut6yvunhfpSqQAAAZljYm9yomdhY3Rpb25zgqJmYWN0aW9ua2MycGEub3BlbmVkanBhcmFtZXRlcnOha2luZ3JlZGllbnRzgaJjdXJseC1zZWxmI2p1bWJmPWMycGEuYXNzZXJ0aW9ucy9jMnBhLmluZ3JlZGllbnQudjNkaGFzaFggC3MIO1cVy2wuunZJFy+mFSgcS/CxwScQrcxwr5MOcy6kZmFjdGlvbngdY29tLmFudGhyb3BpYy5jbGF1ZGUucHJvdmlkZWRqcGFyYW1ldGVyc6F4H2NvbS5hbnRocm9waWMub3JpZ2luLWNvbmZpZGVuY2VndW5rbm93bmtkZXNjcmlwdGlvbnhmQ2xhdWRlIHByb3ZpZGVkIHRoaXMgZmlsZSBhdCB0aGUgcmVxdWVzdCBvZiBhIHVzZXIgYW5kIG1heSBoYXZlIGNyZWF0ZWQgb3IgbW9kaWZpZWQgdGhlIGZpbGUgY29udGVudHMubXNvZnR3YXJlQWdlbnShZG5hbWVmQ2xhdWRlcmFsbEFjdGlvbnNJbmNsdWRlZPUAAADIanVtYgAAAEBqdW1kY2JvcgARABCAAACqADibcRNjMnBhLmhhc2guZGF0YQAAAAAYYzJzaAtstUd18a3OiqE+ipi4hHQAAACAY2JvcqVjYWxnZnNoYTI1NmNwYWRNAAAAAAAAAAAAAAAAAGRoYXNoWCALtuNPXZDczoLvQ2FuewAlzL/g65NtNNdSW44fCCed12RuYW1lbmp1bWJmIG1hbmlmZXN0amV4Y2x1c2lvbnOBomVzdGFydBjWZmxlbmd0aBkeBAAAAj5qdW1iAAAAJ2p1bWRjMmNsABEAEIAAAKoAOJtxA2MycGEuY2xhaW0udjIAAAACD2Nib3KlY2FsZ2ZzaGEyNTZpc2lnbmF0dXJleE1zZWxmI2p1bWJmPS9jMnBhL3VybjpjMnBhOjM0ZmUwYjExLTgzZGEtNDZkZS04NmM4LTU4Nzc1YzdiMTE2MC9jMnBhLnNpZ25hdHVyZWppbnN0YW5jZUlEeCx4bXA6aWlkOmY5ZGY1NGUzLWY5NzMtNGEwMy04YTg3LWM5MTNjMjdkYzUxYnJjcmVhdGVkX2Fzc2VydGlvbnODomN1cmx4LXNlbGYjanVtYmY9YzJwYS5hc3NlcnRpb25zL2MycGEuaW5ncmVkaWVudC52M2RoYXNoWCALcwg7VxXLbC66dkkXL6YVKBxL8LHBJxCtzHCvkw5zLqJjdXJseCpzZWxmI2p1bWJmPWMycGEuYXNzZXJ0aW9ucy9jMnBhLmFjdGlvbnMudjJkaGFzaFgg/ZCE+Oet2YqJNZDdg0RCWmw3JcG690Go3zz88jbIA5SiY3VybHgpc2VsZiNqdW1iZj1jMnBhLmFzc2VydGlvbnMvYzJwYS5oYXNoLmRhdGFkaGFzaFgg3ZUip+3lQqz7i2bReiHByHHzPN13jzGFJZphxY55KdR0Y2xhaW1fZ2VuZXJhdG9yX2luZm+jZG5hbWVvQW50aHJvcGljIEZpbGVzZ3ZlcnNpb25lMS4wLjBrc3BlY1ZlcnNpb25lMi40LjAAABA4anVtYgAAAChqdW1kYzJjcwARABCAAACqADibcQNjMnBhLnNpZ25hdHVyZQAAABAIY2JvctKEWQISogEmGCFZAgowggIGMIIBjaADAgECAhRA5aAK7sI50L64g/oGQgU9Z1UTADAKBggqhkjOPQQDAzBJMRcwFQYDVQQKEw5BbnRocm9waWMsIFBCQzEuMCwGA1UEAxMlQW50aHJvcGljIENvbnRlbnQgQ3JlZGVudGlhbHMgUm9vdCBDQTAeFw0yNjA4MDcxODQzNTZaFw0yODA4MDYxOTQzNTZaMEQxFzAVBgNVBAoTDkFudGhyb3BpYywgUEJDMSkwJwYDVQQDEyBBbnRocm9waWMgQ2xhdWRlIENvbnRlbnQgU2lnbmluZzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABJh6CmvLUBgFFNU0vUKlOVtE6djd17L5SuwX0LemFisBM3dkd/3cyjxFA3Qo5S46fX0/ihY0VZ7mfb9KF703t5OjWDBWMA4GA1UdDwEB/wQEAwIHgDAVBgNVHSUEDjAMBgorBgEEAYPoXgIBMAwGA1UdEwEB/wQCMAAwHwYDVR0jBBgwFoAUzlHiBIFOZFsj+OPEz5o+nMHXXMIwCgYIKoZIzj0EAwMDZwAwZAIwMXMdFJ4BetLLVY7ORuE9noqbbAZOZn/aArXyTwFAZfKrPzxF2vPoJNf1+UCdg1XGAjBwX1zd9WGqYkqmL5SFqw1QySjr1zJfpJM9+1rdDwSPLMOPOjKuiXjoU/pUUeG9RwmhY3BhZFkNngAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPZYQO5k1Koj1af757LtrM3cXecpcIGbRiOdprmQYdNATdKCxY6Y3X+C07Xds7gxvC1CNFEzbqLLyR3X/gOKKAVkchE=</c2pa:manifest></metadata>
+<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0b1020"/><stop offset="1" stop-color="#111a33"/></linearGradient>
+<radialGradient id="g1" cx="0.15" cy="0.1" r="0.6"><stop offset="0" stop-color="#14b8a6" stop-opacity=".18"/><stop offset="1" stop-color="#14b8a6" stop-opacity="0"/></radialGradient>
+<radialGradient id="g2" cx="0.9" cy="0.9" r="0.6"><stop offset="0" stop-color="#8b5cf6" stop-opacity=".18"/><stop offset="1" stop-color="#8b5cf6" stop-opacity="0"/></radialGradient>
+<marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#cbd5e1"/></marker>
+<filter id="sh" x="-5%" y="-5%" width="110%" height="115%"><feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#000" flood-opacity=".35"/></filter>
+</defs>
+<rect width="1600" height="1060" fill="url(#bg)"/><rect width="1600" height="1060" fill="url(#g1)"/><rect width="1600" height="1060" fill="url(#g2)"/>
+<text x="60" y="70" font-size="34" font-weight="800" fill="#f8fafc" text-anchor="start">FileDost AI</text>
+<text x="262" y="70" font-size="34" font-weight="400" fill="#64748b" text-anchor="start">system design</text>
+<text x="60" y="102" font-size="16" font-weight="400" fill="#94a3b8" text-anchor="start">72 file tools. Most run entirely in your browser, so the file never leaves the device.</text>
+<rect x="60" y="118" width="145.8" height="24" rx="12" fill="#14b8a6" fill-opacity=".14" stroke="#14b8a6" stroke-opacity=".5"/>
+<text x="132.9" y="134.5" font-size="12" font-weight="600" fill="#e2e8f0" text-anchor="middle">50 in the browser</text>
+<rect x="215.8" y="118" width="138.4" height="24" rx="12" fill="#8b5cf6" fill-opacity=".14" stroke="#8b5cf6" stroke-opacity=".5"/>
+<text x="285.0" y="134.5" font-size="12" font-weight="600" fill="#e2e8f0" text-anchor="middle">20 on the server</text>
+<rect x="364.20000000000005" y="118" width="79.2" height="24" rx="12" fill="#f59e0b" fill-opacity=".14" stroke="#f59e0b" stroke-opacity=".5"/>
+<text x="403.80000000000007" y="134.5" font-size="12" font-weight="600" fill="#e2e8f0" text-anchor="middle">2 hybrid</text>
+<rect x="60" y="180" width="700" height="760" rx="22" fill="#14b8a6" fill-opacity=".06" stroke="#14b8a6" stroke-opacity=".55" stroke-width="1.5"/>
+<rect x="80" y="166" width="156.79999999999998" height="28" rx="14" fill="#14b8a6"/>
+<text x="94" y="185" font-size="13" font-weight="800" fill="#0b1020" text-anchor="start">USER&#x27;S BROWSER</text>
+<text x="84" y="218" font-size="13" font-weight="400" fill="#94a3b8" text-anchor="start">Desktop or phone, installable PWA. HTML + CSS + vanilla JS, no framework, no build step.</text>
+<g filter="url(#sh)"><rect x="80" y="240" width="660" height="96" rx="14" fill="#151e38" stroke="#14b8a6" stroke-opacity=".35"/></g>
+<rect x="80" y="254" width="4" height="68" rx="2" fill="#14b8a6"/>
+<text x="98" y="268" font-size="15.5" font-weight="700" fill="#f1f5f9" text-anchor="start">UI shell</text>
+<text x="98" y="292" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">app.js: tool modal, progress, downloads, routing (/merge-pdf ...)</text>
+<text x="98" y="312" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">tools.js: catalogue of all 72 tools  ·  chains.js: &quot;Keep going&quot; + My Recipes</text>
+<g filter="url(#sh)"><rect x="80" y="352" width="320" height="150" rx="14" fill="#151e38" stroke="#14b8a6" stroke-opacity=".35"/></g>
+<rect x="80" y="366" width="4" height="122" rx="2" fill="#14b8a6"/>
+<text x="98" y="380" font-size="15.5" font-weight="700" fill="#f1f5f9" text-anchor="start">PDF Web Worker</text>
+<text x="98" y="404" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">pdf-lib 1.17: merge, split, organize,</text>
+<text x="98" y="424" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">rotate, watermark, page numbers,</text>
+<text x="98" y="444" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">crop, sign, edit, n-up, booklet</text>
+<text x="98" y="464" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">JSZip for ZIP output</text>
+<text x="98" y="484" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">Off the main thread, UI never freezes</text>
+<g filter="url(#sh)"><rect x="420" y="352" width="320" height="150" rx="14" fill="#151e38" stroke="#14b8a6" stroke-opacity=".35"/></g>
+<rect x="420" y="366" width="4" height="122" rx="2" fill="#14b8a6"/>
+<text x="438" y="380" font-size="15.5" font-weight="700" fill="#f1f5f9" text-anchor="start">pdf.js 4.10</text>
+<text x="438" y="404" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">Thumbnails and previews</text>
+<text x="438" y="424" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">PDF to JPG / PNG / text</text>
+<text x="438" y="444" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">Compare PDFs (word + pixel diff)</text>
+<text x="438" y="464" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">Extract images, find headings</text>
+<text x="438" y="484" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">Text for Read Aloud and Summarize</text>
+<g filter="url(#sh)"><rect x="80" y="518" width="320" height="130" rx="14" fill="#151e38" stroke="#14b8a6" stroke-opacity=".35"/></g>
+<rect x="80" y="532" width="4" height="102" rx="2" fill="#14b8a6"/>
+<text x="98" y="546" font-size="15.5" font-weight="700" fill="#f1f5f9" text-anchor="start">WebAssembly (on demand)</text>
+<text x="98" y="570" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">ffmpeg.wasm: compress video,</text>
+<text x="98" y="590" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">video to MP3, trim audio/video</text>
+<text x="98" y="610" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">libheif-js: HEIC photos</text>
+<text x="98" y="630" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">libarchive.js: RAR, 7z, TAR, GZ</text>
+<g filter="url(#sh)"><rect x="420" y="518" width="320" height="130" rx="14" fill="#151e38" stroke="#14b8a6" stroke-opacity=".35"/></g>
+<rect x="420" y="532" width="4" height="102" rx="2" fill="#14b8a6"/>
+<text x="438" y="546" font-size="15.5" font-weight="700" fill="#f1f5f9" text-anchor="start">Built-in browser APIs</text>
+<text x="438" y="570" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">Canvas: convert, resize to KB, exam photo</text>
+<text x="438" y="590" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">Camera: scan to PDF, QR reader</text>
+<text x="438" y="610" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">Web Speech: Read Aloud</text>
+<text x="438" y="630" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">Chrome on-device AI: summarize, translate</text>
+<g filter="url(#sh)"><rect x="80" y="664" width="320" height="110" rx="14" fill="#151e38" stroke="#14b8a6" stroke-opacity=".35"/></g>
+<rect x="80" y="678" width="4" height="82" rx="2" fill="#14b8a6"/>
+<text x="98" y="692" font-size="15.5" font-weight="700" fill="#f1f5f9" text-anchor="start">Offline</text>
+<text x="98" y="716" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">sw.js service worker + Cache Storage:</text>
+<text x="98" y="736" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">browser tools work offline</text>
+<text x="98" y="756" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">localStorage: theme, recipes, recents</text>
+<g filter="url(#sh)"><rect x="420" y="664" width="320" height="110" rx="14" fill="#151e38" stroke="#f59e0b" stroke-opacity=".35"/></g>
+<rect x="420" y="678" width="4" height="82" rx="2" fill="#f59e0b"/>
+<text x="438" y="692" font-size="15.5" font-weight="700" fill="#f1f5f9" text-anchor="start">Hybrid tools</text>
+<text x="438" y="716" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">Compress Any File: PDFs via /api</text>
+<text x="438" y="736" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">Compress PDF to Exact Size: server</text>
+<text x="438" y="756" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">levels, then browser JPEG re-render</text>
+<rect x="80" y="792" width="660" height="128" rx="14" fill="#14b8a6" fill-opacity=".12" stroke="#14b8a6" stroke-opacity=".6" stroke-dasharray="6 5"/>
+<text x="102" y="826" font-size="17" font-weight="800" fill="#5eead4" text-anchor="start">Privacy rule</text>
+<text x="102" y="854" font-size="13.5" font-weight="400" fill="#ccfbf1" text-anchor="start">Browser tools read the file with FileReader and write the result to a Blob download.</text>
+<text x="102" y="876" font-size="13.5" font-weight="400" fill="#ccfbf1" text-anchor="start">No network request ever carries the file. Nothing about your files is stored.</text>
+<text x="102" y="900" font-size="13.5" font-weight="400" fill="#99f6e4" text-anchor="start">Results can flow straight into the next tool with the &quot;Keep going&quot; bar.</text>
+<rect x="800" y="180" width="230" height="760" rx="22" fill="#38bdf8" fill-opacity=".06" stroke="#38bdf8" stroke-opacity=".55" stroke-width="1.5"/>
+<rect x="820" y="166" width="129.2" height="28" rx="14" fill="#38bdf8"/>
+<text x="834" y="185" font-size="13" font-weight="800" fill="#0b1020" text-anchor="start">EDGE + HOST</text>
+<text x="824" y="218" font-size="13" font-weight="400" fill="#94a3b8" text-anchor="start"></text>
+<g filter="url(#sh)"><rect x="815" y="240" width="200" height="170" rx="14" fill="#151e38" stroke="#38bdf8" stroke-opacity=".35"/></g>
+<rect x="815" y="254" width="4" height="142" rx="2" fill="#38bdf8"/>
+<text x="833" y="268" font-size="15.5" font-weight="700" fill="#f1f5f9" text-anchor="start">Cloudflare</text>
+<text x="833" y="292" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">DNS + HTTPS</text>
+<text x="833" y="312" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">CDN cache for /static</text>
+<text x="833" y="332" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">/api is never cached</text>
+<text x="833" y="352" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">DDoS shield, WAF</text>
+<text x="833" y="372" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">CF-Connecting-IP header</text>
+<g filter="url(#sh)"><rect x="815" y="426" width="200" height="130" rx="14" fill="#151e38" stroke="#38bdf8" stroke-opacity=".35"/></g>
+<rect x="815" y="440" width="4" height="102" rx="2" fill="#38bdf8"/>
+<text x="833" y="454" font-size="15.5" font-weight="700" fill="#f1f5f9" text-anchor="start">Reverse proxy</text>
+<text x="833" y="478" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">Caddy / nginx or</text>
+<text x="833" y="498" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">Cloudflare Tunnel</text>
+<text x="833" y="518" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">Container bound to</text>
+<text x="833" y="538" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">127.0.0.1:8000 only</text>
+<g filter="url(#sh)"><rect x="815" y="572" width="200" height="170" rx="14" fill="#151e38" stroke="#38bdf8" stroke-opacity=".35"/></g>
+<rect x="815" y="586" width="4" height="142" rx="2" fill="#38bdf8"/>
+<text x="833" y="600" font-size="15.5" font-weight="700" fill="#f1f5f9" text-anchor="start">Host VM</text>
+<text x="833" y="624" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">Oracle Cloud Always Free</text>
+<text x="833" y="644" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">(fallback Hetzner; also</text>
+<text x="833" y="664" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">Render, Railway, Fly.io,</text>
+<text x="833" y="684" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">Cloud Run)</text>
+<text x="833" y="704" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">docker compose up -d</text>
+<g filter="url(#sh)"><rect x="815" y="758" width="200" height="162" rx="14" fill="#151e38" stroke="#38bdf8" stroke-opacity=".35"/></g>
+<rect x="815" y="772" width="4" height="134" rx="2" fill="#38bdf8"/>
+<text x="833" y="786" font-size="15.5" font-weight="700" fill="#f1f5f9" text-anchor="start">Ops</text>
+<text x="833" y="810" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">restart: unless-stopped</text>
+<text x="833" y="830" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">healthcheck /api/health</text>
+<text x="833" y="850" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">volume feedback-data</text>
+<text x="833" y="870" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">  → /app/data</text>
+<text x="833" y="890" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">Windows dev: uvicorn</text>
+<rect x="1070" y="180" width="470" height="760" rx="22" fill="#8b5cf6" fill-opacity=".06" stroke="#8b5cf6" stroke-opacity=".55" stroke-width="1.5"/>
+<rect x="1090" y="166" width="175.2" height="28" rx="14" fill="#8b5cf6"/>
+<text x="1104" y="185" font-size="13" font-weight="800" fill="#0b1020" text-anchor="start">DOCKER CONTAINER</text>
+<text x="1094" y="218" font-size="13" font-weight="400" fill="#94a3b8" text-anchor="start">python:3.11-slim · non-root · read-only FS · cap_drop ALL</text>
+<g filter="url(#sh)"><rect x="1090" y="240" width="430" height="112" rx="14" fill="#151e38" stroke="#8b5cf6" stroke-opacity=".35"/></g>
+<rect x="1090" y="254" width="4" height="84" rx="2" fill="#8b5cf6"/>
+<text x="1108" y="268" font-size="15.5" font-weight="700" fill="#f1f5f9" text-anchor="start">Uvicorn + FastAPI  (main.py)</text>
+<text x="1108" y="292" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">Per-tool HTML pages, sitemap, /static</text>
+<text x="1108" y="312" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">POST /api/*: 32 endpoints  ·  GET /api/health</text>
+<text x="1108" y="332" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">Feedback: stars + reports as JSONL, no IP, no files</text>
+<g filter="url(#sh)"><rect x="1090" y="368" width="430" height="92" rx="14" fill="#151e38" stroke="#8b5cf6" stroke-opacity=".35"/></g>
+<rect x="1090" y="382" width="4" height="64" rx="2" fill="#8b5cf6"/>
+<text x="1108" y="396" font-size="15.5" font-weight="700" fill="#f1f5f9" text-anchor="start">Guards (before the body is read)</text>
+<text x="1108" y="420" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">413 above 100 MB  ·  60 server jobs / IP / hour</text>
+<text x="1108" y="440" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">Trusted host, CORS, CSP, HSTS, no-store</text>
+<rect x="1090" y="476" width="430" height="444" rx="16" fill="#f43f5e" fill-opacity=".06" stroke="#f43f5e" stroke-opacity=".6" stroke-dasharray="6 5"/>
+<text x="1110" y="504" font-size="15.5" font-weight="800" fill="#fda4af" text-anchor="start">Sandboxed job  ·  one per upload</text>
+<text x="1110" y="526" font-size="13" font-weight="400" fill="#fecdd3" text-anchor="start">3 GB memory · 300 s limit · 90 s queue, else 503</text>
+<text x="1110" y="546" font-size="13" font-weight="400" fill="#fecdd3" text-anchor="start">A hostile file can only crash its own job</text>
+<g filter="url(#sh)"><rect x="1106" y="562" width="398" height="112" rx="14" fill="#151e38" stroke="#8b5cf6" stroke-opacity=".35"/></g>
+<rect x="1106" y="576" width="4" height="84" rx="2" fill="#8b5cf6"/>
+<text x="1124" y="590" font-size="15.5" font-weight="700" fill="#f1f5f9" text-anchor="start">pdf_engine.py</text>
+<text x="1124" y="614" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">Compress, OCR (OCRmyPDF + Tesseract),</text>
+<text x="1124" y="634" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">redact, flatten, protect / unlock (AES-256),</text>
+<text x="1124" y="654" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">repair, PDF/A, compare, metadata</text>
+<g filter="url(#sh)"><rect x="1106" y="688" width="398" height="112" rx="14" fill="#151e38" stroke="#8b5cf6" stroke-opacity=".35"/></g>
+<rect x="1106" y="702" width="4" height="84" rx="2" fill="#8b5cf6"/>
+<text x="1124" y="716" font-size="15.5" font-weight="700" fill="#f1f5f9" text-anchor="start">converters.py</text>
+<text x="1124" y="740" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">Office → PDF (LibreOffice headless)</text>
+<text x="1124" y="760" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">PDF → Word / Excel / PowerPoint</text>
+<text x="1124" y="780" font-size="13" font-weight="400" fill="#a5b4cb" text-anchor="start">Markdown, HTML, CSV, text → PDF</text>
+<rect x="1110" y="818" width="71.80000000000001" height="24" rx="12" fill="#8b5cf6" fill-opacity=".14" stroke="#8b5cf6" stroke-opacity=".5"/>
+<text x="1145.9" y="834.5" font-size="12" font-weight="600" fill="#e2e8f0" text-anchor="middle">PyMuPDF</text>
+<rect x="1189.8" y="818" width="71.80000000000001" height="24" rx="12" fill="#8b5cf6" fill-opacity=".14" stroke="#8b5cf6" stroke-opacity=".5"/>
+<text x="1225.7" y="834.5" font-size="12" font-weight="600" fill="#e2e8f0" text-anchor="middle">pikepdf</text>
+<rect x="1269.6" y="818" width="79.2" height="24" rx="12" fill="#8b5cf6" fill-opacity=".14" stroke="#8b5cf6" stroke-opacity=".5"/>
+<text x="1309.1999999999998" y="834.5" font-size="12" font-weight="600" fill="#e2e8f0" text-anchor="middle">pdf2docx</text>
+<rect x="1356.8" y="818" width="64.4" height="24" rx="12" fill="#8b5cf6" fill-opacity=".14" stroke="#8b5cf6" stroke-opacity=".5"/>
+<text x="1389.0" y="834.5" font-size="12" font-weight="600" fill="#e2e8f0" text-anchor="middle">Pillow</text>
+<text x="1110" y="870" font-size="13" font-weight="400" fill="#e9d5ff" text-anchor="start">Files live in memory and tmpfs only, deleted when</text>
+<text x="1110" y="890" font-size="13" font-weight="400" fill="#e9d5ff" text-anchor="start">the job ends. No database, no accounts, no storage.</text>
+<line x1="760" y1="300" x2="812" y2="300" stroke="#cbd5e1" stroke-width="2" marker-end="url(#ar)"/>
+<text x="786.0" y="290" font-size="11.5" font-weight="600" fill="#e2e8f0" text-anchor="middle">GET</text>
+<line x1="1018" y1="330" x2="1088" y2="330" stroke="#cbd5e1" stroke-width="2" marker-end="url(#ar)"/>
+<text x="1053.0" y="320" font-size="11.5" font-weight="600" fill="#e2e8f0" text-anchor="middle">POST</text>
+<line x1="1088" y1="410" x2="1018" y2="410" stroke="#cbd5e1" stroke-width="2" marker-end="url(#ar)"/>
+<text x="1053.0" y="400" font-size="11.5" font-weight="600" fill="#e2e8f0" text-anchor="middle">result</text>
+<line x1="812" y1="380" x2="760" y2="380" stroke="#cbd5e1" stroke-width="2" marker-end="url(#ar)"/>
+<text x="786.0" y="370" font-size="11.5" font-weight="600" fill="#e2e8f0" text-anchor="middle">page</text>
+<text x="60" y="990" font-size="14" font-weight="400" fill="#64748b" text-anchor="start">Python 3.11 (server)  ·  JavaScript ES2020 (browser)  ·  WebAssembly  ·  Docker  ·  AGPL-3.0</text>
+<circle cx="66" cy="1022" r="6" fill="#14b8a6"/>
+<text x="78" y="1027" font-size="13" font-weight="400" fill="#94a3b8" text-anchor="start">Runs in browser</text>
+<circle cx="224.5" cy="1022" r="6" fill="#8b5cf6"/>
+<text x="236.5" y="1027" font-size="13" font-weight="400" fill="#94a3b8" text-anchor="start">Runs on server</text>
+<circle cx="375.5" cy="1022" r="6" fill="#f43f5e"/>
+<text x="387.5" y="1027" font-size="13" font-weight="400" fill="#94a3b8" text-anchor="start">Sandboxed job</text>
+<circle cx="519.0" cy="1022" r="6" fill="#38bdf8"/>
+<text x="531.0" y="1027" font-size="13" font-weight="400" fill="#94a3b8" text-anchor="start">Edge + hosting</text>
+<circle cx="670.0" cy="1022" r="6" fill="#f59e0b"/>
+<text x="682.0" y="1027" font-size="13" font-weight="400" fill="#94a3b8" text-anchor="start">Hybrid</text>
+</svg>
