@@ -1,13 +1,13 @@
 # FileDost AI: how it is built and how every tool works
 
-![FileDost AI system design](SYSTEM-DESIGN.png)
+![FileDost AI system design](SYSTEM-DESIGN.svg)
 
 FileDost AI is a free, open-source (AGPL-3.0) web app with 72 file tools for PDFs, images, Office files, archives, audio and video. It is built so that as much work as possible happens **inside the visitor's browser**, and only the jobs that need heavy desktop-class engines (LibreOffice, Tesseract, Ghostscript, PyMuPDF) go to the server.
 
 | Where it runs | Tools | What happens to the file |
 | :--- | ---: | :--- |
-| Browser only | 47 | Read with FileReader, processed in JavaScript or WebAssembly, saved as a download. Never uploaded. |
-| Server | 18 | Uploaded over HTTPS, processed in memory inside a sandboxed job process, sent back, then discarded. |
+| Browser only | 50 | Read with FileReader, processed in JavaScript or WebAssembly, saved as a download. Never uploaded. |
+| Server | 20 | Uploaded over HTTPS, processed in memory inside a sandboxed job process, sent back, then discarded. |
 | Hybrid | 2 | Browser does most of the work and calls the server for one step (PDF compression). |
 
 ---
