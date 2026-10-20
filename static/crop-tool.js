@@ -20,7 +20,18 @@ const CropTool = (() => {
         <p class="drop-hint" id="cropSize"></p>
         <div class="radio-row">
           <label class="checkbox-group"><input type="radio" name="cropPages" value="all" checked> Crop every page the same way</label>
+          <label class="checkbox-group"><input type="radio" name="cropPages" value="each"> Different crop for each page</label>
           <label class="checkbox-group"><input type="radio" name="cropPages" value="one"> Only this page</label>
+        </div>
+        <div class="crop-each" id="cropEach" hidden>
+          <p class="drop-hint">Pick a page below, drag its box, then move to the next page. Pages you don't touch stay as they are.</p>
+          <div class="crop-pages" id="cropPages" role="group" aria-label="Pages"></div>
+          <div class="sign-row crop-copy">
+            <span>Use this page's crop on:</span>
+            <button type="button" class="btn btn-xs" data-copy="all">All pages</button>
+            <button type="button" class="btn btn-xs" data-copy="odd">Odd pages</button>
+            <button type="button" class="btn btn-xs" data-copy="even">Even pages</button>
+          </div>
         </div>
       </div>`;
     const $ = (id) => root.querySelector(`#${id}`);
@@ -28,18 +39,28 @@ const CropTool = (() => {
     let pageIndex = 0;
     let pagePts = { w: 0, h: 0 };
     // Box as fractions of the displayed page.
-    let box = { l: 0, t: 0, r: 1, b: 1 };
+    const FULL = { l: 0, t: 0, r: 1, b: 1 };
+    let box = { ...FULL };
+    // "each" mode: one box per page (null = page left as it is).
+    let boxes = [];
+    const mode = () => root.querySelector('input[name="cropPages"]:checked').value;
+    const isFull = (b) => !b || (b.l < 0.001 && b.t < 0.001 && b.r > 0.999 && b.b > 0.999);
+    // The box being edited is kept in `box`; in "each" mode it is saved into boxes[page] on every change.
+    function save() { if (mode() === "each") boxes[pageIndex] = isFull(box) ? null : { ...box }; }
 
     async function setPdf(bytes) {
       if (doc) doc.destroy();
       doc = await PdfRender.open(bytes);
       pageIndex = 0;
-      box = { l: 0, t: 0, r: 1, b: 1 };
+      box = { ...FULL };
+      boxes = new Array(doc.numPages).fill(null);
       $("cropWrap").hidden = false;
+      renderPages();
       await show();
     }
 
     async function show() {
+      if (mode() === "each") box = boxes[pageIndex] ? { ...boxes[pageIndex] } : { ...FULL };
       const page = await doc.getPage(pageIndex + 1);
       const vp = page.getViewport({ scale: 1 });
       pagePts = { w: vp.width, h: vp.height };
@@ -57,7 +78,48 @@ const CropTool = (() => {
       el.style.height = `${(box.b - box.t) * 100}%`;
       const mm = (pt) => Math.round(pt * 25.4 / 72);
       $("cropSize").textContent = `New size: ${mm((box.r - box.l) * pagePts.w)} × ${mm((box.b - box.t) * pagePts.h)} mm`;
+      save();
+      renderPages();
     }
+
+    // Page buttons for "each" mode: the current page is outlined, cropped pages are filled.
+    function renderPages() {
+      const wrap = $("cropPages");
+      if (!doc || mode() !== "each") return;
+      if (wrap.children.length !== doc.numPages) {
+        wrap.innerHTML = Array.from({ length: doc.numPages }, (_, i) =>
+          `<button type="button" class="crop-page" data-page="${i}">${i + 1}</button>`).join("");
+      }
+      [...wrap.children].forEach((b, i) => {
+        b.classList.toggle("cropped", !!boxes[i]);
+        b.classList.toggle("current", i === pageIndex);
+        b.setAttribute("aria-label", `Page ${i + 1}${boxes[i] ? ", cropped" : ""}`);
+      });
+      const done = boxes.filter(Boolean).length;
+      $("cropLabel").textContent = `Page ${pageIndex + 1} of ${doc.numPages}` + (done ? ` · ${done} cropped` : "");
+    }
+    const go = (i) => { if (doc && i >= 0 && i < doc.numPages && i !== pageIndex) { pageIndex = i; show(); } };
+    $("cropPages").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-page]");
+      if (b) go(Number(b.dataset.page));
+    });
+    root.querySelectorAll('input[name="cropPages"]').forEach((r) => r.addEventListener("change", () => {
+      const each = mode() === "each";
+      $("cropEach").hidden = !each;
+      // Switching to per-page: every page starts from the box drawn so far, if any.
+      if (each && doc && !boxes.some(Boolean) && !isFull(box)) boxes = boxes.map(() => ({ ...box }));
+      draw();
+    }));
+    root.querySelectorAll("[data-copy]").forEach((btn) => btn.addEventListener("click", () => {
+      const which = btn.dataset.copy;
+      boxes = boxes.map((b, i) => {
+        const n = i + 1;
+        if (which === "all" || (which === "odd" && n % 2) || (which === "even" && !(n % 2))) return isFull(box) ? null : { ...box };
+        return b;
+      });
+      draw();
+      if (typeof showToast === "function") showToast(`Crop copied to ${which === "all" ? "every page" : `${which} pages`}.`, "success");
+    }));
 
     // Drag the box or a handle.
     let drag = null;
@@ -95,9 +157,9 @@ const CropTool = (() => {
     $("cropStage").addEventListener("pointerup", stop);
     $("cropStage").addEventListener("pointercancel", stop);
 
-    $("cropPrev").addEventListener("click", () => { if (doc && pageIndex > 0) { pageIndex--; show(); } });
-    $("cropNext").addEventListener("click", () => { if (doc && pageIndex < doc.numPages - 1) { pageIndex++; show(); } });
-    $("cropReset").addEventListener("click", () => { box = { l: 0, t: 0, r: 1, b: 1 }; draw(); });
+    $("cropPrev").addEventListener("click", () => go(pageIndex - 1));
+    $("cropNext").addEventListener("click", () => go(pageIndex + 1));
+    $("cropReset").addEventListener("click", () => { box = { ...FULL }; draw(); });
     // Finds the content's edges on the preview and crops just outside them.
     $("cropAuto").addEventListener("click", () => {
       const c = $("cropCanvas");
@@ -122,10 +184,13 @@ const CropTool = (() => {
 
     function options() {
       if (!doc) throw new ClientPDF.UserError("Add a PDF first.");
-      const margins = { left: box.l, top: box.t, right: 1 - box.r, bottom: 1 - box.b };
-      if (Object.values(margins).every((m) => m < 0.001)) throw new ClientPDF.UserError("Drag on the page to choose the area to keep.");
-      const only = root.querySelector('input[name="cropPages"]:checked').value === "one";
-      return { ...margins, pages: only ? String(pageIndex + 1) : "all" };
+      const margins = (b) => ({ left: b.l, top: b.t, right: 1 - b.r, bottom: 1 - b.b });
+      if (mode() === "each") {
+        if (!boxes.some(Boolean)) throw new ClientPDF.UserError("Drag on a page to choose the area to keep.");
+        return { boxes: boxes.map((b) => (b ? margins(b) : null)) };
+      }
+      if (isFull(box)) throw new ClientPDF.UserError("Drag on the page to choose the area to keep.");
+      return { ...margins(box), pages: mode() === "one" ? String(pageIndex + 1) : "all" };
     }
 
     return { setPdf, options, destroy: () => doc && doc.destroy() };

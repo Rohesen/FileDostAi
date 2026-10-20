@@ -211,6 +211,19 @@ async function main() {
     }
     const size = fs.statSync(pdfPath).size;
     check("PDF is reasonably small", size < 3.5 * 1024 * 1024, `${(size / 1024).toFixed(0)} KB`);
+    check("saved as Scan_<date>_<time>.pdf", /^Scan_\d{4}-\d\d-\d\d_\d{4}\.pdf$/.test(download.suggestedFilename()), download.suggestedFilename());
+    check("filter label says Magic color", (await page.textContent('[data-filter="enhanced"]')).includes("Magic color"));
+    // PDF size: Small makes a smaller file than Best.
+    const sizeOf = async (preset) => {
+      await page.click(`[data-size="${preset}"]`);
+      const [dl] = await Promise.all([page.waitForEvent("download", { timeout: 60000 }), page.click("#btnExecute")]);
+      const f = path.join(OUT, `scan_${preset}.pdf`);
+      await dl.saveAs(f);
+      return fs.statSync(f).size;
+    };
+    const small = await sizeOf("small"), best = await sizeOf("best");
+    check("PDF size Small is much smaller than Best", small < best * 0.75, `${(small / 1024).toFixed(0)} KB vs ${(best / 1024).toFixed(0)} KB`);
+    await page.click('[data-size="standard"]');
     await ctx.close();
 
     // ---------------- phone width ----------------
@@ -298,6 +311,18 @@ async function main() {
     }));
     check("shutter adds a page per capture", camState.files.length === 2 && camState.files.every((t) => t === "image/jpeg"), doneText);
     check("Done closes the camera and stops it", !camState.overlay && !camState.camera);
+    // Retake page 1: one shot replaces it, keeps its place, and the camera closes by itself.
+    const namesBefore = await c.evaluate(() => ScanTool._active._state().pages.map((p) => p.name));
+    await c.click('.scan-thumb:nth-child(1) .scan-thumb-btn');
+    await c.click('[data-view="result"]').catch(() => {});
+    await c.click('[data-act="retake"]');
+    await c.waitForSelector(".scan-cam.live", { timeout: 15000 });
+    await c.waitForFunction(() => document.querySelector(".scan-cam video").videoWidth > 0);
+    await c.click("#scanShutter");
+    await c.waitForFunction(() => !document.querySelector(".scan-cam"));
+    await waitIdle(c, 2);
+    const retaken = await c.evaluate(() => ({ names: ScanTool._active._state().pages.map((p) => p.name), files: currentFiles.length }));
+    check("Retake replaces the page in place", retaken.names.length === 2 && retaken.files === 2 && retaken.names[1] === namesBefore[1] && retaken.names[0] !== namesBefore[0], `${namesBefore.join()} -> ${retaken.names.join()}`);
     // Escape closes only the camera, not the tool.
     await c.click("#scanCameraBtn");
     await c.waitForSelector(".scan-cam.live", { timeout: 15000 });

@@ -632,3 +632,11 @@
   .scan-cam-flash.go { animation: none; }
   .scan-thumb, .scan-handle span { transition: none; }
 }
+
+/* Second segmented control (PDF size) sits next to the page size. */
+.scan-paper + .scan-paper { margin-left: 0; }
+.scan-out { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+.scan-out .checkbox-group { font-size: 13px; line-height: 1.45; }
+.scan-share { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.scan-share-note { font-size: 12px; color: var(--text-muted); }
+.scan [hidden] { display: none !important; }

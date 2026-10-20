@@ -73,6 +73,34 @@ print(json.dumps({"pages": len(d), "w": round(p.rect.width), "h": round(p.rect.h
   let r = info(await save());
   check("crop keeps the dragged area", Math.abs(r.w - 306) < 12 && Math.abs(r.h - 210) < 12, `${r.w}x${r.h}`);
 
+  // Different crop for each page: crop page 1 only, then copy it to every page.
+  const sizes = (file) => JSON.parse(py(`
+import sys, json, pymupdf
+d = pymupdf.open(sys.argv[1]); print(json.dumps([[round(p.rect.width), round(p.rect.height)] for p in d]))
+`, file));
+  await open("crop-pdf", ["old.pdf"]);
+  await page.waitForFunction(() => document.querySelector("#cropCanvas").width > 100);
+  await page.check('input[name="cropPages"][value="each"]');
+  check("per-page mode shows page buttons", await page.locator("#cropPages .crop-page").count() === 2);
+  await page.evaluate(() => document.querySelector("#cropStage").scrollIntoView({ block: "start" }));
+  const st2 = await page.locator("#cropStage").boundingBox();
+  const se2 = await page.locator(".crop-handle.h-se").boundingBox();
+  await page.mouse.move(se2.x + se2.width / 2, se2.y + se2.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(st2.x + st2.width / 2, st2.y + st2.height / 2, { steps: 5 });
+  await page.mouse.up();
+  await page.click('#cropPages [data-page="1"]');
+  await page.waitForFunction(() => /Page 2 of 2/.test(document.querySelector("#cropLabel").textContent));
+  const page2Box = await page.evaluate(() => document.querySelector("#cropBox").style.width);
+  check("page 2 starts uncropped", page2Box === "100%", page2Box);
+  let sz = sizes(await save());
+  check("per-page: page 1 cropped, page 2 untouched", Math.abs(sz[0][0] - 298) < 12 && Math.abs(sz[0][1] - 421) < 12 && sz[1][0] === 595, JSON.stringify(sz));
+  await page.click('#cropPages [data-page="0"]');
+  await page.waitForFunction(() => /Page 1 of 2/.test(document.querySelector("#cropLabel").textContent));
+  await page.click('[data-copy="all"]');
+  sz = sizes(await save());
+  check("copy this crop to all pages", sz.every(([w, h]) => Math.abs(w - 298) < 12 && Math.abs(h - 421) < 12), JSON.stringify(sz));
+
   await page.setViewportSize({ width: 1280, height: 900 });
   // Resize to A4.
   await open("resize-pdf", ["old.pdf"]);

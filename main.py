@@ -689,20 +689,38 @@ def _page(title: str, description: str, path: str, request: Request) -> HTMLResp
     start = page.index('<meta name="description" content="')
     end = page.index('">', start) + 2
     canonical = _base_url(request) + path
-    page = page[:start] + (
-        f'<meta name="description" content="{html.escape(description)}">\n'
-        f'  <link rel="canonical" href="{html.escape(canonical)}">'
-    ) + page[end:]
+    base = _base_url(request)
+    e = html.escape
+    # Site-name signals: Google shows og:site_name / WebSite JSON-LD as the name above results,
+    # instead of the bare domain.
+    meta = (
+        f'<meta name="description" content="{e(description)}">\n'
+        f'  <link rel="canonical" href="{e(canonical)}">\n'
+        f'  <meta name="application-name" content="{e(BRAND_NAME)}">\n'
+        f'  <meta property="og:site_name" content="{e(BRAND_NAME)}">\n'
+        f'  <meta property="og:type" content="website">\n'
+        f'  <meta property="og:title" content="{e(title)}">\n'
+        f'  <meta property="og:description" content="{e(description)}">\n'
+        f'  <meta property="og:url" content="{e(canonical)}">\n'
+        f'  <meta property="og:image" content="{e(base)}/static/icons/icon-512.png">\n'
+        f'  <meta name="twitter:card" content="summary">'
+    )
+    if path == "/":
+        site = {"@context": "https://schema.org", "@type": "WebSite", "name": BRAND_NAME,
+                "alternateName": sorted({BRAND_NAME.replace(" ", ""), BRAND_NAME.replace(" ", "").lower() + ".com"} - {BRAND_NAME}),
+                "url": base + "/"}
+        meta += '\n  <script type="application/ld+json">' + json.dumps(site).replace("<", "\\u003c") + "</script>"
+    page = page[:start] + meta + page[end:]
     return HTMLResponse(page)
 
 
-@app.get("/", response_class=HTMLResponse)
+@app.api_route("/", methods=["GET", "HEAD"], response_class=HTMLResponse)
 async def serve_index(request: Request):
     return _page(HOME_TITLE, "Free PDF tools: merge, split, rotate, compress, OCR, redact, sign and more. "
                  "Most tools run in your browser, so your files never leave your device.", "/", request)
 
 
-@app.get("/sitemap.xml")
+@app.api_route("/sitemap.xml", methods=["GET", "HEAD"])
 async def sitemap(request: Request):
     base = _base_url(request)
     urls = [f"{base}/"] + [f"{base}/{slug}" for slug in list(TOOL_PAGES) + list(INFO_PAGES)]
@@ -711,7 +729,7 @@ async def sitemap(request: Request):
     return Response(body, media_type="application/xml")
 
 
-@app.get("/robots.txt", response_class=PlainTextResponse)
+@app.api_route("/robots.txt", methods=["GET", "HEAD"], response_class=PlainTextResponse)
 async def robots(request: Request):
     return f"User-agent: *\nDisallow: /api/\nSitemap: {_base_url(request)}/sitemap.xml\n"
 
@@ -791,7 +809,7 @@ async def manifest():
     return Response(body, media_type="application/manifest+json")
 
 
-@app.get("/{slug}", response_class=HTMLResponse)
+@app.api_route("/{slug}", methods=["GET", "HEAD"], response_class=HTMLResponse)
 async def tool_page(slug: str, request: Request):
     slug = TOOL_ALIASES.get(slug, slug)
     if slug in INFO_PAGES:

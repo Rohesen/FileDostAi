@@ -320,17 +320,25 @@
 
   /**
    * Crops pages. margins are fractions (0-1) of the page as the reader sees it, cut from each side.
+   * boxes: optional list with one { left, top, right, bottom } (or null to leave it) per page, for a
+   * different crop on each page; otherwise the same margins go on every page in `pages`.
    * Sets the CropBox, which every viewer and printer honours.
    */
-  async function crop(bytes, { left = 0, top = 0, right = 0, bottom = 0, pages = "all" } = {}) {
-    const m = [left, top, right, bottom].map(Number);
-    if (m.some((v) => !(v >= 0 && v < 1)) || m[0] + m[2] >= 0.95 || m[1] + m[3] >= 0.95) {
-      throw new UserError("The crop area is too small.");
-    }
-    const [L, T, R, B] = m;
+  async function crop(bytes, { left = 0, top = 0, right = 0, bottom = 0, pages = "all", boxes = null } = {}) {
+    const check = (o) => {
+      const m = [o.left || 0, o.top || 0, o.right || 0, o.bottom || 0].map(Number);
+      if (m.some((v) => !(v >= 0 && v < 1)) || m[0] + m[2] >= 0.95 || m[1] + m[3] >= 0.95) {
+        throw new UserError("The crop area is too small.");
+      }
+      return m;
+    };
     const doc = await load(bytes);
     const all = doc.getPages();
-    for (const i of pickPages(pages, all.length)) {
+    const jobs = boxes
+      ? boxes.map((b, i) => (b && i < all.length ? [i, check(b)] : null)).filter(Boolean)
+      : pickPages(pages, all.length).map((i) => [i, check({ left, top, right, bottom })]);
+    if (!jobs.length) throw new UserError("Drag on the page to choose the area to keep.");
+    for (const [i, [L, T, R, B]] of jobs) {
       const page = all[i];
       const { box, rot } = viewOf(page);
       // Which side of the page's own box each side of the reader's view falls on.

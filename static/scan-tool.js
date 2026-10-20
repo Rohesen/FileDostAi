@@ -9,13 +9,17 @@ const ScanTool = (() => {
   const DISPLAY_MAX = 1600; // long edge kept in memory per page, for editing and previews
   const DETECT_MAX = 480; // long edge used to find the page edges
   const PREVIEW_MAX = 1100; // long edge of the on-screen result
-  const OUTPUT_MAX = 2500; // long edge of each page in the PDF
-  const JPEG_QUALITY = 0.85;
+  // PDF size presets: long edge of each page and JPEG quality. "small" suits portals and email limits.
+  const SIZES = {
+    small: { maxEdge: 1400, quality: 0.6, label: "Small" },
+    standard: { maxEdge: 2000, quality: 0.75, label: "Standard" },
+    best: { maxEdge: 2600, quality: 0.88, label: "Best" },
+  };
   const PAPERS = { fit: 0, a4: 297 / 210, letter: 11 / 8.5 };
   const FULL = [[0, 0], [1, 0], [1, 1], [0, 1]];
   const FILTERS = [
     { id: "original", label: "Original" },
-    { id: "enhanced", label: "Enhanced" },
+    { id: "enhanced", label: "Magic color" },
     { id: "gray", label: "Grayscale" },
     { id: "bw", label: "B&W" },
   ];
@@ -757,6 +761,7 @@ const ScanTool = (() => {
         return new Promise((r) => setTimeout(r, 0)).then(() => { last = performance.now(); });
       },
       encode(c, type, q) {
+        if (type === "image/jpeg") return Promise.resolve(jpegBytes(c, q));
         return new Promise((resolve, reject) => c.toBlob((b) => {
           if (!b) return reject(new Error("Couldn't encode the page image."));
           b.arrayBuffer().then((a) => resolve(new Uint8Array(a)), reject);
@@ -880,6 +885,15 @@ self.onmessage = async (e) => {
   /* ======================================================================
    * Helpers
    * ==================================================================== */
+  function jpegBytes(canvas, q) {
+    const url = canvas.toDataURL("image/jpeg", q);
+    if (!url.startsWith("data:image/jpeg")) throw new Error("Couldn't encode the page image.");
+    const bin = atob(url.slice(url.indexOf(",") + 1));
+    const out = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out;
+  }
+
   function makeCanvas(w, h) {
     const c = document.createElement("canvas");
     c.width = Math.max(1, Math.round(w));
@@ -946,6 +960,8 @@ self.onmessage = async (e) => {
   }
 
   const ICONS = {
+    retake: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><path d="M15.5 13a3.5 3.5 0 1 1-1-2.5"/><path d="M15.5 9.5v2h-2"/></svg>',
+    share: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.2 10.8l7.6-3.6M8.2 13.2l7.6 3.6"/></svg>',
     camera: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>',
     images: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M21 16l-5-5-8 8"/></svg>',
     rotate: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>',
@@ -972,6 +988,12 @@ self.onmessage = async (e) => {
               <button type="button" role="radio" data-act="paper" data-paper="fit" aria-checked="true">Fit</button>
               <button type="button" role="radio" data-act="paper" data-paper="a4" aria-checked="false">A4</button>
               <button type="button" role="radio" data-act="paper" data-paper="letter" aria-checked="false">Letter</button>
+            </div>
+          </div>
+          <div class="scan-paper" role="radiogroup" aria-label="PDF size">
+            <span class="scan-paper-label">PDF size</span>
+            <div class="scan-seg">
+              ${Object.entries(SIZES).map(([id, z]) => `<button type="button" role="radio" data-act="size" data-size="${id}" aria-checked="${id === "standard"}">${z.label}</button>`).join("")}
             </div>
           </div>
         </div>
@@ -1033,9 +1055,17 @@ self.onmessage = async (e) => {
                 <button type="button" class="scan-chip" data-act="left" aria-label="Move page earlier">${ICONS.left}</button>
                 <button type="button" class="scan-chip" data-act="right" aria-label="Move page later">${ICONS.right}</button>
                 <button type="button" class="scan-chip" data-act="filter-all">Use look on all pages</button>
+                <button type="button" class="scan-chip" data-act="retake" title="Take this page again">${ICONS.retake}<span>Retake</span></button>
                 <button type="button" class="scan-chip scan-chip-danger" data-act="delete">${ICONS.trash}<span>Delete</span></button>
               </div>
             </section>
+          </div>
+          <div class="scan-out">
+            <label class="checkbox-group"><input type="checkbox" id="scanOcr"> Make the text searchable and copyable (OCR). This step sends the PDF to our server, which deletes it straight after.</label>
+            <div class="scan-share" id="scanShareRow" hidden>
+              <button type="button" class="scan-btn scan-btn-primary" data-act="share">${ICONS.share}<span>Share PDF</span></button>
+              <span class="scan-share-note" id="scanShareNote"></span>
+            </div>
           </div>
         </div>
       </div>`;
@@ -1049,7 +1079,7 @@ self.onmessage = async (e) => {
   function create(root) {
     root.innerHTML = template();
     const $ = (id) => root.querySelector(`#${id}`);
-    const st = { pages: [], sel: null, paper: "fit", view: "result", destroyed: false, queue: Promise.resolve(), layout: null };
+    const st = { pages: [], sel: null, paper: "fit", size: "standard", retake: null, result: null, view: "result", destroyed: false, queue: Promise.resolve(), layout: null };
     const els = {
       empty: $("scanEmpty"), work: $("scanWork"), strip: $("scanStrip"), panes: $("scanPanes"),
       stage: $("scanStage"), inner: $("scanInner"), canvas: $("scanCanvas"), shade: $("scanShade"),
@@ -1068,6 +1098,9 @@ self.onmessage = async (e) => {
     function addFiles(files) {
       files = Array.from(files).filter(isImage);
       if (!files.length) return;
+      const old = st.retake;
+      st.retake = null;
+      if (old && !old.disposed && st.pages.includes(old)) return replacePage(old, files[0]);
       if (typeof addFilesToTool === "function" && root.isConnected) addFilesToTool(files);
       else setFiles([...st.pages.map((p) => p.file), ...files]);
     }
@@ -1082,6 +1115,24 @@ self.onmessage = async (e) => {
       st.pages = next;
       if (fresh.length) select(fresh[fresh.length - 1], true);
       else if (!next.includes(st.sel)) select(next[0] || null);
+      renderAll();
+    }
+
+    // Retake: the new photo takes the old page's place, keeping its look and position.
+    function replacePage(old, file) {
+      const i = st.pages.indexOf(old);
+      const p = newPage(file);
+      p.filter = old.filter;
+      old.disposed = true;
+      st.pages[i] = p;
+      try {
+        if (typeof currentFiles !== "undefined" && Array.isArray(currentFiles)) {
+          const k = currentFiles.indexOf(old.file);
+          if (k >= 0) currentFiles[k] = file;
+          if (typeof updateSelectedFilesUI === "function") updateSelectedFilesUI();
+        }
+      } catch (e) { /* not in the app shell */ }
+      select(p, true);
       renderAll();
     }
 
@@ -1146,7 +1197,7 @@ self.onmessage = async (e) => {
     function jobOpts(p, maxEdge, encode) {
       return {
         corners: p.corners, rot: p.rot, filter: p.filter, paperRatio: PAPERS[st.paper] || 0,
-        maxEdge, encode, quality: JPEG_QUALITY,
+        maxEdge, encode, quality: SIZES[st.size].quality,
       };
     }
 
@@ -1188,7 +1239,7 @@ self.onmessage = async (e) => {
       for (let i = 0; i < list.length; i++) {
         const p = list[i];
         if (typeof setProcessingLabel === "function") setProcessingLabel(`Straightening page ${i + 1} of ${list.length}...`);
-        const r = await Runner.render(() => decodeImage(p.file), jobOpts(p, OUTPUT_MAX, true));
+        const r = await Runner.render(() => decodeImage(p.file), jobOpts(p, SIZES[st.size].maxEdge, true));
         // Real paper sizes in points, so A4 prints as A4 (landscape pages keep their turn).
         const size = { a4: [595.28, 841.89], letter: [612, 792] }[st.paper];
         const page = { bytes: r.bytes, type: r.type };
@@ -1564,13 +1615,18 @@ self.onmessage = async (e) => {
       if (!b || !root.contains(b) || b.disabled) return;
       const p = st.sel;
       switch (b.dataset.act) {
-        case "camera": openCamera(); return;
-        case "pick": els.pick.click(); return;
+        case "camera": st.retake = null; openCamera(); return;
+        case "pick": st.retake = null; els.pick.click(); return;
         case "paper":
           st.paper = b.dataset.paper;
           updateInfo();
           st.pages.forEach((q) => renderPreview(q));
           return;
+        case "size":
+          st.size = b.dataset.size;
+          root.querySelectorAll('[data-act="size"]').forEach((x) => x.setAttribute("aria-checked", String(x === b)));
+          return;
+        case "share": share(); return;
         case "view": setView(b.dataset.view); renderEditor(); drawResult(); return;
         case "select": {
           if (suppressClick) return;
@@ -1595,6 +1651,10 @@ self.onmessage = async (e) => {
         case "left": movePage(st.pages.indexOf(p), st.pages.indexOf(p) - 1); break;
         case "right": movePage(st.pages.indexOf(p), st.pages.indexOf(p) + 1); break;
         case "delete": deletePage(p); break;
+        case "retake":
+          st.retake = p;
+          if (canUseCamera()) openCamera({ single: true }); else els.capture.click();
+          break;
         case "filter": p.filter = b.dataset.filter; updateInfo(); renderPreview(p); break;
         case "filter-all":
           st.pages.forEach((q) => { if (q.filter !== p.filter) { q.filter = p.filter; renderPreview(q); } });
@@ -1641,9 +1701,10 @@ self.onmessage = async (e) => {
         </div>`;
     }
 
-    async function openCamera() {
+    async function openCamera({ single = false } = {}) {
       if (!canUseCamera()) { els.capture.click(); return; }
       if (cam.el || cam.opening) return;
+      cam.single = single;
       cam.opening = true;
       const el = document.createElement("div");
       el.className = "scan-cam";
@@ -1698,6 +1759,7 @@ self.onmessage = async (e) => {
     }
 
     function closeCamera() {
+      st.retake = null;
       clearInterval(cam.timer);
       cam.timer = 0;
       if (cam.stream) cam.stream.getTracks().forEach((t) => t.stop());
@@ -1777,8 +1839,8 @@ self.onmessage = async (e) => {
         flash.classList.remove("go");
         void flash.offsetWidth;
         flash.classList.add("go");
-        const blob = await new Promise((r) => c.toBlob(r, "image/jpeg", 0.92));
-        if (!blob) throw new Error("capture failed");
+        // toDataURL, not toBlob: Chrome runs toBlob in idle time, which the live outline rarely leaves.
+        const blob = new Blob([jpegBytes(c, 0.92)], { type: "image/jpeg" });
         cam.shots++;
         const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
         const file = new File([blob], `scan-${stamp}-${cam.shots}.jpg`, { type: "image/jpeg", lastModified: Date.now() });
@@ -1791,10 +1853,34 @@ self.onmessage = async (e) => {
         el.querySelector(".scan-cam-last").classList.add("has");
         el.querySelector(".scan-cam-done").textContent = `Done (${cam.shots})`;
         addFiles([file]);
+        if (cam.single) closeCamera();
       } catch (e) {
         toast("Couldn't take the photo. Try again.");
       } finally {
         cam.busy = false;
+      }
+    }
+
+    // ---------- after saving ----------
+    // The phone's share sheet (WhatsApp, Gmail, Drive...) for the PDF just made.
+    function setResult(result) {
+      st.result = result;
+      const row = $("scanShareRow");
+      let ok = false;
+      try {
+        const file = new File([result.bytes], result.filename, { type: "application/pdf" });
+        ok = !!(navigator.canShare && navigator.canShare({ files: [file] }));
+        st.shareFile = file;
+      } catch (e) { ok = false; }
+      row.hidden = !ok;
+      $("scanShareNote").textContent = ok ? `${result.filename}, ${Math.max(1, Math.round(result.bytes.length / 1024))} KB` : "";
+    }
+    async function share() {
+      if (!st.shareFile) return;
+      try {
+        await navigator.share({ files: [st.shareFile], title: st.shareFile.name });
+      } catch (e) {
+        if (e && e.name !== "AbortError") toast("Couldn't open sharing. The PDF is in your downloads.");
       }
     }
 
@@ -1815,9 +1901,12 @@ self.onmessage = async (e) => {
       setFiles,
       pages,
       destroy,
+      setResult,
+      ocr: () => $("scanOcr").checked,
       // Test hooks.
       _state: () => ({
         paper: st.paper,
+        size: st.size,
         selected: st.pages.indexOf(st.sel),
         view: st.view,
         worker: Runner.usingWorker(),

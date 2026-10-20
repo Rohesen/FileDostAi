@@ -262,7 +262,25 @@ const TOOLS = [
     onOpen: (ctx) => { ctx.scan = ScanTool.create(ctx.el("scanRoot")); },
     onFiles: (ctx) => ctx.scan.setFiles(ctx.files),
     onClose: (ctx) => ctx.scan && ctx.scan.destroy(),
-    run: async (ctx) => PdfWorker.run("imagesToPdf", await ctx.scan.pages()),
+    run: async (ctx) => {
+      const t0 = performance.now();
+      let result = await PdfWorker.run("imagesToPdf", await ctx.scan.pages());
+      const stamp = new Date();
+      const pad = (n) => String(n).padStart(2, "0");
+      const name = `Scan_${stamp.getFullYear()}-${pad(stamp.getMonth() + 1)}-${pad(stamp.getDate())}_${pad(stamp.getHours())}${pad(stamp.getMinutes())}.pdf`;
+      if (ctx.scan.ocr()) {
+        ctx.progress(0.8, "Making the text searchable on the server…");
+        const fd = new FormData();
+        fd.append("file", new Blob([result.bytes], { type: "application/pdf" }), name);
+        fd.append("language", "eng");
+        const r = await serverRequest("/api/ocr", fd, ctx, { quiet: true, label: "Making the text searchable (OCR)…" });
+        result = { ...result, bytes: r.bytes };
+      }
+      result = { ...result, filename: name };
+      ScanTool._lastMs = Math.round(performance.now() - t0);
+      ctx.scan.setResult(result);
+      return result;
+    },
   },
   {
     id: "word-to-pdf",

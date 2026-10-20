@@ -1530,6 +1530,15 @@ a.tool-card:focus-visible, .page-card:focus-visible, button:focus-visible {
 .crop-handle.h-s { left: 50%; top: 100%; cursor: ns-resize; }
 .crop-handle.h-sw { left: 0; top: 100%; cursor: nesw-resize; }
 .crop-handle.h-w { left: 0; top: 50%; cursor: ew-resize; }
+.crop-each { margin-top: 8px; }
+.crop-pages { display: flex; flex-wrap: wrap; gap: 6px; max-height: 120px; overflow-y: auto; margin: 6px 0 10px; }
+.crop-page {
+  min-width: 36px; height: 32px; padding: 0 8px; border-radius: 8px; font: inherit; font-size: 13px;
+  color: var(--text-muted); background: transparent; border: 1px solid var(--border-subtle); cursor: pointer;
+}
+.crop-page.cropped { background: rgba(34, 211, 238, 0.18); color: var(--text-strong); border-color: var(--accent-cyan); }
+.crop-page.current { outline: 2px solid var(--accent-cyan); outline-offset: 1px; font-weight: 700; }
+.crop-copy { flex-wrap: wrap; gap: 6px; font-size: 13px; color: var(--text-muted); }
 @media (pointer: coarse) { .crop-handle { width: 24px; height: 24px; margin: -12px 0 0 -12px; } }
 
 .hf-row { gap: 8px; }
