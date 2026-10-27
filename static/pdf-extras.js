@@ -4,7 +4,7 @@
 // tries the server's compressor (files processed in memory, never stored) and then falls back
 // to the browser.
 
-document.head.append(Object.assign(document.createElement("link"), { rel: "stylesheet", href: "/static/pdf-extras.css?v=33" }));
+document.head.append(Object.assign(document.createElement("link"), { rel: "stylesheet", href: "/static/pdf-extras.css?v=34" }));
 
 const PdfExtras = (() => {
   const { PDFDocument, PDFName, PDFDict, PDFArray, PDFNumber, PDFHexString, PDFRef, StandardFonts, rgb, degrees } = PDFLib;
@@ -48,12 +48,12 @@ const PdfExtras = (() => {
     if (type === "image/jpeg") {
       const url = canvas.toDataURL(type, quality);
       if (!url.startsWith("data:image/jpeg")) return Promise.reject(new UserError("This page is too large for your browser to turn into a picture."));
-      return Promise.resolve(Uint8Array.from(atob(url.slice(url.indexOf(",") + 1)), (c) => c.charCodeAt(0)));
+      return Promise.resolve(dataUrlBytes(url));
     }
-    return new Promise((resolve, reject) => canvas.toBlob(async (blob) => {
-      if (!blob) return reject(new UserError("This page is too large for your browser to turn into a picture."));
-      resolve(new Uint8Array(await blob.arrayBuffer()));
-    }, type, quality));
+    return fastCanvasBlob(canvas, type, quality).then(async (blob) => {
+      if (!blob) throw new UserError("This page is too large for your browser to turn into a picture.");
+      return new Uint8Array(await blob.arrayBuffer());
+    });
   }
 
   /** Page size as the reader sees it (crop box, rotation applied). */

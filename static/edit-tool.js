@@ -783,7 +783,7 @@ const EditTool = (() => {
         c.width = Math.max(1, Math.round(bmp.width * k));
         c.height = Math.max(1, Math.round(bmp.height * k));
         c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
-        const blob = await new Promise((res) => c.toBlob(res, "image/png"));
+        const blob = await fastCanvasBlob(c, "image/png");
         if (!blob) { toast("Couldn't convert this image. Try a PNG or JPG."); return; }
         bytes = new Uint8Array(await blob.arrayBuffer());
         mime = "image/png";
@@ -1397,7 +1397,7 @@ const EditTool = (() => {
         else if (o.align === "right") x += widthPt - lw;
         ctx.fillText(line, x * k, (i * LINE_HEIGHT * o.size + off) * k);
       });
-      const blob = await new Promise((res) => c.toBlob(res, "image/png"));
+      const blob = await fastCanvasBlob(c, "image/png");
       return { bytes: new Uint8Array(await blob.arrayBuffer()), w: c.width / k, h: c.height / k, padPt };
     }
 

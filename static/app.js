@@ -345,11 +345,11 @@ function removeFile(idx) {
 
 const Progress = (() => {
   let shown = 0, real = 0, floor = 0, ceil = 1, started = 0, expect = 4000, timer = null, label = "";
-  let steps = [], current = 0, onCancel = null;
+  let steps = [], current = 0, onCancel = null, gen = 0;
   const el = (id) => document.getElementById(id);
 
   function begin({ steps: names, expectMs = 4000, cancel = null }) {
-    steps = names; current = 0; expect = expectMs; onCancel = cancel;
+    steps = names; current = 0; expect = expectMs; onCancel = cancel; gen++;
     shown = real = floor = 0; ceil = 1; started = performance.now();
     el("processingState").style.display = "flex";
     el("progressCancel").hidden = !cancel;
@@ -398,7 +398,8 @@ const Progress = (() => {
     current = steps.length; renderSteps();
     el("progressFill").style.width = "100%";
     el("progressPct").textContent = "100%";
-    return new Promise((r) => setTimeout(() => { hide(); r(); }, 350));
+    const g = gen;
+    return new Promise((r) => setTimeout(() => { if (g === gen) hide(); r(); }, 250));
   }
   function hide() {
     clearInterval(timer);
@@ -460,7 +461,7 @@ async function executeCurrentTool({ keep = false } = {}) {
     if (tool.run) {
       Progress.begin({ steps: ["Read your file", "Work on it on this device", "Get the download ready"], expectMs: 1500 + (bytes / 1048576) * 600, cancel });
       Progress.setLabel("Reading your file…");
-      await new Promise((r) => setTimeout(r, 30));
+      await new Promise((r) => requestAnimationFrame(() => r()));
       Progress.step(1, { from: 0.08, to: 0.92 });
       Progress.setLabel("Working on your device…");
       ctx.progress = (f, text) => { if (token === runToken) Progress.set(f, text); };
@@ -478,9 +479,11 @@ async function executeCurrentTool({ keep = false } = {}) {
     if (token !== runToken) throw cancelledError();
     if (tool !== activeTool) return null;
     Progress.step(2, { from: 0.95, to: 1 });
-    await Progress.finish();
-    if (keep) return result;
+    // The bar's last moment plays while the file is already being saved, not before it.
+    const finished = Progress.finish();
+    if (keep) { await finished; return result; }
     if (result.json) {
+      await finished;
       const box = document.getElementById("resultBox");
       if (tool.renderResult) {
         box.style.display = "flex";

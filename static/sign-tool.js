@@ -149,7 +149,7 @@ const SignTool = (() => {
       }
       const c = signatureCanvas();
       if (!c) return null;
-      const blob = await new Promise((r) => c.toBlob(r, "image/png"));
+      const blob = await fastCanvasBlob(c, "image/png");
       return { bytes: new Uint8Array(await blob.arrayBuffer()), type: "image/png", aspect: c.width / c.height, url: c.toDataURL("image/png") };
     }
 

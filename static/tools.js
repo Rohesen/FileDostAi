@@ -980,6 +980,6 @@ async function imageForPdf(file) {
   c.width = bitmap.width;
   c.height = bitmap.height;
   c.getContext("2d").drawImage(bitmap, 0, 0);
-  const png = await new Promise((resolve) => c.toBlob(resolve, "image/png"));
+  const png = await fastCanvasBlob(c, "image/png");
   return { bytes: new Uint8Array(await png.arrayBuffer()), type: "image/png", name: file.name };
 }

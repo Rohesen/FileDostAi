@@ -1,6 +1,23 @@
 // pdf.js helpers: open documents, render pages, and the PDF to image / PDF to text tools.
 // Everything here runs in the browser; nothing is uploaded.
 
+// Canvas to Blob without canvas.toBlob's wait. Chrome encodes toBlob in idle time, which a page
+// with animations rarely has: a PNG page took 1.3 s that way and 30 ms with toDataURL.
+function dataUrlBytes(url) {
+  const bin = atob(url.slice(url.indexOf(",") + 1));
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+function fastCanvasBlob(canvas, type = "image/png", quality) {
+  if (type === "image/png" || type === "image/jpeg") {
+    let url = "";
+    try { url = canvas.toDataURL(type, quality); } catch (e) { url = ""; }
+    if (url.startsWith(`data:${type}`)) return Promise.resolve(new Blob([dataUrlBytes(url)], { type }));
+  }
+  return new Promise((resolve) => canvas.toBlob(resolve, type, quality));
+}
+
 const PdfRender = (() => {
   // pdf.js (about 430 KB) is fetched only when a tool first needs it, so it never slows the home page.
   const version = (document.currentScript && new URL(document.currentScript.src).search) || "";
@@ -56,12 +73,12 @@ const PdfRender = (() => {
     if (type === "image/jpeg") {
       const url = canvas.toDataURL(type, quality);
       if (!url.startsWith("data:image/jpeg")) return Promise.reject(new Error("Couldn't encode the image."));
-      return Promise.resolve(Uint8Array.from(atob(url.slice(url.indexOf(",") + 1)), (c) => c.charCodeAt(0)));
+      return Promise.resolve(dataUrlBytes(url));
     }
-    return new Promise((resolve, reject) => canvas.toBlob(async (blob) => {
-      if (!blob) return reject(new Error("Couldn't encode the image."));
-      resolve(new Uint8Array(await blob.arrayBuffer()));
-    }, type, quality));
+    return fastCanvasBlob(canvas, type, quality).then(async (blob) => {
+      if (!blob) throw new Error("Couldn't encode the image.");
+      return new Uint8Array(await blob.arrayBuffer());
+    });
   }
 
   /** PDF to JPG/PNG. One page gives one image; several pages give a ZIP. */
@@ -72,8 +89,11 @@ const PdfRender = (() => {
     const ext = format === "png" ? "png" : "jpg";
     const canvas = document.createElement("canvas");
     const files = [];
+    let next = indices.length ? doc.getPage(indices[0] + 1) : null;
     for (let n = 0; n < indices.length; n++) {
-      const page = await doc.getPage(indices[n] + 1);
+      const page = await next;
+      // Ask the pdf.js worker for the next page now, so its parsing overlaps this page's drawing.
+      next = n + 1 < indices.length ? doc.getPage(indices[n + 1] + 1) : null;
       // Cap very large pages at about 40 megapixels so the browser doesn't run out of memory.
       const base = page.getViewport({ scale: 1 });
       let scale = dpi / 72;

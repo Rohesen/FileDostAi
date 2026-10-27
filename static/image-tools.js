@@ -17,7 +17,7 @@ const ImageKit = (() => {
   const err = (msg) => new ClientPDF.UserError(msg);
 
   function blobOf(canvas, mime, quality) {
-    return new Promise((resolve) => canvas.toBlob(resolve, mime, quality));
+    return fastCanvasBlob(canvas, mime, quality);
   }
 
   /** True when this browser can save canvases in that format (AVIF and WebP vary). */
@@ -92,7 +92,7 @@ const ImageKit = (() => {
       images.forEach((i) => { try { i.free(); } catch (e) { /* already freed */ } });
     }
     g.putImageData(pixels, 0, 0);
-    const blob = await new Promise((r) => canvas.toBlob(r, type, quality));
+    const blob = await fastCanvasBlob(canvas, type, quality);
     if (!blob) throw bad();
     return blob;
   }

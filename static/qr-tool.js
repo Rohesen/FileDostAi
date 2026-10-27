@@ -7,7 +7,7 @@ const QrTool = (() => {
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
   if (!document.querySelector("link[data-qr-css]")) {
-    const link = Object.assign(document.createElement("link"), { rel: "stylesheet", href: "/static/qr-tool.css?v=33" });
+    const link = Object.assign(document.createElement("link"), { rel: "stylesheet", href: "/static/qr-tool.css?v=34" });
     link.dataset.qrCss = "1";
     document.head.append(link);
   }
@@ -490,11 +490,11 @@ const QrTool = (() => {
     async function downloadPng() {
       if (!current) return;
       const canvas = toCanvas(current.m, current.opts);
-      canvas.toBlob((blob) => {
+      fastCanvasBlob(canvas, "image/png").then((blob) => {
         if (!blob) return showToast("Couldn't make the picture.", "error");
         downloadBlob(blob, `${fileBase()}.png`);
         showToast(`Done! Downloaded ${fileBase()}.png. Nothing was uploaded.`, "success");
-      }, "image/png");
+      });
     }
     function downloadSvg() {
       if (!current) return;
@@ -618,7 +618,7 @@ const QrTool = (() => {
       const cur = ui.current();
       if (!cur) throw UserError("Fill in what goes in the QR code first.");
       const canvas = toCanvas(cur.m, cur.opts);
-      const blob = await new Promise((r) => canvas.toBlob(r, "image/png"));
+      const blob = await fastCanvasBlob(canvas, "image/png");
       return { bytes: new Uint8Array(await blob.arrayBuffer()), filename: "qr-code.png", mime: "image/png" };
     }
     ctx.progress(0.05, "Loading the QR reader…");

@@ -1,5 +1,5 @@
 """
-UltraPDF converters - server-side conversions that need more than the core engine:
+FileDost AI converters - server-side conversions that need more than the core engine:
 Office documents, Markdown/HTML/CSV to PDF, PDF to Excel/PowerPoint/Word,
 PDF repair, privacy scanning/cleaning and PDF/A.
 
@@ -880,9 +880,23 @@ def _to_number(value: str):
     return n
 
 
-def _tables_pymupdf(doc) -> Dict[int, List[List[List[Any]]]]:
-    found: Dict[int, List[List[List[Any]]]] = {}
+def _ruled_pages(doc) -> List[int]:
+    """Pages holding any vector drawing. Both table finders work from ruling lines and
+    cell fills, so pages without drawings are skipped (a 20-page text PDF: 11.7 s -> 0.3 s)."""
+    out = []
     for page in doc:
+        try:
+            if page.get_cdrawings():
+                out.append(page.number)
+        except Exception:
+            out.append(page.number)
+    return out
+
+
+def _tables_pymupdf(doc, pages=None) -> Dict[int, List[List[List[Any]]]]:
+    found: Dict[int, List[List[List[Any]]]] = {}
+    for pno in (range(doc.page_count) if pages is None else pages):
+        page = doc[pno]
         try:
             tabs = page.find_tables()
         except Exception:
@@ -894,7 +908,7 @@ def _tables_pymupdf(doc) -> Dict[int, List[List[List[Any]]]]:
     return found
 
 
-def _tables_pdfplumber(pdf: bytes) -> Dict[int, List[List[List[Any]]]]:
+def _tables_pdfplumber(pdf: bytes, pages=None) -> Dict[int, List[List[List[Any]]]]:
     found: Dict[int, List[List[List[Any]]]] = {}
     try:
         import pdfplumber
@@ -903,6 +917,8 @@ def _tables_pdfplumber(pdf: bytes) -> Dict[int, List[List[List[Any]]]]:
     try:
         with pdfplumber.open(io.BytesIO(pdf)) as p:
             for i, page in enumerate(p.pages):
+                if pages is not None and i not in pages:
+                    continue
                 for rows in page.extract_tables() or []:
                     if rows and any(any(c for c in r) for r in rows):
                         found.setdefault(i, []).append(rows)
@@ -933,9 +949,10 @@ def pdf_to_excel(pdf: bytes) -> bytes:
         raise ToolUnavailableError("PDF to Excel needs the 'openpyxl' package on the server.")
     doc = _open_pdf(pdf)
     try:
-        tables = _tables_pymupdf(doc)
-        if not tables:
-            tables = _tables_pdfplumber(pdf)
+        ruled = _ruled_pages(doc)
+        tables = _tables_pymupdf(doc, ruled) if ruled else {}
+        if not tables and ruled:
+            tables = _tables_pdfplumber(pdf, set(ruled))
         wb = Workbook()
         wb.remove(wb.active)
         bold = Font(bold=True)
@@ -985,6 +1002,19 @@ EMU_PER_PT = 12700
 SLIDE_MIN, SLIDE_MAX = 914400, 51206400  # PowerPoint's limits: 1 inch to 56 inches
 
 
+def _pix_jpeg(pix, quality: int) -> bytes:
+    """JPEG bytes for an RGB pixmap. Pillow's libjpeg-turbo is several times faster than
+    MuPDF's own JPEG writer (about 20 ms vs 130 ms for an A4 page at 150 dpi)."""
+    try:
+        from PIL import Image
+        im = Image.frombytes("RGB", (pix.width, pix.height), pix.samples)
+        buf = io.BytesIO()
+        im.save(buf, "JPEG", quality=quality, optimize=True)
+        return buf.getvalue()
+    except Exception:
+        return pix.tobytes("jpeg", jpg_quality=quality)
+
+
 def pdf_to_pptx(pdf: bytes) -> bytes:
     """One slide per page: the page as a full-slide picture, its text in the speaker notes."""
     try:
@@ -1011,7 +1041,7 @@ def pdf_to_pptx(pdf: bytes) -> bytes:
             if longest_in * dpi > 4000:
                 dpi = max(36, int(4000 / longest_in))
             pix = page.get_pixmap(dpi=dpi, alpha=False)
-            img = pix.tobytes("jpeg", jpg_quality=88)
+            img = _pix_jpeg(pix, 88)
             slide = prs.slides.add_slide(blank)
             # Fit the page inside the slide (pages may differ in shape from the first one).
             scale = min(width / r.width, height / r.height)
