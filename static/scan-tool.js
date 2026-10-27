@@ -491,12 +491,19 @@ const ScanTool = (() => {
       }
       // Only for the best few: lines crossing the inside from one side to the other.
       out.sort((x, y) => y.s - x.s);
+      // The best-supported few, plus the biggest fair ones: ruled tables and blocks of writing
+      // often outscore the page itself, which must still be in the running.
       const top = out.slice(0, 12);
+      const area = (q) => polyArea(q) / (w * h);
+      out.filter((c) => c.s >= 0.42 && !top.includes(c)).sort((x, y) => y.s * area(y.q) - x.s * area(x.q))
+        .slice(0, 8).forEach((c) => top.push(c));
       for (const c of top) {
         const { T, B, Lf, R } = c;
         for (const l of lines) {
-          if (l === T || l === B || l === Lf || l === R) continue;
-          const across = isV(l) ? [meet(l, T), meet(l, B)] : isH(l) ? [meet(l, Lf), meet(l, R)] : null;
+          // Only an upright line can be a spine: two pages lie side by side. A level line across
+          // the page is a table border or a heading rule, and must not count against the page.
+          if (l === T || l === B || l === Lf || l === R || !isV(l)) continue;
+          const across = [meet(l, T), meet(l, B)];
           if (!across || !across[0] || !across[1]) continue;
           const mid = [(across[0][0] + across[1][0]) / 2, (across[0][1] + across[1][1]) / 2];
           const span = isV(l) ? [xAt(Lf), xAt(R)] : [yAt(T), yAt(B)];
@@ -508,6 +515,30 @@ const ScanTool = (() => {
         }
       }
       return top.map(({ q, s }) => ({ q, s }));
+    }
+
+    // True when every corner of `inner` lies inside quad `outer` (convex, clockwise), or within tol of it.
+    function encloses(outer, inner, tol) {
+      return inner.every(([x, y]) => outer.every((P, i) => {
+        const Q = outer[(i + 1) % 4];
+        const L = Math.hypot(Q[0] - P[0], Q[1] - P[1]) || 1;
+        return ((Q[0] - P[0]) * (y - P[1]) - (Q[1] - P[1]) * (x - P[0])) / L >= -tol;
+      }));
+    }
+
+    // The band between an enclosing quad and the one inside it must look like paper (about as
+    // bright as the inside), or the bigger quad has just swallowed the table or bed around the page.
+    function paperRing(outer, inner, g, w, h) {
+      let rs = 0, rn = 0, is = 0, inn = 0;
+      const step = Math.max(2, Math.round(Math.max(w, h) / 120));
+      for (let y = step / 2; y < h; y += step) {
+        for (let x = step / 2; x < w; x += step) {
+          const v = g[Math.floor(y) * w + Math.floor(x)];
+          if (encloses(inner, [[x, y]], 0)) { is += v; inn++; } else if (encloses(outer, [[x, y]], 0)) { rs += v; rn++; }
+        }
+      }
+      if (!rn || !inn) return true;
+      return rs / rn >= 0.85 * (is / inn);
     }
 
     /**
@@ -561,14 +592,16 @@ const ScanTool = (() => {
 
       const diag = Math.hypot(w, h);
       let best = null;
-      const lq = lineQuads(ed, w, h).sort((a, b) => b.s - a.s).slice(0, 6);
+      const cands = [];
+      const lq = lineQuads(ed, w, h);
       for (const c of lq) {
         // Hough lines are only good to a degree; fit each side to its edge pixels.
         let q = orderCorners(c.q);
         q = refine(q, ed, Math.max(1.5, diag * 0.012));
         if (!isReasonable(q, w, h)) q = orderCorners(c.q);
         const score = c.s * (0.7 + 0.3 * Math.sqrt(polyArea(q) / n));
-        if (!best || score > best.score) best = { q, s: c.s, score, lines: true };
+        cands.push({ q, s: c.s, score, lines: true });
+        if (!best || score > best.score) best = cands[cands.length - 1];
       }
       for (const pts of regions) {
         const quad = hullToQuad(convexHull(pts));
@@ -579,7 +612,23 @@ const ScanTool = (() => {
         if (!isReasonable(q, w, h)) continue;
         const s = support(q, ed);
         const score = s * (0.7 + 0.3 * Math.sqrt(polyArea(q) / n));
-        if (!best || score > best.score) best = { q, s, score };
+        cands.push({ q, s, score });
+        if (!best || score > best.score) best = cands[cands.length - 1];
+      }
+      // Tables, boxes and blocks of writing on a page make clean rectangles of their own. When a
+      // fair candidate encloses the winner, the winner is something drawn on that page: take the
+      // bigger one (and repeat, in case the table sat inside a box).
+      for (let guard = 0; best && guard < 4; guard++) {
+        const area = polyArea(best.q);
+        let up = null;
+        for (const c of cands) {
+          if (c === best || c.s < Math.max(0.42, 0.72 * best.s)) continue;
+          if (polyArea(c.q) < 1.25 * area || !encloses(c.q, best.q, diag * 0.02)) continue;
+          if (!paperRing(c.q, best.q, g, w, h)) continue;
+          if (!up || c.score > up.score) up = c;
+        }
+        if (!up) break;
+        best = up;
       }
       if (!best || best.s < 0.4) return { corners: null, confidence: best ? best.s : 0 };
       return { corners: best.q, confidence: best.s, by: best.lines ? "lines" : "region" };
@@ -961,7 +1010,7 @@ const ScanTool = (() => {
       return { result, transfer: [] };
     }
 
-    return { detect, detectJob, homography, aspect, docSize, warp, applyFilter, rotate, pad, render, renderJob, orderCorners, isFull };
+    return { detect, detectJob, homography, aspect, docSize, warp, applyFilter, rotate, pad, render, renderJob, orderCorners, isFull, polyArea, encloses };
   }
 
   const Core = scanCore();
@@ -2044,7 +2093,8 @@ self.onmessage = async (e) => {
     window.addEventListener("resize", relayout);
 
     /* ---------------------------- camera ---------------------------- */
-    const cam = { el: null, stream: null, timer: 0, shots: 0, smooth: null, busy: false, opening: false, detecting: false };
+    const cam = { el: null, stream: null, timer: 0, raf: 0, shots: 0, smooth: null, target: null, pending: null, hits: 0, seen: 0, shown: null, alpha: 0,
+      busy: false, opening: false, detecting: false };
 
     function camTemplate() {
       return `
@@ -2150,7 +2200,9 @@ self.onmessage = async (e) => {
       el.querySelector(".scan-cam-hint").textContent = "Looking for the page...";
       el.classList.add("live");
       ScanTool._camera = { active: true };
-      cam.timer = setInterval(liveOutline, 180);
+      Object.assign(cam, { smooth: null, target: null, pending: null, hits: 0, shown: null, alpha: 0 });
+      cam.timer = setInterval(liveOutline, 150);
+      cam.raf = requestAnimationFrame(drawLive);
       el.querySelector(".scan-shutter").focus();
     }
 
@@ -2165,6 +2217,8 @@ self.onmessage = async (e) => {
       rv.file = rv.img = rv.layout = null;
       clearInterval(cam.timer);
       cam.timer = 0;
+      cancelAnimationFrame(cam.raf);
+      cam.raf = 0;
       if (cam.stream) cam.stream.getTracks().forEach((t) => t.stop());
       cam.stream = null;
       cam.smooth = null;
@@ -2174,14 +2228,20 @@ self.onmessage = async (e) => {
       ScanTool._camera = { active: false };
     }
 
+    // Live outline. Detection runs a few times a second in the worker; a separate animation
+    // loop glides the drawn outline toward the latest answer, so it never jumps or flickers.
+    // A new place only takes over after two detections agree, and a brief miss keeps the
+    // last outline, which stops the box from hopping onto the bedsheet or the wall.
+    const LIVE_DETECT = 400;  // long edge of the video frame the live outline is found on
+    const quadDist = (a, b) => Math.max(...a.map((p, i) => Math.hypot(p[0] - b[i][0], p[1] - b[i][1])));
+
     async function liveOutline() {
       const el = cam.el;
-      if (!el || cam.detecting) return;
+      if (!el || cam.detecting || el.classList.contains("reviewing")) return;
       const video = el.querySelector("video");
-      const out = el.querySelector(".scan-cam-outline");
       const vw = video.videoWidth, vh = video.videoHeight;
       if (!vw || !vh) return;
-      const s = Math.min(1, 320 / Math.max(vw, vh));
+      const s = Math.min(1, LIVE_DETECT / Math.max(vw, vh));
       const w = Math.round(vw * s), h = Math.round(vh * s);
       let res;
       cam.detecting = true;
@@ -2198,34 +2258,70 @@ self.onmessage = async (e) => {
         cam.detecting = false;
       }
       if (cam.el !== el) return;
-      const q = res.corners ? res.corners.map(([x, y]) => [x / w, y / h]) : null;
-      if (q) cam.smooth = cam.smooth ? cam.smooth.map((p, i) => [p[0] * 0.5 + q[i][0] * 0.5, p[1] * 0.5 + q[i][1] * 0.5]) : q;
-      else cam.smooth = null;
-      // Map video pixels to the element (object-fit: contain).
-      const r = video.getBoundingClientRect();
-      const dpr = Math.min(2, window.devicePixelRatio || 1);
-      out.width = Math.round(r.width * dpr);
-      out.height = Math.round(r.height * dpr);
-      const k = Math.min(r.width / vw, r.height / vh);
-      const ox = (r.width - vw * k) / 2, oy = (r.height - vh * k) / 2;
-      const ctx = out.getContext("2d");
-      ctx.clearRect(0, 0, out.width, out.height);
+      const q = res.corners ? res.corners.map(([x, y]) => [clamp01(x / w), clamp01(y / h)]) : null;
+      const now = performance.now();
+      if (q) {
+        if (cam.target && quadDist(q, cam.target) < 0.07) {
+          cam.target = cam.target.map((p, i) => [p[0] * 0.4 + q[i][0] * 0.6, p[1] * 0.4 + q[i][1] * 0.6]);
+          cam.hits++;
+          cam.seen = now;
+          cam.pending = null;
+        } else if (cam.pending && quadDist(q, cam.pending) < 0.07) {
+          cam.target = q;
+          cam.hits = 2;
+          cam.seen = now;
+          cam.pending = null;
+        } else {
+          cam.pending = q;
+          if (!cam.target) cam.hits = 0;
+        }
+      } else if (cam.target && now - cam.seen > 700) {
+        cam.target = null;
+        cam.hits = 0;
+      }
+      cam.smooth = cam.target && cam.hits >= 2 ? clone(cam.target) : null;
       el.querySelector(".scan-cam-hint").textContent = cam.smooth ? "Page found. Hold still and tap the button." : "Looking for the page...";
       el.classList.toggle("found", !!cam.smooth);
-      if (!cam.smooth) return;
-      ctx.scale(dpr, dpr);
+    }
+
+    function drawLive() {
+      const el = cam.el;
+      if (!el) return;
+      cam.raf = requestAnimationFrame(drawLive);
+      const video = el.querySelector("video");
+      const out = el.querySelector(".scan-cam-outline");
+      const vw = video.videoWidth, vh = video.videoHeight;
+      if (!vw || !vh) return;
+      const goal = el.classList.contains("reviewing") ? null : cam.smooth;
+      if (goal) cam.shown = cam.shown ? cam.shown.map((p, i) => [p[0] + (goal[i][0] - p[0]) * 0.3, p[1] + (goal[i][1] - p[1]) * 0.3]) : clone(goal);
+      cam.alpha += ((goal ? 1 : 0) - cam.alpha) * 0.25;
+      if (!goal && cam.alpha < 0.02) cam.alpha = 0;
+      const r = video.getBoundingClientRect();
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      const cw = Math.round(r.width * dpr), ch = Math.round(r.height * dpr);
+      if (out.width !== cw || out.height !== ch) { out.width = cw; out.height = ch; }
+      const ctx = out.getContext("2d");
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, cw, ch);
+      if (!cam.shown || cam.alpha <= 0) return;
+      // Map video pixels to the element (object-fit: contain).
+      const k = Math.min(r.width / vw, r.height / vh);
+      const ox = (r.width - vw * k) / 2, oy = (r.height - vh * k) / 2;
+      const pts = cam.shown.map(([x, y]) => [ox + x * vw * k, oy + y * vh * k]);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.globalAlpha = cam.alpha;
       ctx.beginPath();
-      cam.smooth.forEach(([x, y], i) => {
-        const px = ox + x * vw * k, py = oy + y * vh * k;
-        if (i) ctx.lineTo(px, py); else ctx.moveTo(px, py);
-      });
+      pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
       ctx.closePath();
-      ctx.fillStyle = "rgba(16, 185, 129, 0.28)";
+      ctx.fillStyle = "rgba(239, 68, 68, 0.07)";
       ctx.fill();
-      ctx.lineWidth = 3;
-      ctx.strokeStyle = "#10b981";
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = "#ef4444";
       ctx.lineJoin = "round";
       ctx.stroke();
+      ctx.fillStyle = "#ef4444";
+      pts.forEach(([x, y]) => { ctx.beginPath(); ctx.arc(x, y, 3.5, 0, Math.PI * 2); ctx.fill(); });
+      ctx.globalAlpha = 1;
     }
 
     function acceptShot(file, preset) {
@@ -2288,7 +2384,12 @@ self.onmessage = async (e) => {
       const stage = el.querySelector(".scan-review-stage");
       const inner = el.querySelector(".scan-review-inner");
       const c = el.querySelector(".scan-review-img");
-      const aw = stage.clientWidth || window.innerWidth, ah = stage.clientHeight || window.innerHeight * 0.7;
+      // clientWidth includes the stage padding; without taking it off, the box came out wider
+      // than the room, flex shrank it, and the dots no longer sat on the drawn outline.
+      const cs = getComputedStyle(stage);
+      const padX = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight) || 0;
+      const padY = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom) || 0;
+      const aw = (stage.clientWidth || window.innerWidth) - padX, ah = (stage.clientHeight || window.innerHeight * 0.7) - padY;
       const k = Math.min(aw / rv.img.width, ah / rv.img.height);
       const w = Math.floor(rv.img.width * k), h = Math.floor(rv.img.height * k);
       inner.style.width = `${w}px`;
@@ -2334,8 +2435,11 @@ self.onmessage = async (e) => {
         const w = Math.max(1, Math.round(canvas.width * s)), h = Math.max(1, Math.round(canvas.height * s));
         const res = await Runner.detect(() => toBitmap(canvas), { w, h });
         if (token !== rv.token || rv.touched || !cam.el) return;
-        if (res.corners) {
-          rv.auto = res.corners.map(([x, y]) => [clamp01(x / w), clamp01(y / h)]);
+        const sharp = res.corners ? res.corners.map(([x, y]) => [clamp01(x / w), clamp01(y / h)]) : null;
+        // The steady live outline wins over a much smaller box inside it (a table on the page).
+        const shrank = sharp && live && Core.polyArea(sharp) < 0.7 * Core.polyArea(live) && Core.encloses(live, sharp, 0.02);
+        if (sharp && !shrank) {
+          rv.auto = sharp;
           rv.found = true;
           rv.confidence = res.confidence;
           if (el.querySelector('[data-cam="autocrop"]').checked) { rv.corners = clone(rv.auto); drawReviewQuad(); }

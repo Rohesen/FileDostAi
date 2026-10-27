@@ -3,7 +3,7 @@
 // then downloaded one by one or as a ZIP. Also registers the HEIC to JPG tool (HeicConvert lives
 // in image-tools.js). Everything runs in the browser; nothing is uploaded.
 
-document.head.append(Object.assign(document.createElement("link"), { rel: "stylesheet", href: "/static/form-kit.css?v=34" }));
+document.head.append(Object.assign(document.createElement("link"), { rel: "stylesheet", href: "/static/form-kit.css?v=36" }));
 
 const FormKit = (() => {
   const P = (typeof PhotoTool !== "undefined" && PhotoTool.PRESETS) || {};

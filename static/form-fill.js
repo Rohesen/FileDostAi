@@ -9,7 +9,7 @@ const FormFill = (() => {
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
   if (!document.querySelector("link[data-ff-css]")) {
-    const link = Object.assign(document.createElement("link"), { rel: "stylesheet", href: "/static/form-fill.css?v=34" });
+    const link = Object.assign(document.createElement("link"), { rel: "stylesheet", href: "/static/form-fill.css?v=36" });
     link.dataset.ffCss = "1";
     document.head.append(link);
   }

@@ -7,7 +7,7 @@ const QrTool = (() => {
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
   if (!document.querySelector("link[data-qr-css]")) {
-    const link = Object.assign(document.createElement("link"), { rel: "stylesheet", href: "/static/qr-tool.css?v=34" });
+    const link = Object.assign(document.createElement("link"), { rel: "stylesheet", href: "/static/qr-tool.css?v=36" });
     link.dataset.qrCss = "1";
     document.head.append(link);
   }

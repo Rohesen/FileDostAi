@@ -321,6 +321,21 @@ async function main() {
     await c.click("#scanShutter");
     await c.waitForSelector(".scan-review:not([hidden])");
     check("crop check opens after a shot with 8 handles", (await c.locator(".scan-review [data-r]").count()) === 8);
+    const quadBox = await c.evaluate(() => {
+      const img = document.querySelector(".scan-review-img").getBoundingClientRect();
+      const svg = document.querySelector(".scan-review-quad").getBoundingClientRect();
+      return { iw: img.width, sw: svg.width, ih: img.height, sh: svg.height,
+        stroke: getComputedStyle(document.querySelector(".scan-review .scan-outline")).stroke,
+        // Each corner dot must sit on the outline's corner.
+        dotGap: Math.max(...[0, 1, 2, 3].map((i) => {
+          const b = document.querySelector(`.scan-review [data-r="${i}"]`).getBoundingClientRect();
+          const pt = document.querySelector(".scan-review .scan-outline").points.getItem(i);
+          const m = document.querySelector(".scan-review-quad").getScreenCTM();
+          return Math.hypot(b.left + b.width / 2 - (pt.x * m.a + m.e), b.top + b.height / 2 - (pt.y * m.d + m.f));
+        })) };
+    });
+    check("crop check draws the outline over the whole photo, in red",
+      Math.abs(quadBox.sw - quadBox.iw) < 2 && Math.abs(quadBox.sh - quadBox.ih) < 2 && quadBox.stroke === "rgb(239, 68, 68)" && quadBox.dotGap < 2, JSON.stringify(quadBox));
     await c.screenshot({ path: path.join(SHOTS, "scan-review-390.png") });
     await c.click('[data-cam="keep"]');
     await c.waitForFunction(() => ScanTool._active._state().pages.length === 1);

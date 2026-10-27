@@ -822,7 +822,7 @@
   justify-content: center;
   padding: calc(18px + env(safe-area-inset-top)) 18px 8px;
 }
-.scan-review-inner { position: relative; touch-action: none; }
+.scan-review-inner { position: relative; touch-action: none; flex: none; }
 .scan-review-img { width: 100%; height: 100%; display: block; border-radius: 4px; }
 .scan-review-quad { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
 .scan-review .scan-outline { stroke: #10b981; }
@@ -865,3 +865,166 @@
 .scan-review .scan-outline { fill: rgba(16, 185, 129, 0.12); }
 .scan-review-stage { padding-left: 28px; padding-right: 28px; }
 .scan-cam-done-text { white-space: nowrap; }
+
+/* Page outline: a thin red line with small dots (asked for by Rohesen, 2026-10-27).
+   The camera's ".scan-cam svg" icon rule (22 px, no fill) used to shrink the crop-check
+   outline to an invisible 22 px square, so these selectors are deliberately stronger. */
+.scan-cam .scan-review-quad { width: 100%; height: 100%; stroke: none; }
+.scan-cam .scan-review-quad .scan-shade, .scan .scan-shade { fill: rgba(11, 15, 25, 0.5); stroke: none; }
+.scan-cam .scan-review-quad .scan-outline, .scan .scan-outline {
+  fill: rgba(239, 68, 68, 0.06);
+  stroke: #ef4444;
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+.scan .scan-handle span, .scan-cam .scan-handle span {
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  border: 2px solid #ef4444;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+.scan .scan-handle-edge span, .scan-cam .scan-handle-edge span { background: #ef4444; border: 0; }
+.scan .scan-handle:hover span, .scan .scan-handle:focus-visible span, .scan .scan-handle.dragging span,
+.scan-cam .scan-handle:hover span, .scan-cam .scan-handle:focus-visible span, .scan-cam .scan-handle.dragging span { background: #ef4444; }
+.scan-handle-edge span { width: 18px !important; height: 6px !important; border-radius: 3px !important; }
+.scan-handle-edge[data-i="5"] span, .scan-handle-edge[data-i="7"] span,
+.scan-handle-edge[data-r="5"] span, .scan-handle-edge[data-r="7"] span { width: 6px !important; height: 18px !important; }
+.scan-cam.found .scan-cam-view .scan-cam-hint { background: rgba(17, 24, 39, 0.85); color: #fff; }
+
+/* ---------- button refresh (2026-10-27, Rohesen: "buttons are boring") ----------
+   Glass pills on the camera, the site's cyan-to-indigo gradient for the main action,
+   icon bubbles in the editor tool bar. Pure CSS; .fx-lite phones skip the blur. */
+.scan-cam {
+  --scan-grad: linear-gradient(135deg, #06b6d4 0%, #6366f1 100%);
+  --scan-glass: rgba(255, 255, 255, 0.1);
+  --scan-glass-line: rgba(255, 255, 255, 0.18);
+}
+.scan-cam-opt, .scan-cam-x, .scan-review-btn {
+  background: var(--scan-glass);
+  border: 1px solid var(--scan-glass-line);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 4px 14px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(10px) saturate(1.4);
+  -webkit-backdrop-filter: blur(10px) saturate(1.4);
+  transition: transform 0.12s, background 0.15s, box-shadow 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.scan-cam-opt { padding: 0 14px 0 12px; letter-spacing: 0.01em; }
+.scan-cam-opt[aria-pressed="true"] {
+  background: var(--scan-grad);
+  border-color: transparent;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 6px 18px -4px rgba(99, 102, 241, 0.6);
+}
+.scan-cam-x { width: 44px; height: 44px; }
+.scan-cam-opt:active, .scan-cam-x:active, .scan-review-btn:active, .scan-cam-done:active, .scan-cam-import:active { transform: scale(0.95); }
+
+.scan-cam-bar {
+  background: linear-gradient(180deg, rgba(5, 6, 8, 0.85), #050608 40%);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+.scan-cam-import { gap: 6px; font-weight: 600; color: rgba(255, 255, 255, 0.85); }
+.scan-cam-import svg {
+  box-sizing: content-box;
+  padding: 11px;
+  border-radius: 16px;
+  background: var(--scan-glass);
+  border: 1px solid var(--scan-glass-line);
+  width: 24px !important;
+  height: 24px !important;
+}
+
+.scan-shutter {
+  width: 78px;
+  height: 78px;
+  padding: 5px;
+  border: 0;
+  background: conic-gradient(from 210deg, #06b6d4, #6366f1, #a855f7, #06b6d4);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.15), 0 8px 26px -6px rgba(99, 102, 241, 0.7);
+}
+.scan-shutter span {
+  background: radial-gradient(circle at 35% 30%, #fff 0%, #f1f5f9 55%, #cbd5e1 100%);
+  box-shadow: 0 0 0 4px #050608, inset 0 -3px 6px rgba(15, 23, 42, 0.15);
+}
+.scan-cam.found .scan-shutter { animation: scanReady 1.6s ease-in-out infinite; }
+@keyframes scanReady {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.15), 0 8px 26px -6px rgba(99, 102, 241, 0.7); }
+  50% { box-shadow: 0 0 0 6px rgba(99, 102, 241, 0.18), 0 8px 30px -4px rgba(6, 182, 212, 0.8); }
+}
+
+.scan-cam-done, .scan-review-ok {
+  background: var(--scan-grad);
+  border: 0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 8px 22px -6px rgba(99, 102, 241, 0.75);
+  transition: transform 0.12s, filter 0.15s;
+}
+.scan-cam-done:hover, .scan-review-ok:hover { filter: brightness(1.08); }
+.scan-cam-done .scan-cam-last { border: 2px solid rgba(255, 255, 255, 0.85); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35); }
+.scan-cam-count { background: #ef4444; box-shadow: 0 0 0 2px #050608; }
+
+.scan-cam-view .scan-cam-hint {
+  background: rgba(15, 23, 42, 0.72);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+.scan-cam.found .scan-cam-view .scan-cam-hint { background: rgba(15, 23, 42, 0.8); }
+.scan-cam.found .scan-cam-view .scan-cam-hint::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.25);
+  vertical-align: 1px;
+}
+
+.scan-review-bar { gap: 10px; }
+.scan-review-btn { border-radius: 14px; }
+.scan-review-ok { border-radius: 14px; padding: 0 20px; }
+.scan-review-auto {
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: var(--scan-glass);
+  border: 1px solid var(--scan-glass-line);
+  font-weight: 600;
+}
+
+/* Editor tool bar: each icon sits in a soft bubble. */
+.scan-tools { padding: 8px 6px; border-radius: 18px; }
+.scan-tool { gap: 6px; transition: transform 0.12s; }
+.scan-tool svg {
+  box-sizing: content-box;
+  padding: 8px;
+  border-radius: 12px;
+  background: rgba(99, 102, 241, 0.12);
+  color: var(--primary);
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+  width: 19px !important;
+  height: 19px !important;
+}
+.scan-tool:hover:not(:disabled) { background: transparent; }
+.scan-tool:hover:not(:disabled) svg { background: var(--scan-grad-ed, linear-gradient(135deg, #06b6d4, #6366f1)); color: #fff; box-shadow: 0 6px 14px -6px rgba(99, 102, 241, 0.8); }
+.scan-tool:active:not(:disabled) { transform: scale(0.94); }
+.scan-tool-danger svg { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
+.scan-tool-danger:hover:not(:disabled) svg { background: #ef4444; color: #fff; box-shadow: 0 6px 14px -6px rgba(239, 68, 68, 0.8); }
+.scan-btn { border-radius: 14px; transition: background 0.15s, border-color 0.15s, transform 0.1s, box-shadow 0.15s; }
+.scan-btn-primary { background: linear-gradient(135deg, #06b6d4, #6366f1); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 8px 20px -8px rgba(99, 102, 241, 0.8); }
+.scan-btn-primary:hover { background: linear-gradient(135deg, #0891b2, #4f46e5); }
+
+/* Weak phones: no blur, no pulsing. */
+.fx-lite .scan-cam-opt, .fx-lite .scan-cam-x, .fx-lite .scan-review-btn, .fx-lite .scan-cam-view .scan-cam-hint {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background-color: rgba(30, 33, 45, 0.92);
+}
+.fx-lite .scan-cam-opt[aria-pressed="true"] { background: var(--scan-grad); }
+.fx-lite .scan-cam.found .scan-shutter { animation: none; }
+@media (prefers-reduced-motion: reduce) { .scan-cam.found .scan-shutter { animation: none; } }
+.scan-review-auto { white-space: nowrap; flex: none; }
+.scan-review-auto input { accent-color: #6366f1; }
+@media (max-width: 380px) { .scan-review-auto { padding: 8px 10px; font-size: 13px; } .scan-review-btn { padding: 0 14px; } }

@@ -9,7 +9,7 @@ const ZipTool = (() => {
   const size = (n) => (n < 1024 ? `${n} B` : typeof formatSize === "function" ? formatSize(n) : `${(n / 1024).toFixed(1)} KB`);
 
   if (!document.querySelector("link[data-zt-css]")) {
-    const link = Object.assign(document.createElement("link"), { rel: "stylesheet", href: "/static/zip-tool.css?v=34" });
+    const link = Object.assign(document.createElement("link"), { rel: "stylesheet", href: "/static/zip-tool.css?v=36" });
     link.dataset.ztCss = "1";
     document.head.append(link);
   }
