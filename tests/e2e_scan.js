@@ -187,15 +187,26 @@ async function main() {
     await page.waitForFunction(() => ScanTool._active._state().pages.length === 2 && currentFiles.length === 2);
     check("deleting a page removes it from the app's file list too", (await page.evaluate(() => currentFiles.length)) === 2);
 
-    // Filters: B&W on page 2, A4 paper for all.
-    await page.click('.scan-thumb:nth-child(2) .scan-thumb-btn');
+    // Look previews: one small preview per look for the selected page.
+    await page.waitForFunction(() => document.querySelectorAll(".scan-filter.ready").length === 7, null, { timeout: 30000 });
+    check("every look shows a preview of the page", true);
+    // Apply to all (on by default): Grayscale on page 1 changes both pages.
+    await page.click('[data-filter="gray"]');
+    s = await waitIdle(page, 2);
+    check("Apply to all pages sets the look on every page", s.pages.every((q) => q.filter === "gray"), s.pages.map((q) => q.filter).join());
+    // Per page: B&W on page 2 only, No shadow back on page 1, A4 paper for all.
+    await page.uncheck("#scanApplyAll");
+    await page.click('[data-filter="noshadow"]');
+    await page.click('[data-act="next"]');
+    check("next arrow moves to page 2", (await page.evaluate(() => ScanTool._active._state().selected)) === 1);
     await page.click('[data-filter="bw"]');
     await page.click('[data-paper="a4"]');
     s = await waitIdle(page, 2);
-    check("filter and page size apply", s.pages[1].filter === "bw" && s.pages[0].filter === "enhanced" && s.paper === "a4");
+    check("filter and page size apply", s.pages[1].filter === "bw" && s.pages[0].filter === "noshadow" && s.paper === "a4");
     await page.screenshot({ path: path.join(SHOTS, "scan-bw-1280.png") });
 
-    // Save.
+    // Save (with a name the user typed).
+    await page.fill("#scanName", "ISM Assignment 2");
     const [download] = await Promise.all([page.waitForEvent("download", { timeout: 60000 }), page.click("#btnExecute")]);
     const pdfPath = path.join(OUT, "scan.pdf");
     await download.saveAs(pdfPath);
@@ -211,7 +222,8 @@ async function main() {
     }
     const size = fs.statSync(pdfPath).size;
     check("PDF is reasonably small", size < 3.5 * 1024 * 1024, `${(size / 1024).toFixed(0)} KB`);
-    check("saved as Scan_<date>_<time>.pdf", /^Scan_\d{4}-\d\d-\d\d_\d{4}\.pdf$/.test(download.suggestedFilename()), download.suggestedFilename());
+    check("saved under the typed name", download.suggestedFilename() === "ISM Assignment 2.pdf", download.suggestedFilename());
+    await page.fill("#scanName", "");
     check("filter label says Magic color", (await page.textContent('[data-filter="enhanced"]')).includes("Magic color"));
     // PDF size: Small makes a smaller file than Best.
     const sizeOf = async (preset) => {
@@ -258,6 +270,17 @@ async function main() {
     });
     const ms1 = (await m.evaluate(() => ScanTool._active._state())).pages[1].corners[2];
     check("touch pointer drags a corner", ms1[0] < ms0[0] - 40 && ms1[1] < ms0[1] - 30);
+    // A side handle moves both of its corners.
+    const e0 = (await m.evaluate(() => ScanTool._active._state())).pages[1].corners;
+    await m.evaluate(async () => {
+      const h = document.querySelector('.scan-handle[data-i="7"]');
+      const r = h.getBoundingClientRect();
+      const x = r.left + r.width / 2, y = r.top + r.height / 2;
+      const ev = (type, dx) => h.dispatchEvent(new PointerEvent(type, { bubbles: true, pointerId: 8, pointerType: "touch", clientX: x + dx, clientY: y, isPrimary: true }));
+      ev("pointerdown", 0); ev("pointermove", 20); ev("pointermove", 40); ev("pointerup", 40);
+    });
+    const e1 = (await m.evaluate(() => ScanTool._active._state())).pages[1].corners;
+    check("a side handle moves the whole side", e1[3][0] > e0[3][0] + 30 && e1[0][0] > e0[0][0] + 30 && Math.abs(e1[1][0] - e0[1][0]) < 1, `${e0[3][0]}->${e1[3][0]}`);
     await mctx.close();
 
     // ---------------- no Worker / OffscreenCanvas: runs on the page ----------------
@@ -294,11 +317,19 @@ async function main() {
     await c.waitForSelector(".scan-cam.live", { timeout: 15000 });
     await c.waitForFunction(() => document.querySelector(".scan-cam video").videoWidth > 0);
     check("camera opens with a live preview", await c.evaluate(() => ScanTool._active._state().camera));
+    // First shot: the crop check appears with 8 handles; Continue adds the page.
     await c.click("#scanShutter");
+    await c.waitForSelector(".scan-review:not([hidden])");
+    check("crop check opens after a shot with 8 handles", (await c.locator(".scan-review [data-r]").count()) === 8);
+    await c.screenshot({ path: path.join(SHOTS, "scan-review-390.png") });
+    await c.click('[data-cam="keep"]');
     await c.waitForFunction(() => ScanTool._active._state().pages.length === 1);
+    // Second shot with the check turned off goes straight in.
+    await c.click('[data-cam="check"]');
     await c.waitForTimeout(300);
     await c.click("#scanShutter");
     await c.waitForFunction(() => ScanTool._active._state().pages.length === 2);
+    await c.click('[data-cam="check"]');
     await c.waitForTimeout(200);
     await c.screenshot({ path: path.join(SHOTS, "scan-camera-390.png") });
     const doneText = await c.textContent("#scanCamDone");
@@ -319,6 +350,8 @@ async function main() {
     await c.waitForSelector(".scan-cam.live", { timeout: 15000 });
     await c.waitForFunction(() => document.querySelector(".scan-cam video").videoWidth > 0);
     await c.click("#scanShutter");
+    await c.waitForSelector(".scan-review:not([hidden])");
+    await c.click('[data-cam="keep"]');
     await c.waitForFunction(() => !document.querySelector(".scan-cam"));
     await waitIdle(c, 2);
     const retaken = await c.evaluate(() => ({ names: ScanTool._active._state().pages.map((p) => p.name), files: currentFiles.length }));

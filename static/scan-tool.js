@@ -18,11 +18,16 @@ const ScanTool = (() => {
   const PAPERS = { fit: 0, a4: 297 / 210, letter: 11 / 8.5 };
   const FULL = [[0, 0], [1, 0], [1, 1], [0, 1]];
   const FILTERS = [
+    { id: "noshadow", label: "No shadow" },
     { id: "original", label: "Original" },
+    { id: "lighten", label: "Lighten" },
     { id: "enhanced", label: "Magic color" },
     { id: "gray", label: "Grayscale" },
     { id: "bw", label: "B&W" },
+    { id: "eco", label: "Eco" },
   ];
+  const DEFAULT_FILTER = "noshadow";
+  const FTHUMB = 132; // long edge of the look previews under the page
 
   /* ======================================================================
    * Image core. Pure functions on RGBA arrays. It is also turned into a
@@ -329,6 +334,182 @@ const ScanTool = (() => {
       return 0.6 * (total / 4) + 0.4 * minS;
     }
 
+    // ---------- straight-line candidates ----------
+    // Hough transform on the edge map: the long straight edges in the photo, as (angle, distance).
+    function houghLines(ed, max) {
+      const { gx, gy, mag, w, h, thr } = ed;
+      const diag = Math.ceil(Math.hypot(w, h));
+      const NA = 180, NR = 2 * diag + 1;
+      const acc = new Float32Array(NA * NR);
+      const cs = new Float32Array(NA), sn = new Float32Array(NA);
+      for (let a = 0; a < NA; a++) { cs[a] = Math.cos((a * Math.PI) / NA); sn[a] = Math.sin((a * Math.PI) / NA); }
+      for (let y = 1; y < h - 1; y++) {
+        for (let x = 1; x < w - 1; x++) {
+          const i = y * w + x;
+          const m = mag[i];
+          if (m <= thr) continue;
+          // Vote only near the gradient's own direction: far fewer votes and sharper peaks.
+          let a0 = Math.round((Math.atan2(gy[i], gx[i]) * NA) / Math.PI);
+          a0 = ((a0 % NA) + NA) % NA;
+          const wgt = Math.min(m, 4 * thr);
+          for (let da = -4; da <= 4; da++) {
+            const a = (a0 + da + NA) % NA;
+            const r = Math.round(x * cs[a] + y * sn[a]) + diag;
+            acc[a * NR + r] += wgt;
+          }
+        }
+      }
+      const lines = [];
+      const used = new Uint8Array(NA * NR);
+      const minLen = 0.2 * Math.min(w, h) * thr;
+      // Only local peaks above the floor need sorting.
+      const order = [];
+      for (let a = 0; a < NA; a++) {
+        for (let r = 1; r < NR - 1; r++) {
+          const k = a * NR + r, v = acc[k];
+          if (v < minLen || v < acc[k - 1] || v < acc[k + 1]) continue;
+          if (a > 0 && v < acc[k - NR]) continue;
+          if (a < NA - 1 && v < acc[k + NR]) continue;
+          order.push(k);
+        }
+      }
+      order.sort((p, q) => acc[q] - acc[p]);
+      // Up to `max` lines each way: the page's sides must not be crowded out by ruled lines.
+      let nh = 0, nv = 0;
+      const tilt = Math.cos((35 * Math.PI) / 180);
+      for (const k of order) {
+        if ((nh >= max && nv >= max) || acc[k] < minLen) break;
+        if (used[k]) continue;
+        const a = Math.floor(k / NR), r = (k % NR) - diag;
+        const horiz = Math.abs(sn[a]) > tilt, vert = Math.abs(cs[a]) > tilt;
+        if ((!horiz && !vert) || (horiz && nh >= max) || (vert && nv >= max)) continue;
+        if (horiz) nh++; else nv++;
+        lines.push({ a, r, c: cs[a], s: sn[a], votes: acc[k] });
+        // Suppress near-duplicates (also across the 0/180 degree wrap, where r flips sign).
+        for (let da = -6; da <= 6; da++) {
+          let aa = a + da, rr = r;
+          if (aa < 0) { aa += NA; rr = -r; } else if (aa >= NA) { aa -= NA; rr = -r; }
+          for (let dr = -10; dr <= 10; dr++) {
+            const ri = rr + dr + diag;
+            if (ri >= 0 && ri < NR) used[aa * NR + ri] = 1;
+          }
+        }
+      }
+      return lines;
+    }
+
+    function meet(l1, l2) {
+      const det = l1.c * l2.s - l1.s * l2.c;
+      if (Math.abs(det) < 1e-6) return null;
+      return [(l1.r * l2.s - l1.s * l2.r) / det, (l1.c * l2.r - l1.r * l2.c) / det];
+    }
+
+    // Edge support along segment P-Q (share of samples on an edge running the same way).
+    function segSupport(P, Q, ed) {
+      const { gx, gy, mag, w, h, thr } = ed;
+      const dx = Q[0] - P[0], dy = Q[1] - P[1];
+      const L = Math.hypot(dx, dy) || 1;
+      const nx = -dy / L, ny = dx / L;
+      const N = 40;
+      let hits = 0, total = 0;
+      for (let k = 0; k < N; k++) {
+        const t = 0.05 + (0.9 * k) / (N - 1);
+        const x = P[0] + t * dx, y = P[1] + t * dy;
+        if (x < 1 || y < 1 || x >= w - 1 || y >= h - 1) continue;
+        total++;
+        for (let o = -2; o <= 2; o++) {
+          const xi = Math.floor(x + o * nx), yi = Math.floor(y + o * ny);
+          if (xi < 1 || yi < 1 || xi >= w - 1 || yi >= h - 1) continue;
+          const i = yi * w + xi;
+          if (mag[i] > thr && Math.abs(gx[i] * nx + gy[i] * ny) > 0.7 * mag[i]) { hits++; break; }
+        }
+      }
+      if (total < N * 0.5) return 0;
+      // A pen stroke or a ruled line has paper on both sides; a page edge has a step in brightness.
+      const g = ed.g;
+      let step = 0, trough = 0, cnt = 0;
+      const at = (x, y) => g[clamp(Math.round(y), 0, h - 1) * w + clamp(Math.round(x), 0, w - 1)];
+      for (let k = 0; k < 24; k++) {
+        const t = 0.08 + (0.84 * k) / 23;
+        const x = P[0] + t * dx, y = P[1] + t * dy;
+        const a = at(x + 5 * nx, y + 5 * ny), b = at(x - 5 * nx, y - 5 * ny), c = at(x, y);
+        step += Math.abs(a - b);
+        trough += Math.max(0, Math.min(a, b) - c);
+        cnt++;
+      }
+      if (trough / cnt > 6 && trough > step) return 0;
+      return hits / total;
+    }
+
+    // Pages made of two long "horizontal" and two long "vertical" lines. The photo's own border
+    // stands in for a side that runs off the frame. A strong line right through the middle
+    // (a notebook's spine, the next page) means the quad holds two pages, so it scores lower.
+    function lineQuads(ed, w, h) {
+      const lines = houghLines(ed, 8);
+      const isH = (l) => Math.abs(l.s) > Math.cos((35 * Math.PI) / 180);
+      const isV = (l) => Math.abs(l.c) > Math.cos((35 * Math.PI) / 180);
+      const border = (c, s, r) => ({ c, s, r, border: true });
+      const H = lines.filter(isH).concat([border(0, 1, 0.5), border(0, 1, h - 0.5)]);
+      const V = lines.filter(isV).concat([border(1, 0, 0.5), border(1, 0, w - 0.5)]);
+      H.forEach((l, i) => { l.id = `h${i}`; });
+      V.forEach((l, i) => { l.id = `v${i}`; });
+      const yAt = (l) => (l.r - l.c * (w / 2)) / l.s;
+      const xAt = (l) => (l.r - l.s * (h / 2)) / l.c;
+      // A side is line l cut by lines a and b; the same side recurs in many quads, so remember it.
+      const memo = new Map();
+      const side = (l, a, b, P, Q) => {
+        if (l.border) return 0.42;
+        const key = `${l.id}|${a.id}|${b.id}`;
+        let v = memo.get(key);
+        if (v === undefined) { v = segSupport(P, Q, ed); memo.set(key, v); }
+        return v;
+      };
+      const out = [];
+      for (let i = 0; i < H.length; i++) for (let j = 0; j < H.length; j++) {
+        const T = H[i], B = H[j];
+        if (yAt(B) - yAt(T) < 0.3 * h) continue;
+        for (let k = 0; k < V.length; k++) for (let m = 0; m < V.length; m++) {
+          const Lf = V[k], R = V[m];
+          if (xAt(R) - xAt(Lf) < 0.3 * w) continue;
+          if (T.border + B.border + Lf.border + R.border > 2) continue;
+          const q = [meet(T, Lf), meet(T, R), meet(B, R), meet(B, Lf)];
+          if (q.some((p) => !p || p[0] < -0.02 * w || p[1] < -0.02 * h || p[0] > 1.02 * w || p[1] > 1.02 * h)) continue;
+          q.forEach((p) => { p[0] = clamp(p[0], 0, w); p[1] = clamp(p[1], 0, h); });
+          if (!isReasonable(q, w, h)) continue;
+          const sides = [];
+          const sideLines = [[T, Lf, R, q[0], q[1]], [R, T, B, q[1], q[2]], [B, Lf, R, q[3], q[2]], [Lf, T, B, q[0], q[3]]];
+          let weak = false;
+          for (const [l, a, c, P, Q] of sideLines) {
+            const v = side(l, a, c, P, Q);
+            if (!l.border && v < 0.35) { weak = true; break; }
+            sides.push(v);
+          }
+          if (weak) continue;
+          const s = 0.6 * (sides.reduce((x, y) => x + y, 0) / 4) + 0.4 * Math.min(...sides);
+          out.push({ q, s, T, B, Lf, R });
+        }
+      }
+      // Only for the best few: lines crossing the inside from one side to the other.
+      out.sort((x, y) => y.s - x.s);
+      const top = out.slice(0, 12);
+      for (const c of top) {
+        const { T, B, Lf, R } = c;
+        for (const l of lines) {
+          if (l === T || l === B || l === Lf || l === R) continue;
+          const across = isV(l) ? [meet(l, T), meet(l, B)] : isH(l) ? [meet(l, Lf), meet(l, R)] : null;
+          if (!across || !across[0] || !across[1]) continue;
+          const mid = [(across[0][0] + across[1][0]) / 2, (across[0][1] + across[1][1]) / 2];
+          const span = isV(l) ? [xAt(Lf), xAt(R)] : [yAt(T), yAt(B)];
+          const pos = isV(l) ? mid[0] : mid[1];
+          const f = (pos - span[0]) / (span[1] - span[0]);
+          if (f < 0.12 || f > 0.88) continue;
+          const sup = segSupport(across[0], across[1], ed);
+          if (sup > 0.7) c.s -= 0.5 * sup;
+        }
+      }
+      return top.map(({ q, s }) => ({ q, s }));
+    }
+
     /**
      * Finds the page in a small RGBA image.
      * Returns { corners: [[x,y] x4] in pixels (clockwise from top-left) or null, confidence 0..1 }.
@@ -339,6 +520,7 @@ const ScanTool = (() => {
       const r = Math.max(1, Math.round(Math.max(w, h) / 240));
       const g = boxBlur(boxBlur(g0, w, h, r), w, h, r);
       const ed = sobel(g, w, h);
+      ed.g = g;
       ed.thr = clamp(0.3 * percentile(ed.mag, 0.985), 14, 120);
 
       const regions = [];
@@ -379,6 +561,15 @@ const ScanTool = (() => {
 
       const diag = Math.hypot(w, h);
       let best = null;
+      const lq = lineQuads(ed, w, h).sort((a, b) => b.s - a.s).slice(0, 6);
+      for (const c of lq) {
+        // Hough lines are only good to a degree; fit each side to its edge pixels.
+        let q = orderCorners(c.q);
+        q = refine(q, ed, Math.max(1.5, diag * 0.012));
+        if (!isReasonable(q, w, h)) q = orderCorners(c.q);
+        const score = c.s * (0.7 + 0.3 * Math.sqrt(polyArea(q) / n));
+        if (!best || score > best.score) best = { q, s: c.s, score, lines: true };
+      }
       for (const pts of regions) {
         const quad = hullToQuad(convexHull(pts));
         if (!quad) continue;
@@ -391,7 +582,7 @@ const ScanTool = (() => {
         if (!best || score > best.score) best = { q, s, score };
       }
       if (!best || best.s < 0.4) return { corners: null, confidence: best ? best.s : 0 };
-      return { corners: best.q, confidence: best.s };
+      return { corners: best.q, confidence: best.s, by: best.lines ? "lines" : "region" };
     }
 
     // ---------- geometry ----------
@@ -501,65 +692,101 @@ const ScanTool = (() => {
     }
 
     // ---------- filters ----------
-    function lumaOf(d, n) {
-      const L = new Uint8Array(n);
-      for (let i = 0, j = 0; i < n; i++, j += 4) L[i] = (77 * d[j] + 150 * d[j + 1] + 29 * d[j + 2]) >> 8;
-      return L;
-    }
-
-    // Brightness of the paper across the page (a coarse grid), so shadows and uneven light can be evened out.
-    function paperLevels(L, w, h) {
-      const s = Math.max(8, Math.round(Math.max(w, h) / 40));
-      const gw = Math.ceil(w / s), gh = Math.ceil(h / s);
-      let grid = new Float32Array(gw * gh);
+    // Paper colour across the page, per channel, on a coarse grid. Ink, shadows and uneven light
+    // all sit on top of it, so dividing by it leaves white paper and the strokes alone.
+    function paperMap(d, w, h) {
+      const s = Math.max(4, Math.round(Math.max(w, h) / 120));
+      const gw = Math.ceil(w / s), gh = Math.ceil(h / s), G = gw * gh;
+      let R = new Float32Array(G), Gc = new Float32Array(G), B = new Float32Array(G), Y = new Float32Array(G);
       const hist = new Uint32Array(64);
       for (let by = 0; by < gh; by++) {
         for (let bx = 0; bx < gw; bx++) {
+          const y0 = by * s, y1 = Math.min(h, y0 + s), x0 = bx * s, x1 = Math.min(w, x0 + s);
           hist.fill(0);
           let n = 0;
-          const yEnd = Math.min(h, (by + 1) * s), xEnd = Math.min(w, (bx + 1) * s);
-          for (let y = by * s; y < yEnd; y += 2) for (let x = bx * s; x < xEnd; x += 2) { hist[L[y * w + x] >> 2]++; n++; }
+          for (let y = y0; y < y1; y += 2) for (let x = x0; x < x1; x += 2) {
+            const j = (y * w + x) * 4;
+            hist[(77 * d[j] + 150 * d[j + 1] + 29 * d[j + 2]) >> 10]++; n++;
+          }
+          // The brightest quarter of the cell is paper (even in a line of handwriting).
           let k = 63, acc = 0;
-          const want = n * 0.08;
-          while (k > 0 && acc + hist[k] < want) { acc += hist[k]; k--; }
-          grid[by * gw + bx] = k * 4 + 2;
+          while (k > 0 && acc + hist[k] < n * 0.25) acc += hist[k--];
+          let sr = 0, sg = 0, sb = 0, c = 0;
+          for (let y = y0; y < y1; y += 2) for (let x = x0; x < x1; x += 2) {
+            const j = (y * w + x) * 4;
+            if (((77 * d[j] + 150 * d[j + 1] + 29 * d[j + 2]) >> 10) < k) continue;
+            sr += d[j]; sg += d[j + 1]; sb += d[j + 2]; c++;
+          }
+          const i = by * gw + bx;
+          R[i] = sr / c; Gc[i] = sg / c; B[i] = sb / c;
+          Y[i] = 0.299 * R[i] + 0.587 * Gc[i] + 0.114 * B[i];
         }
       }
-      const filt = (src, useMax) => {
-        const out = new Float32Array(src.length);
-        for (let y = 0; y < gh; y++) {
-          for (let x = 0; x < gw; x++) {
+      // Grow the brightest cells over their neighbours (fills cells covered by heavy ink or a table rule).
+      const grow = (rad) => {
+        const r2 = new Float32Array(G), g2 = new Float32Array(G), b2 = new Float32Array(G), y2 = new Float32Array(G);
+        for (let y = 0; y < gh; y++) for (let x = 0; x < gw; x++) {
+          let best = y * gw + x;
+          for (let dy = -rad; dy <= rad; dy++) {
+            const yy = y + dy;
+            if (yy < 0 || yy >= gh) continue;
+            for (let dx = -rad; dx <= rad; dx++) {
+              const xx = x + dx;
+              if (xx < 0 || xx >= gw) continue;
+              if (Y[yy * gw + xx] > Y[best]) best = yy * gw + xx;
+            }
+          }
+          const i = y * gw + x;
+          r2[i] = R[best]; g2[i] = Gc[best]; b2[i] = B[best]; y2[i] = Y[best];
+        }
+        R = r2; Gc = g2; B = b2; Y = y2;
+      };
+      grow(1);
+      // A dark photo or a solid block is not paper in shade: give it the page's usual paper colour.
+      const sorted = Array.from(Y).sort((a, b) => a - b);
+      const typical = Math.max(40, sorted[Math.floor(sorted.length * 0.75)]);
+      let tr = 0, tg = 0, tb = 0, tc = 0;
+      for (let i = 0; i < G; i++) if (Y[i] >= typical * 0.9) { tr += R[i]; tg += Gc[i]; tb += B[i]; tc++; }
+      tr /= tc; tg /= tc; tb /= tc;
+      for (let i = 0; i < G; i++) if (Y[i] < typical * 0.45) { R[i] = tr; Gc[i] = tg; B[i] = tb; }
+      const blur = (a) => {
+        let src = a;
+        for (let pass = 0; pass < 2; pass++) {
+          const out = new Float32Array(G);
+          for (let y = 0; y < gh; y++) for (let x = 0; x < gw; x++) {
             let acc = 0, cnt = 0;
-            for (let dy = -1; dy <= 1; dy++) {
-              for (let dx = -1; dx <= 1; dx++) {
-                const yy = y + dy, xx = x + dx;
-                if (yy < 0 || xx < 0 || yy >= gh || xx >= gw) continue;
-                const v = src[yy * gw + xx];
-                if (useMax) acc = Math.max(acc, v); else { acc += v; cnt++; }
+            for (let dy = -2; dy <= 2; dy++) {
+              const yy = y + dy;
+              if (yy < 0 || yy >= gh) continue;
+              for (let dx = -2; dx <= 2; dx++) {
+                const xx = x + dx;
+                if (xx < 0 || xx >= gw) continue;
+                acc += src[yy * gw + xx]; cnt++;
               }
             }
-            out[y * gw + x] = useMax ? acc : acc / cnt;
+            out[y * gw + x] = acc / cnt;
           }
+          src = out;
         }
-        return out;
+        return src;
       };
-      grid = filt(grid, true);
-      const sorted = Array.from(grid).sort((a, b) => a - b);
-      const paper = Math.max(60, sorted[Math.floor(sorted.length * 0.9)]);
-      for (let i = 0; i < grid.length; i++) if (grid[i] < paper * 0.55) grid[i] = paper; // a dark picture, not paper in shade
-      grid = filt(filt(grid, false), false);
+      const maps = [blur(R), blur(Gc), blur(B)].map((m) => { for (let i = 0; i < G; i++) m[i] = Math.max(m[i], 12); return m; });
       const xi0 = new Int32Array(w), xi1 = new Int32Array(w), xt = new Float32Array(w);
       for (let x = 0; x < w; x++) {
         const fx = clamp((x + 0.5) / s - 0.5, 0, gw - 1);
         xi0[x] = fx | 0; xi1[x] = Math.min(gw - 1, xi0[x] + 1); xt[x] = fx - xi0[x];
       }
+      // row(y, out): out[x*3 + c] = paper level of channel c at (x, y).
       return function row(y, out) {
         const fy = clamp((y + 0.5) / s - 0.5, 0, gh - 1);
         const y0 = fy | 0, y1 = Math.min(gh - 1, y0 + 1), ty = fy - y0;
-        for (let x = 0; x < w; x++) {
-          const a = grid[y0 * gw + xi0[x]] * (1 - xt[x]) + grid[y0 * gw + xi1[x]] * xt[x];
-          const b = grid[y1 * gw + xi0[x]] * (1 - xt[x]) + grid[y1 * gw + xi1[x]] * xt[x];
-          out[x] = a * (1 - ty) + b * ty;
+        for (let c = 0; c < 3; c++) {
+          const m = maps[c];
+          for (let x = 0; x < w; x++) {
+            const a = m[y0 * gw + xi0[x]] * (1 - xt[x]) + m[y0 * gw + xi1[x]] * xt[x];
+            const b = m[y1 * gw + xi0[x]] * (1 - xt[x]) + m[y1 * gw + xi1[x]] * xt[x];
+            out[x * 3 + c] = a * (1 - ty) + b * ty;
+          }
         }
       };
     }
@@ -577,72 +804,63 @@ const ScanTool = (() => {
       }
     }
 
+    // Looks. "noshadow" is the default: white paper, no shadows or colour cast, dark crisp ink.
+    const LOOKS = {
+      noshadow: { white: 0.86, gamma: 1.5, sat: 1.1 },
+      lighten: { white: 0.95, gamma: 1.0, sat: 1.0, soft: true },
+      enhanced: { white: 0.88, gamma: 1.35, sat: 1.6 },
+      gray: { white: 0.86, gamma: 1.5, sat: 0 },
+      bw: { white: 0.86, gamma: 1, sat: 0 },
+      eco: { white: 0.8, gamma: 1, sat: 0 },
+    };
+
     async function applyFilter(d, w, h, filter, pause) {
-      if (filter === "original") return d;
+      if (filter === "original" || !LOOKS[filter]) return d;
+      const look = LOOKS[filter];
       const n = w * h;
-      const L = lumaOf(d, n);
-      const row = paperLevels(L, w, h);
-      const bg = new Float32Array(w);
-      // Even out the lighting: the paper becomes about white everywhere.
+      const row = paperMap(d, w, h);
+      const bg = new Float32Array(w * 3);
+      const L = new Uint8Array(n);
+      // 1) Divide by the paper: paper becomes 255 everywhere, whatever the light did.
       for (let y = 0; y < h; y++) {
         row(y, bg);
         for (let x = 0, i = y * w, j = i * 4; x < w; x++, i++, j += 4) {
-          const gain = clamp(250 / bg[x], 0.9, 3);
-          const r = d[j] * gain, g = d[j + 1] * gain, b = d[j + 2] * gain;
+          const r = Math.min(255, (d[j] * 255) / bg[x * 3]);
+          const g = Math.min(255, (d[j + 1] * 255) / bg[x * 3 + 1]);
+          const b = Math.min(255, (d[j + 2] * 255) / bg[x * 3 + 2]);
           d[j] = r; d[j + 1] = g; d[j + 2] = b;
-          L[i] = Math.min(255, (77 * r + 150 * g + 29 * b) / 256);
+          L[i] = (77 * r + 150 * g + 29 * b) >> 8;
         }
         if ((y & 63) === 63) await pause();
       }
 
-      if (filter === "bw") {
-        // Adaptive threshold against the local mean (integral image).
-        const rad = Math.max(8, Math.round(Math.min(w, h) / 30));
-        const W1 = w + 1;
-        const integ = new Uint32Array(W1 * (h + 1));
-        for (let y = 0; y < h; y++) {
-          let acc = 0;
-          for (let x = 0; x < w; x++) {
-            acc += L[y * w + x];
-            integ[(y + 1) * W1 + x + 1] = integ[y * W1 + x + 1] + acc;
-          }
-        }
-        for (let y = 0; y < h; y++) {
-          const ya = Math.max(0, y - rad), yb = Math.min(h, y + rad + 1);
-          for (let x = 0; x < w; x++) {
-            const xa = Math.max(0, x - rad), xb = Math.min(w, x + rad + 1);
-            const sum = integ[yb * W1 + xb] - integ[ya * W1 + xb] - integ[yb * W1 + xa] + integ[ya * W1 + xa];
-            const mean = sum / ((xb - xa) * (yb - ya));
-            const v = L[y * w + x];
-            const ink = v < mean * 0.86 - 2 || v < 70 ? 0 : 255;
-            const j = (y * w + x) * 4;
-            d[j] = d[j + 1] = d[j + 2] = ink;
-          }
-          if ((y & 63) === 63) await pause();
-        }
+      if (filter === "bw" || filter === "eco") {
+        // The paper is flat now, so a fixed cut works; a little local check keeps thin strokes.
+        const cut = filter === "eco" ? 150 : 185;
+        for (let i = 0, j = 0; i < n; i++, j += 4) d[j] = d[j + 1] = d[j + 2] = L[i] < cut ? 0 : 255;
         whiteBorder(d, w, h);
         return d;
       }
 
-      // Levels: black point from the darkest 0.7%, white point near paper, gentle contrast curve.
+      // 2) Curve: near-paper goes to pure white, ink is pulled darker. Black point from the darkest 0.5%.
       const hist = new Uint32Array(256);
       for (let i = 0; i < n; i++) hist[L[i]]++;
       let bp = 0, acc = 0;
-      while (bp < 255 && acc + hist[bp] < n * 0.007) acc += hist[bp++];
-      bp = Math.min(bp, 100);
-      const wp = 238;
+      while (bp < 255 && acc + hist[bp] < n * 0.005) acc += hist[bp++];
+      bp = look.soft ? Math.min(bp, 30) : Math.min(bp, 90);
+      const wp = 255 * look.white;
       const lut = new Uint8ClampedArray(256);
-      for (let v = 0; v < 256; v++) lut[v] = 255 * Math.pow(clamp((v - bp) / (wp - bp), 0, 1), 1.2);
-      const gray = filter === "gray";
+      for (let v = 0; v < 256; v++) lut[v] = 255 * Math.pow(clamp((v - bp) / (wp - bp), 0, 1), look.gamma);
+      const sat = look.sat;
       for (let i = 0, j = 0; i < n; i++, j += 4) {
-        if (gray) {
-          d[j] = d[j + 1] = d[j + 2] = lut[L[i]];
-        } else {
-          const l = L[i];
-          d[j] = lut[clamp(Math.round(l + (d[j] - l) * 1.25), 0, 255)];
-          d[j + 1] = lut[clamp(Math.round(l + (d[j + 1] - l) * 1.25), 0, 255)];
-          d[j + 2] = lut[clamp(Math.round(l + (d[j + 2] - l) * 1.25), 0, 255)];
-        }
+        const l = L[i], o = lut[l];
+        if (!sat) { d[j] = d[j + 1] = d[j + 2] = o; continue; }
+        // Keep the ink's colour (blue pen stays blue) around the new brightness.
+        const k = o >= 254 ? 0 : sat;
+        d[j] = o + (d[j] - l) * k;
+        d[j + 1] = o + (d[j + 1] - l) * k;
+        d[j + 2] = o + (d[j + 2] - l) * k;
+        if ((i & 262143) === 262143) await pause();
       }
       whiteBorder(d, w, h);
       return d;
@@ -770,7 +988,7 @@ const ScanTool = (() => {
     };
   })();
 
-  const Runner = (() => {
+  const makeRunner = () => {
     let worker = null, url = null, broken = false, seq = 0;
     const pending = new Map();
 
@@ -880,7 +1098,10 @@ self.onmessage = async (e) => {
       reset,
       usingWorker: () => !!worker,
     };
-  })();
+  };
+  const Runner = makeRunner();
+  // Full-size pages for the PDF get their own worker, so they never hold up the camera or previews.
+  const FinalRunner = makeRunner();
 
   /* ======================================================================
    * Helpers
@@ -972,12 +1193,16 @@ self.onmessage = async (e) => {
     trash: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>',
     close: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
     plus: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
+    crop: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3v14h14"/><path d="M3 7h14v14"/></svg>',
+    torch: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2L5 13h6l-1 9 8-11h-6z"/></svg>',
+    check: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
   };
 
   function template() {
     return `
       <div class="scan">
         <div class="scan-bar">
+          <label class="scan-name"><span class="scan-paper-label">File name</span><input type="text" id="scanName" maxlength="80" spellcheck="false" autocomplete="off"></label>
           <button type="button" class="scan-btn scan-btn-primary" id="scanCameraBtn" data-act="camera">${ICONS.camera}<span>Use camera</span></button>
           <button type="button" class="scan-btn" id="scanAddBtn" data-act="pick">${ICONS.images}<span>Add photos</span></button>
           <input type="file" id="scanCaptureInput" accept="image/*" capture="environment" hidden>
@@ -1029,6 +1254,7 @@ self.onmessage = async (e) => {
                     <polygon class="scan-outline" id="scanOutline"></polygon>
                   </svg>
                   ${[0, 1, 2, 3].map((i) => `<button type="button" class="scan-handle" data-i="${i}" aria-label="Corner ${i + 1} of 4. Drag, or use the arrow keys."><span></span></button>`).join("")}
+                  ${[0, 1, 2, 3].map((i) => `<button type="button" class="scan-handle scan-handle-edge" data-i="${i + 4}" aria-label="Side ${i + 1} of 4. Drag to move the whole side."><span></span></button>`).join("")}
                   <canvas class="scan-loupe" id="scanLoupe" hidden></canvas>
                 </div>
                 <div class="scan-loading" id="scanEditLoading"><div class="spinner"></div></div>
@@ -1046,17 +1272,22 @@ self.onmessage = async (e) => {
               </div>
               <div class="scan-result" id="scanResult">
                 <canvas id="scanPreview"></canvas>
+                <button type="button" class="scan-nav scan-nav-prev" data-act="prev" aria-label="Previous page">${ICONS.left}</button>
+                <button type="button" class="scan-nav scan-nav-next" data-act="next" aria-label="Next page">${ICONS.right}</button>
                 <div class="scan-loading" id="scanBusy"><div class="spinner"></div></div>
               </div>
+              <label class="scan-applyall"><input type="checkbox" id="scanApplyAll" checked> Apply the look to all pages</label>
               <div class="scan-filters" role="radiogroup" aria-label="Look">
-                ${FILTERS.map((f) => `<button type="button" role="radio" class="scan-filter" data-act="filter" data-filter="${f.id}" aria-checked="false"><span class="scan-swatch sw-${f.id}"></span>${f.label}</button>`).join("")}
+                ${FILTERS.map((f) => `<button type="button" role="radio" class="scan-filter" data-act="filter" data-filter="${f.id}" aria-checked="false"><canvas class="scan-fthumb" width="1" height="1"></canvas><span class="scan-flabel">${f.label}</span></button>`).join("")}
               </div>
-              <div class="scan-actions">
-                <button type="button" class="scan-chip" data-act="left" aria-label="Move page earlier">${ICONS.left}</button>
-                <button type="button" class="scan-chip" data-act="right" aria-label="Move page later">${ICONS.right}</button>
-                <button type="button" class="scan-chip" data-act="filter-all">Use look on all pages</button>
-                <button type="button" class="scan-chip" data-act="retake" title="Take this page again">${ICONS.retake}<span>Retake</span></button>
-                <button type="button" class="scan-chip scan-chip-danger" data-act="delete">${ICONS.trash}<span>Delete</span></button>
+              <div class="scan-tools" role="toolbar" aria-label="Page tools">
+                <button type="button" class="scan-tool" data-act="retake" title="Take this page again">${ICONS.retake}<span>Retake</span></button>
+                <button type="button" class="scan-tool" data-act="camera" title="Add more pages">${ICONS.plus}<span>Add</span></button>
+                <button type="button" class="scan-tool" data-act="rotate" title="Turn 90 degrees">${ICONS.rotate}<span>Rotate</span></button>
+                <button type="button" class="scan-tool" data-act="crop" title="Adjust the page edges">${ICONS.crop}<span>Crop</span></button>
+                <button type="button" class="scan-tool" data-act="left" aria-label="Move page earlier">${ICONS.left}<span>Earlier</span></button>
+                <button type="button" class="scan-tool" data-act="right" aria-label="Move page later">${ICONS.right}<span>Later</span></button>
+                <button type="button" class="scan-tool scan-tool-danger" data-act="delete">${ICONS.trash}<span>Delete</span></button>
               </div>
             </section>
           </div>
@@ -1079,7 +1310,7 @@ self.onmessage = async (e) => {
   function create(root) {
     root.innerHTML = template();
     const $ = (id) => root.querySelector(`#${id}`);
-    const st = { pages: [], sel: null, paper: "fit", size: "standard", retake: null, result: null, view: "result", destroyed: false, queue: Promise.resolve(), layout: null };
+    const st = { pages: [], sel: null, paper: "fit", size: "standard", retake: null, result: null, view: "result", destroyed: false, queue: Promise.resolve(), layout: null, look: DEFAULT_FILTER };
     const els = {
       empty: $("scanEmpty"), work: $("scanWork"), strip: $("scanStrip"), panes: $("scanPanes"),
       stage: $("scanStage"), inner: $("scanInner"), canvas: $("scanCanvas"), shade: $("scanShade"),
@@ -1089,6 +1320,17 @@ self.onmessage = async (e) => {
     };
     const handles = Array.from(root.querySelectorAll(".scan-handle"));
     if (!canUseCamera()) $("scanCameraBtn").querySelector("span").textContent = "Take photo";
+    const presetCorners = new Map(); // File -> corners approved on the camera's crop check
+    const nameInput = $("scanName");
+    const applyAll = $("scanApplyAll");
+    {
+      const d = new Date(), z = (n) => String(n).padStart(2, "0");
+      nameInput.value = `Scan ${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())} ${z(d.getHours())}.${z(d.getMinutes())}`;
+    }
+    function fileName() {
+      const base = (nameInput.value || "").replace(/[\\/:*?"<>|\u0000-\u001f]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 80) || "Scan";
+      return `${base.replace(/\.pdf$/i, "")}.pdf`;
+    }
 
     // ---------- files ----------
     function isImage(f) {
@@ -1139,9 +1381,11 @@ self.onmessage = async (e) => {
     function newPage(file) {
       const p = {
         id: nextId++, file, w: 0, h: 0, display: null, auto: clone(FULL), corners: clone(FULL),
-        found: false, confidence: 0, rot: 0, filter: "enhanced", preview: null, thumb: makeCanvas(1, 1),
-        ver: 0, busy: true, error: null, disposed: false, justAdded: false,
+        found: false, confidence: 0, rot: 0, filter: st.look, preview: null, thumb: makeCanvas(1, 1),
+        ver: 0, busy: true, error: null, disposed: false, justAdded: false, final: null, looks: null,
       };
+      // Set by the camera's crop check: the corners the user already approved.
+      if (presetCorners.has(file)) { p.preset = presetCorners.get(file); presetCorners.delete(file); }
       p.ready = st.queue = st.queue.then(() => loadPage(p));
       return p;
     }
@@ -1184,6 +1428,13 @@ self.onmessage = async (e) => {
 
     async function detectPage(p) {
       const d = p.display;
+      if (p.preset) {
+        p.found = !p.preset.full;
+        p.confidence = p.preset.confidence || 0;
+        p.auto = clone(p.preset.auto || p.preset.corners);
+        p.corners = clone(p.preset.corners);
+        return;
+      }
       const s = Math.min(1, DETECT_MAX / Math.max(d.width, d.height));
       const w = Math.max(1, Math.round(d.width * s)), h = Math.max(1, Math.round(d.height * s));
       const res = await Runner.detect(() => toBitmap(d), { w, h });
@@ -1215,7 +1466,8 @@ self.onmessage = async (e) => {
         c.getContext("2d").putImageData(new ImageData(new Uint8ClampedArray(out.buffer), out.w, out.h), 0, 0);
         p.preview = c;
         drawThumb(p);
-        if (p === st.sel) drawResult();
+        if (p === st.sel) { drawResult(); lookThumbs(p); }
+        prepareFinal(p);
       } catch (e) {
         if (!st.destroyed && v === p.ver && !e.cancelled) toast(`Couldn't process "${p.file.name}": ${e.message}`);
       } finally {
@@ -1229,25 +1481,88 @@ self.onmessage = async (e) => {
       previewTimer = setTimeout(() => renderPreview(p), delay);
     }
 
+    // The full-size page for the PDF, made in the background as soon as a page looks settled,
+    // so Save only has to stitch the pages together.
+    function finalKey(p) {
+      return JSON.stringify([p.corners, p.rot, p.filter, st.paper, st.size]);
+    }
+    async function renderFinal(p) {
+      const key = finalKey(p);
+      if (p.final && p.final.key === key) return p.final.promise;
+      const promise = FinalRunner.render(() => decodeImage(p.file), jobOpts(p, SIZES[st.size].maxEdge, true)).then((r) => {
+        // Real paper sizes in points, so A4 prints as A4 (landscape pages keep their turn).
+        const size = { a4: [595.28, 841.89], letter: [612, 792] }[st.paper];
+        const page = { bytes: r.bytes, type: r.type };
+        if (size) page.pageSize = r.w > r.h ? [size[1], size[0]] : size;
+        return page;
+      });
+      p.final = { key, promise };
+      promise.catch(() => { if (p.final && p.final.promise === promise) p.final = null; });
+      return promise;
+    }
+    let finalTimer = 0;
+    function prepareFinal() {
+      clearTimeout(finalTimer);
+      finalTimer = setTimeout(async () => {
+        for (const p of st.pages.slice()) {
+          if (st.destroyed) return;
+          if (p.disposed || !p.display || p.busy) continue;
+          try { await renderFinal(p); } catch (e) { /* made again on Save */ }
+        }
+      }, 300);
+    }
+
     async function pages() {
       if (!st.pages.length) throw userError("Add or take a photo first.");
       await Promise.all(st.pages.map((p) => p.ready));
       const bad = st.pages.find((p) => !p.display);
       if (bad) throw userError(`Couldn't read "${bad.file.name}". Remove it and try again.`);
+      clearTimeout(finalTimer);
       const out = [];
       const list = st.pages.slice();
       for (let i = 0; i < list.length; i++) {
         const p = list[i];
-        if (typeof setProcessingLabel === "function") setProcessingLabel(`Straightening page ${i + 1} of ${list.length}...`);
-        const r = await Runner.render(() => decodeImage(p.file), jobOpts(p, SIZES[st.size].maxEdge, true));
-        // Real paper sizes in points, so A4 prints as A4 (landscape pages keep their turn).
-        const size = { a4: [595.28, 841.89], letter: [612, 792] }[st.paper];
-        const page = { bytes: r.bytes, type: r.type };
-        if (size) page.pageSize = r.w > r.h ? [size[1], size[0]] : size;
-        out.push(page);
+        if (typeof setProcessingLabel === "function") setProcessingLabel(`Getting page ${i + 1} of ${list.length} ready...`);
+        // Page copies are handed to the PDF worker, which takes ownership of the bytes.
+        const page = await renderFinal(p);
+        out.push({ ...page, bytes: page.bytes.slice() });
       }
       if (typeof setProcessingLabel === "function") setProcessingLabel("Building your PDF...");
       return out;
+    }
+
+    // Small previews of every look for the selected page (the strip under the page).
+    async function lookThumbs(p) {
+      const key = JSON.stringify([p.corners, p.rot, st.paper]);
+      const btns = Array.from(root.querySelectorAll(".scan-filter"));
+      if (p.looks && p.looks.key === key) { paintLooks(p); return; }
+      p.looks = { key, canvases: {} };
+      for (const f of FILTERS) {
+        if (st.destroyed || p.disposed || p.looks.key !== key) return;
+        try {
+          const out = await Runner.render(() => toBitmap(p.display), { ...jobOpts(p, FTHUMB * 2, false), filter: f.id });
+          if (p.looks.key !== key) return;
+          const c = makeCanvas(out.w, out.h);
+          c.getContext("2d").putImageData(new ImageData(new Uint8ClampedArray(out.buffer), out.w, out.h), 0, 0);
+          p.looks.canvases[f.id] = c;
+          if (p === st.sel) paintLooks(p);
+        } catch (e) { return; }
+      }
+      void btns;
+    }
+    function paintLooks(p) {
+      root.querySelectorAll(".scan-filter").forEach((b) => {
+        const src = p && p.looks && p.looks.canvases[b.dataset.filter];
+        const c = b.querySelector("canvas");
+        if (!src) { c.width = c.height = 1; b.classList.remove("ready"); return; }
+        const k = Math.min(1, FTHUMB / Math.max(src.width, src.height)) * Math.min(2, window.devicePixelRatio || 1);
+        c.width = Math.max(1, Math.round(src.width * k));
+        c.height = Math.max(1, Math.round(src.height * k));
+        const ctx = c.getContext("2d");
+        ctx.imageSmoothingQuality = "high";
+        ctx.drawImage(src, 0, 0, c.width, c.height);
+        b.classList.add("ready");
+      });
     }
 
     // ---------- page list ----------
@@ -1288,6 +1603,7 @@ self.onmessage = async (e) => {
     }
 
     function select(p, justAdded = false) {
+      if (st.sel !== p) paintLooks(p);
       st.sel = p;
       if (p) p.justAdded = justAdded;
       if (p && justAdded && p.display) setView(p.found ? "result" : "edit");
@@ -1368,6 +1684,9 @@ self.onmessage = async (e) => {
       const left = root.querySelector('[data-act="left"]'), right = root.querySelector('[data-act="right"]');
       if (left) left.disabled = i <= 0;
       if (right) right.disabled = i < 0 || i >= st.pages.length - 1;
+      const prev = root.querySelector('[data-act="prev"]'), next = root.querySelector('[data-act="next"]');
+      if (prev) prev.hidden = i <= 0;
+      if (next) next.hidden = i < 0 || i >= st.pages.length - 1;
       if (p && p.display) {
         els.status.textContent = p.found ? "Edges found. Drag a corner to adjust." : "No clear edges. Drag the corners to crop.";
         els.status.classList.toggle("warn", !p.found);
@@ -1439,8 +1758,9 @@ self.onmessage = async (e) => {
       if (!p || !st.layout) return;
       const pts = p.corners.map(toView);
       handles.forEach((h, i) => {
-        h.style.left = `${pts[i][0]}px`;
-        h.style.top = `${pts[i][1]}px`;
+        const [x, y] = i < 4 ? pts[i] : [(pts[i - 4][0] + pts[(i - 3) % 4][0]) / 2, (pts[i - 4][1] + pts[(i - 3) % 4][1]) / 2];
+        h.style.left = `${x}px`;
+        h.style.top = `${y}px`;
       });
       els.outline.setAttribute("points", pts.map((q) => `${q[0].toFixed(1)},${q[1].toFixed(1)}`).join(" "));
       const { cw, ch } = st.layout;
@@ -1524,6 +1844,12 @@ self.onmessage = async (e) => {
         e.preventDefault();
         try { h.setPointerCapture(e.pointerId); } catch (err) { /* synthetic pointer */ }
         const r = els.inner.getBoundingClientRect();
+        if (i >= 4) {
+          // A side handle moves its two corners together.
+          drag = { i, id: e.pointerId, x0: e.clientX, y0: e.clientY, start: [toView(p.corners[i - 4]), toView(p.corners[(i - 3) % 4])] };
+          h.classList.add("dragging");
+          return;
+        }
         const [vx, vy] = toView(p.corners[i]);
         drag = { i, id: e.pointerId, dx: vx - (e.clientX - r.left), dy: vy - (e.clientY - r.top) };
         h.classList.add("dragging");
@@ -1532,6 +1858,13 @@ self.onmessage = async (e) => {
       h.addEventListener("pointermove", (e) => {
         if (!drag || drag.id !== e.pointerId || drag.i !== i) return;
         const r = els.inner.getBoundingClientRect();
+        if (i >= 4) {
+          const dx = e.clientX - drag.x0, dy = e.clientY - drag.y0;
+          st.sel.corners[i - 4] = fromView(drag.start[0][0] + dx, drag.start[0][1] + dy);
+          st.sel.corners[(i - 3) % 4] = fromView(drag.start[1][0] + dx, drag.start[1][1] + dy);
+          positionHandles();
+          return;
+        }
         st.sel.corners[i] = fromView(e.clientX - r.left + drag.dx, e.clientY - r.top + drag.dy);
         positionHandles();
         drawLoupe(i);
@@ -1550,8 +1883,10 @@ self.onmessage = async (e) => {
         if (!step || !st.sel || !st.layout) return;
         e.preventDefault();
         const amt = (e.shiftKey ? 0.02 : 0.004) * Math.max(st.layout.cw, st.layout.ch);
-        const [vx, vy] = toView(st.sel.corners[i]);
-        st.sel.corners[i] = fromView(vx + step[0] * amt, vy + step[1] * amt);
+        for (const k of i < 4 ? [i] : [i - 4, (i - 3) % 4]) {
+          const [vx, vy] = toView(st.sel.corners[k]);
+          st.sel.corners[k] = fromView(vx + step[0] * amt, vy + step[1] * amt);
+        }
         positionHandles();
         schedulePreview(st.sel, 350);
       });
@@ -1627,12 +1962,18 @@ self.onmessage = async (e) => {
           root.querySelectorAll('[data-act="size"]').forEach((x) => x.setAttribute("aria-checked", String(x === b)));
           return;
         case "share": share(); return;
+        case "prev": case "next": {
+          const i = st.pages.indexOf(p) + (b.dataset.act === "next" ? 1 : -1);
+          if (i >= 0 && i < st.pages.length) { select(st.pages[i]); renderStrip(); renderEditor(); drawResult(); if (st.pages[i].preview) lookThumbs(st.pages[i]); }
+          return;
+        }
         case "view": setView(b.dataset.view); renderEditor(); drawResult(); return;
         case "select": {
           if (suppressClick) return;
           const id = Number(b.closest(".scan-thumb").dataset.id);
           select(st.pages.find((q) => q.id === id) || null);
           renderStrip(); renderEditor(); drawResult();
+          if (st.sel && st.sel.preview) lookThumbs(st.sel);
           return;
         }
         case "delete-one": {
@@ -1648,6 +1989,7 @@ self.onmessage = async (e) => {
         case "auto": p.corners = clone(p.auto); positionHandles(); renderPreview(p); break;
         case "full": p.corners = clone(FULL); positionHandles(); renderPreview(p); break;
         case "rotate": p.rot = (p.rot + 90) % 360; renderEditor(); renderPreview(p); break;
+        case "crop": setView("edit"); renderEditor(); break;
         case "left": movePage(st.pages.indexOf(p), st.pages.indexOf(p) - 1); break;
         case "right": movePage(st.pages.indexOf(p), st.pages.indexOf(p) + 1); break;
         case "delete": deletePage(p); break;
@@ -1655,14 +1997,31 @@ self.onmessage = async (e) => {
           st.retake = p;
           if (canUseCamera()) openCamera({ single: true }); else els.capture.click();
           break;
-        case "filter": p.filter = b.dataset.filter; updateInfo(); renderPreview(p); break;
-        case "filter-all":
-          st.pages.forEach((q) => { if (q.filter !== p.filter) { q.filter = p.filter; renderPreview(q); } });
-          toast(`Every page now uses ${FILTERS.find((f) => f.id === p.filter).label}.`, "success");
+        case "filter":
+          if (applyAll.checked) {
+            st.look = b.dataset.filter;
+            st.pages.forEach((q) => { if (q.filter !== st.look) { q.filter = st.look; if (q !== p) renderPreview(q); } });
+          }
+          p.filter = b.dataset.filter;
+          updateInfo();
+          renderPreview(p);
           break;
         default: break;
       }
     });
+
+    // Swipe the result left or right for the next or previous page.
+    let swipe = null;
+    els.result.addEventListener("pointerdown", (e) => { if (e.pointerType !== "mouse") swipe = { x: e.clientX, y: e.clientY, id: e.pointerId }; });
+    els.result.addEventListener("pointerup", (e) => {
+      if (!swipe || swipe.id !== e.pointerId) return;
+      const dx = e.clientX - swipe.x, dy = e.clientY - swipe.y;
+      swipe = null;
+      if (Math.abs(dx) < 50 || Math.abs(dy) > Math.abs(dx)) return;
+      const b = root.querySelector(`[data-act="${dx < 0 ? "next" : "prev"}"]`);
+      if (b && !b.hidden) b.click();
+    });
+    els.result.addEventListener("pointercancel", () => { swipe = null; });
 
     for (const input of [els.pick, els.capture]) {
       input.addEventListener("change", () => {
@@ -1674,7 +2033,11 @@ self.onmessage = async (e) => {
     let raf = 0;
     const relayout = () => {
       cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => { if (!st.destroyed && st.pages.length) { renderEditor(); drawResult(); } });
+      raf = requestAnimationFrame(() => {
+        if (st.destroyed) return;
+        if (st.pages.length) { renderEditor(); drawResult(); }
+        if (cam.el && rv.img) layoutReview();
+      });
     };
     const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(relayout) : null;
     if (ro) ro.observe(root);
@@ -1688,16 +2051,36 @@ self.onmessage = async (e) => {
         <div class="scan-cam-view">
           <video class="scan-cam-video" playsinline muted autoplay></video>
           <canvas class="scan-cam-outline"></canvas>
+          <span class="scan-cam-hint" aria-live="polite">Starting camera...</span>
           <div class="scan-cam-flash"></div>
         </div>
         <div class="scan-cam-top">
-          <span class="scan-cam-hint" aria-live="polite">Starting camera...</span>
           <button type="button" class="scan-cam-x" data-cam="close" aria-label="Close camera">${ICONS.close}</button>
+          <button type="button" class="scan-cam-opt" data-cam="torch" aria-pressed="false" hidden>${ICONS.torch}<span>Flash</span></button>
+          <button type="button" class="scan-cam-opt" data-cam="check" aria-pressed="true" title="Show the crop after each photo">${ICONS.crop}<span>Check crop</span></button>
         </div>
         <div class="scan-cam-bar">
-          <div class="scan-cam-last"><canvas></canvas><span class="scan-cam-count">0</span></div>
+          <button type="button" class="scan-cam-import" data-cam="import" aria-label="Add photos from your gallery">${ICONS.images}<span>Import</span></button>
           <button type="button" class="scan-shutter" id="scanShutter" data-cam="shoot" aria-label="Take photo"><span></span></button>
-          <button type="button" class="scan-cam-done" id="scanCamDone" data-cam="close">Done</button>
+          <button type="button" class="scan-cam-done" id="scanCamDone" data-cam="close" aria-label="Done">
+            <span class="scan-cam-last"><canvas></canvas><span class="scan-cam-count">0</span></span>
+            <span class="scan-cam-done-text">Done</span>
+          </button>
+        </div>
+        <div class="scan-review" hidden>
+          <div class="scan-review-stage">
+            <div class="scan-review-inner">
+              <canvas class="scan-review-img"></canvas>
+              <svg class="scan-quad scan-review-quad" aria-hidden="true"><path class="scan-shade" fill-rule="evenodd"></path><polygon class="scan-outline"></polygon></svg>
+              ${[0, 1, 2, 3, 4, 5, 6, 7].map((i) => `<button type="button" class="scan-handle${i > 3 ? " scan-handle-edge" : ""}" data-r="${i}" aria-label="${i < 4 ? `Corner ${i + 1}` : `Side ${i - 3}`}"><span></span></button>`).join("")}
+            </div>
+          </div>
+          <p class="scan-review-tip">Drag the dots to fit the page edges.</p>
+          <div class="scan-review-bar">
+            <label class="scan-review-auto"><input type="checkbox" data-cam="autocrop" checked> Auto crop</label>
+            <button type="button" class="scan-review-btn" data-cam="retake">Retake</button>
+            <button type="button" class="scan-review-btn scan-review-ok" data-cam="keep">${ICONS.check}<span>Continue</span></button>
+          </div>
         </div>`;
     }
 
@@ -1718,9 +2101,23 @@ self.onmessage = async (e) => {
       el.addEventListener("click", (e) => {
         const b = e.target.closest("[data-cam]");
         if (!b) return;
-        if (b.dataset.cam === "shoot") shoot();
-        else closeCamera();
+        const act = b.dataset.cam;
+        if (act === "shoot") shoot();
+        else if (act === "keep") reviewDone(true);
+        else if (act === "retake") reviewDone(false);
+        else if (act === "autocrop") reviewAuto(b.checked);
+        else if (act === "import") { st.retake = cam.single ? st.retake : null; els.pick.click(); }
+        else if (act === "torch") setTorch(b.getAttribute("aria-pressed") !== "true");
+        else if (act === "check") {
+          const on = b.getAttribute("aria-pressed") !== "true";
+          b.setAttribute("aria-pressed", String(on));
+          cam.check = on;
+          try { localStorage.setItem("scanCheckCrop", on ? "1" : "0"); } catch (err) { /* private mode */ }
+        } else closeCamera();
       });
+      try { cam.check = localStorage.getItem("scanCheckCrop") !== "0"; } catch (err) { cam.check = true; }
+      el.querySelector('[data-cam="check"]').setAttribute("aria-pressed", String(cam.check));
+      setupReview(el);
       window.addEventListener("keydown", camKeys, true);
       let stream;
       try {
@@ -1743,10 +2140,14 @@ self.onmessage = async (e) => {
       cam.stream = stream;
       const track = stream.getVideoTracks()[0];
       if (track && track.applyConstraints) track.applyConstraints({ advanced: [{ focusMode: "continuous" }] }).catch(() => {});
+      try {
+        const caps = track && track.getCapabilities ? track.getCapabilities() : {};
+        if (caps.torch) el.querySelector('[data-cam="torch"]').hidden = false;
+      } catch (e) { /* no torch */ }
       const video = el.querySelector("video");
       video.srcObject = stream;
       try { await video.play(); } catch (e) { /* the autoplay attribute covers it */ }
-      el.querySelector(".scan-cam-hint").textContent = "Fit the page in the frame";
+      el.querySelector(".scan-cam-hint").textContent = "Looking for the page...";
       el.classList.add("live");
       ScanTool._camera = { active: true };
       cam.timer = setInterval(liveOutline, 180);
@@ -1760,6 +2161,8 @@ self.onmessage = async (e) => {
 
     function closeCamera() {
       st.retake = null;
+      rv.token++;
+      rv.file = rv.img = rv.layout = null;
       clearInterval(cam.timer);
       cam.timer = 0;
       if (cam.stream) cam.stream.getTracks().forEach((t) => t.stop());
@@ -1807,7 +2210,7 @@ self.onmessage = async (e) => {
       const ox = (r.width - vw * k) / 2, oy = (r.height - vh * k) / 2;
       const ctx = out.getContext("2d");
       ctx.clearRect(0, 0, out.width, out.height);
-      el.querySelector(".scan-cam-hint").textContent = cam.smooth ? "Page found. Hold still and tap the shutter." : "Fit the page in the frame";
+      el.querySelector(".scan-cam-hint").textContent = cam.smooth ? "Page found. Hold still and tap the button." : "Looking for the page...";
       el.classList.toggle("found", !!cam.smooth);
       if (!cam.smooth) return;
       ctx.scale(dpr, dpr);
@@ -1817,17 +2220,157 @@ self.onmessage = async (e) => {
         if (i) ctx.lineTo(px, py); else ctx.moveTo(px, py);
       });
       ctx.closePath();
-      ctx.fillStyle = "rgba(99, 102, 241, 0.18)";
+      ctx.fillStyle = "rgba(16, 185, 129, 0.28)";
       ctx.fill();
       ctx.lineWidth = 3;
-      ctx.strokeStyle = "#22d3ee";
+      ctx.strokeStyle = "#10b981";
       ctx.lineJoin = "round";
       ctx.stroke();
     }
 
+    function acceptShot(file, preset) {
+      const el = cam.el;
+      if (!el) return;
+      cam.shots++;
+      el.querySelector(".scan-cam-count").textContent = String(cam.shots);
+      el.querySelector(".scan-cam-last").classList.add("has");
+      el.querySelector(".scan-cam-done-text").textContent = `Done (${cam.shots})`;
+      if (preset) presetCorners.set(file, preset);
+      addFiles([file]);
+      if (cam.single) closeCamera();
+    }
+
+    async function setTorch(on) {
+      const track = cam.stream && cam.stream.getVideoTracks()[0];
+      if (!track) return;
+      try {
+        await track.applyConstraints({ advanced: [{ torch: on }] });
+        cam.el.querySelector('[data-cam="torch"]').setAttribute("aria-pressed", String(on));
+      } catch (e) { toast("This camera has no flash we can turn on."); }
+    }
+
+    /* ----- crop check after each shot ----- */
+    const rv = { file: null, img: null, corners: null, auto: null, found: false, confidence: 0, touched: false, layout: null, drag: null, token: 0 };
+
+    function setupReview(el) {
+      const inner = el.querySelector(".scan-review-inner");
+      const hs = Array.from(el.querySelectorAll(".scan-review [data-r]"));
+      const view = ([x, y]) => [x * rv.layout.w, y * rv.layout.h];
+      hs.forEach((h) => {
+        const i = Number(h.dataset.r);
+        h.addEventListener("pointerdown", (e) => {
+          if (!rv.layout) return;
+          e.preventDefault();
+          try { h.setPointerCapture(e.pointerId); } catch (err) { /* synthetic */ }
+          rv.drag = { i, id: e.pointerId, x0: e.clientX, y0: e.clientY, start: rv.corners.map(view) };
+          h.classList.add("dragging");
+        });
+        h.addEventListener("pointermove", (e) => {
+          const d = rv.drag;
+          if (!d || d.id !== e.pointerId || d.i !== i) return;
+          const dx = e.clientX - d.x0, dy = e.clientY - d.y0;
+          const ks = i < 4 ? [i] : [i - 4, (i - 3) % 4];
+          for (const k of ks) rv.corners[k] = [clamp01((d.start[k][0] + dx) / rv.layout.w), clamp01((d.start[k][1] + dy) / rv.layout.h)];
+          rv.touched = true;
+          el.querySelector('[data-cam="autocrop"]').checked = true;
+          drawReviewQuad();
+        });
+        const end = (e) => { if (rv.drag && rv.drag.id === e.pointerId) { rv.drag = null; h.classList.remove("dragging"); } };
+        h.addEventListener("pointerup", end);
+        h.addEventListener("pointercancel", end);
+      });
+      void inner;
+    }
+
+    function layoutReview() {
+      const el = cam.el;
+      if (!el || !rv.img) return;
+      const stage = el.querySelector(".scan-review-stage");
+      const inner = el.querySelector(".scan-review-inner");
+      const c = el.querySelector(".scan-review-img");
+      const aw = stage.clientWidth || window.innerWidth, ah = stage.clientHeight || window.innerHeight * 0.7;
+      const k = Math.min(aw / rv.img.width, ah / rv.img.height);
+      const w = Math.floor(rv.img.width * k), h = Math.floor(rv.img.height * k);
+      inner.style.width = `${w}px`;
+      inner.style.height = `${h}px`;
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      c.width = Math.round(w * dpr);
+      c.height = Math.round(h * dpr);
+      c.getContext("2d").drawImage(rv.img, 0, 0, c.width, c.height);
+      rv.layout = { w, h };
+      el.querySelector(".scan-review-quad").setAttribute("viewBox", `0 0 ${w} ${h}`);
+      drawReviewQuad();
+    }
+
+    function drawReviewQuad() {
+      const el = cam.el;
+      if (!el || !rv.layout) return;
+      const { w, h } = rv.layout;
+      const pts = rv.corners.map(([x, y]) => [x * w, y * h]);
+      el.querySelectorAll(".scan-review [data-r]").forEach((b) => {
+        const i = Number(b.dataset.r);
+        const [x, y] = i < 4 ? pts[i] : [(pts[i - 4][0] + pts[(i - 3) % 4][0]) / 2, (pts[i - 4][1] + pts[(i - 3) % 4][1]) / 2];
+        b.style.left = `${x}px`;
+        b.style.top = `${y}px`;
+      });
+      el.querySelector(".scan-review .scan-outline").setAttribute("points", pts.map((q) => `${q[0].toFixed(1)},${q[1].toFixed(1)}`).join(" "));
+      el.querySelector(".scan-review .scan-shade").setAttribute("d", `M0 0H${w}V${h}H0Z M${pts.map((q) => `${q[0].toFixed(1)} ${q[1].toFixed(1)}`).join(" L")}Z`);
+    }
+
+    async function openReview(canvas, file, live) {
+      const el = cam.el;
+      const token = ++rv.token;
+      Object.assign(rv, { file, img: canvas, touched: false, found: !!live, confidence: live ? 0.5 : 0 });
+      rv.auto = live ? clone(live) : [[0.06, 0.06], [0.94, 0.06], [0.94, 0.94], [0.06, 0.94]];
+      rv.corners = clone(rv.auto);
+      el.querySelector('[data-cam="autocrop"]').checked = true;
+      el.classList.add("reviewing");
+      el.querySelector(".scan-review").hidden = false;
+      layoutReview();
+      el.querySelector(".scan-review-ok").focus();
+      // Look again on the sharp photo; the live outline was found on a small video frame.
+      try {
+        const s = Math.min(1, DETECT_MAX / Math.max(canvas.width, canvas.height));
+        const w = Math.max(1, Math.round(canvas.width * s)), h = Math.max(1, Math.round(canvas.height * s));
+        const res = await Runner.detect(() => toBitmap(canvas), { w, h });
+        if (token !== rv.token || rv.touched || !cam.el) return;
+        if (res.corners) {
+          rv.auto = res.corners.map(([x, y]) => [clamp01(x / w), clamp01(y / h)]);
+          rv.found = true;
+          rv.confidence = res.confidence;
+          if (el.querySelector('[data-cam="autocrop"]').checked) { rv.corners = clone(rv.auto); drawReviewQuad(); }
+        }
+      } catch (e) { /* keep the live outline */ }
+      ScanTool._review = { corners: rv.corners.map((p) => p.slice()), found: rv.found };
+    }
+
+    function reviewAuto(on) {
+      rv.corners = on ? clone(rv.auto) : clone(FULL);
+      rv.touched = !on;
+      drawReviewQuad();
+    }
+
+    function reviewDone(keep) {
+      const el = cam.el;
+      if (!el) return;
+      rv.token++;
+      el.classList.remove("reviewing");
+      el.querySelector(".scan-review").hidden = true;
+      const file = rv.file, img = rv.img;
+      rv.file = rv.img = rv.layout = null;
+      if (!keep) return;
+      const full = rv.corners.every((p, i) => Math.abs(p[0] - FULL[i][0]) < 1e-6 && Math.abs(p[1] - FULL[i][1]) < 1e-6);
+      const last = el.querySelector(".scan-cam-last canvas");
+      const ts = 112 / Math.max(img.width, img.height);
+      last.width = Math.round(img.width * ts);
+      last.height = Math.round(img.height * ts);
+      last.getContext("2d").drawImage(img, 0, 0, last.width, last.height);
+      acceptShot(file, { corners: clone(rv.corners), auto: clone(rv.auto), confidence: rv.confidence, full });
+    }
+
     async function shoot() {
       const el = cam.el;
-      if (!el || cam.busy) return;
+      if (!el || cam.busy || el.classList.contains("reviewing")) return;
       const video = el.querySelector("video");
       const vw = video.videoWidth, vh = video.videoHeight;
       if (!vw || !vh) return;
@@ -1841,19 +2384,19 @@ self.onmessage = async (e) => {
         flash.classList.add("go");
         // toDataURL, not toBlob: Chrome runs toBlob in idle time, which the live outline rarely leaves.
         const blob = new Blob([jpegBytes(c, 0.92)], { type: "image/jpeg" });
-        cam.shots++;
         const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
-        const file = new File([blob], `scan-${stamp}-${cam.shots}.jpg`, { type: "image/jpeg", lastModified: Date.now() });
+        const file = new File([blob], `scan-${stamp}-${cam.shots + 1}-${Date.now() % 1000}.jpg`, { type: "image/jpeg", lastModified: Date.now() });
+        if (cam.check) {
+          // Show the crop straight away (Oken style); the shot is added on Continue.
+          openReview(c, file, cam.smooth);
+          return;
+        }
         const last = el.querySelector(".scan-cam-last canvas");
         const ts = 112 / Math.max(vw, vh);
         last.width = Math.round(vw * ts);
         last.height = Math.round(vh * ts);
         last.getContext("2d").drawImage(c, 0, 0, last.width, last.height);
-        el.querySelector(".scan-cam-count").textContent = String(cam.shots);
-        el.querySelector(".scan-cam-last").classList.add("has");
-        el.querySelector(".scan-cam-done").textContent = `Done (${cam.shots})`;
-        addFiles([file]);
-        if (cam.single) closeCamera();
+        acceptShot(file, null);
       } catch (e) {
         toast("Couldn't take the photo. Try again.");
       } finally {
@@ -1894,6 +2437,7 @@ self.onmessage = async (e) => {
       st.pages.forEach((p) => { p.disposed = true; p.display = null; p.preview = null; });
       st.pages = [];
       Runner.reset();
+      FinalRunner.reset();
       if (ScanTool._active === api) ScanTool._active = null;
     }
 
@@ -1903,6 +2447,7 @@ self.onmessage = async (e) => {
       destroy,
       setResult,
       ocr: () => $("scanOcr").checked,
+      name: fileName,
       // Test hooks.
       _state: () => ({
         paper: st.paper,

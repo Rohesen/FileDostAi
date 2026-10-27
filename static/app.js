@@ -19,6 +19,11 @@ document.addEventListener("DOMContentLoaded", () => {
   window.addEventListener("popstate", openFromUrl);
   if ("serviceWorker" in navigator && location.protocol !== "file:") {
     navigator.serviceWorker.register("/sw.js").catch(() => {});
+    // Fill the offline copy only after the page has been quiet for a while, never during first use.
+    const saveData = navigator.connection && navigator.connection.saveData;
+    if (!saveData) window.addEventListener("load", () => setTimeout(() => {
+      navigator.serviceWorker.ready.then((r) => r.active && r.active.postMessage("precache")).catch(() => {});
+    }, 20000));
   }
 });
 
@@ -148,6 +153,11 @@ function openToolModal(toolId, { push = true } = {}) {
   document.querySelector("#btnExecute .btn-text").textContent = tool.actionLabel || (shows ? "Run" : "Save & download");
 
   if (tool.onOpen) tool.onOpen(ctx);
+  // PDF tools: fetch pdf.js and start the PDF worker now, while the user picks files.
+  if (/pdf/.test(tool.accept || "")) {
+    if (typeof PdfRender !== "undefined") PdfRender.ready().catch(() => {});
+    if (!tool.endpoint && !tool.server && typeof PdfWorker !== "undefined") PdfWorker.warm();
+  }
   document.getElementById("universalModal").classList.add("open");
   document.title = `${tool.name} | ${BRAND_NAME}`;
   if (push && location.pathname !== `/${tool.slug}`) history.pushState({}, "", `/${tool.slug}`);
@@ -243,12 +253,20 @@ function isPdf(file) {
   return file.type === "application/pdf" || /\.pdf$/i.test(file.name);
 }
 
-async function filesChanged() {
+// Running a tool waits for these, so a quick click right after adding files can't see a half-ready state:
+// ctx.buffersReady once the files are read, ctx.settled once page thumbnails and onFiles are done.
+function filesChanged() {
+  ctx.settled = filesChangedNow();
+  return ctx.settled;
+}
+
+async function filesChangedNow() {
   const tool = activeTool;
   updateSelectedFilesUI();
   ctx.files = currentFiles;
   // Tools that stream big files themselves (video) set noBuffers so a 1 GB video isn't read into memory twice.
-  ctx.buffers = tool.noBuffers ? [] : await Promise.all(currentFiles.map((f) => f.arrayBuffer().then((b) => new Uint8Array(b))));
+  ctx.buffersReady = tool.noBuffers ? Promise.resolve([]) : Promise.all(currentFiles.map((f) => f.arrayBuffer().then((b) => new Uint8Array(b))));
+  ctx.buffers = await ctx.buffersReady;
   if (tool !== activeTool) return;
   try {
     if (tool.board) {
@@ -446,6 +464,12 @@ async function executeCurrentTool({ keep = false } = {}) {
       Progress.step(1, { from: 0.08, to: 0.92 });
       Progress.setLabel("Working on your device…");
       ctx.progress = (f, text) => { if (token === runToken) Progress.set(f, text); };
+      if (ctx.buffersReady) ctx.buffers = await ctx.buffersReady;
+      if (ctx.settled && !(tool.boardOptional && !ctx.board)) {
+        Progress.setLabel("Getting your pages ready…");
+        await ctx.settled;
+        Progress.setLabel("Working on your device…");
+      }
       result = await tool.run(ctx);
     } else {
       Progress.begin({ steps: ["Upload", tool.slow ? "Convert (the slowest part)" : "Process on the server", "Download the result"], expectMs: 2000, cancel });

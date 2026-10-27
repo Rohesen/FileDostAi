@@ -4,7 +4,7 @@
 // tries the server's compressor (files processed in memory, never stored) and then falls back
 // to the browser.
 
-document.head.append(Object.assign(document.createElement("link"), { rel: "stylesheet", href: "/static/pdf-extras.css?v=13" }));
+document.head.append(Object.assign(document.createElement("link"), { rel: "stylesheet", href: "/static/pdf-extras.css?v=33" }));
 
 const PdfExtras = (() => {
   const { PDFDocument, PDFName, PDFDict, PDFArray, PDFNumber, PDFHexString, PDFRef, StandardFonts, rgb, degrees } = PDFLib;

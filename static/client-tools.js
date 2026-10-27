@@ -212,9 +212,11 @@
    * This one call backs merge, organize, rotate and remove pages in the page-grid UI.
    */
   async function assemble(pdfs, plan, filename = "organized.pdf") {
-    if (!plan.length) throw new UserError("There are no pages left to save.");
     const sources = [];
     for (const bytes of pdfs) sources.push(await load(bytes));
+    // No plan (the page thumbnails weren't ready yet): every page of every file, in order.
+    if (!plan) plan = sources.flatMap((s, f) => s.getPageIndices().map((page) => ({ file: f, page, rotate: 0 })));
+    if (!plan.length) throw new UserError("There are no pages left to save.");
     const out = await PDFDocument.create();
     // Copy each source's pages once, then reuse them in plan order.
     const copied = new Map();

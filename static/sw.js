@@ -2,7 +2,11 @@
 // Pages and static files: network first, falling back to the cached copy when offline,
 // so an update never mixes old and new files.
 // The API is never cached, and no user file ever passes through here.
-const VERSION = "filedost-v32";
+const V = "33";  // keep equal to the ?v= in index.html
+const VERSION = `filedost-v${V}`;
+// Only the page itself is cached at install, so the first visit downloads nothing extra.
+// CORE (the offline copy of every tool) is fetched later, when the page says it is idle.
+const SHELL = ["/", "/manifest.webmanifest"];
 const CORE = [
   "/",
   "/static/style.css",
@@ -81,11 +85,23 @@ const CORE = [
   "/static/vendor/pdfjs/pdf.min.mjs",
   "/static/vendor/pdfjs/pdf.worker.min.mjs",
   "/static/icons/icon-192.png",
-  "/manifest.webmanifest",
 ];
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(VERSION).then((c) => c.addAll(CORE)).then(() => self.skipWaiting()));
+  event.waitUntil(caches.open(VERSION).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
+});
+
+// Sent by the page once it has been idle for a while. The same ?v= as the page's own <script> tags
+// means most of these come straight from the browser cache instead of the network.
+self.addEventListener("message", (event) => {
+  if (event.data !== "precache") return;
+  event.waitUntil(caches.open(VERSION).then(async (c) => {
+    for (const path of CORE) {
+      const url = path.startsWith("/static/") && !path.includes("/fonts/") && !path.includes("/icons/") ? `${path}?v=${V}` : path;
+      if (await c.match(url, { ignoreSearch: true })) continue;
+      try { await c.add(url); } catch (e) { /* offline or missing: try again next visit */ }
+    }
+  }));
 });
 
 self.addEventListener("activate", (event) => {

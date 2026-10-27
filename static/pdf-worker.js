@@ -1,7 +1,8 @@
 // Background worker for the in-browser tools, so big PDFs never freeze the page.
 // Messages in:  { id, op, args }   where op is a ClientPDF function name.
 // Messages out: { id, ok: true, result } or { id, ok: false, message, userError }.
-importScripts("vendor/pdf-lib.min.js", "vendor/jszip.min.js", "client-tools.js", "edit-ops.js");
+// The ?v= this worker was started with is reused so these come straight from the browser cache.
+importScripts(...["vendor/pdf-lib.min.js", "vendor/jszip.min.js", "client-tools.js", "edit-ops.js"].map((f) => f + self.location.search));
 
 self.onmessage = async (event) => {
   const { id, op, args } = event.data;

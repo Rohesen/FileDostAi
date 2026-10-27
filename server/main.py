@@ -17,6 +17,7 @@ import logging
 import mimetypes
 import sys
 import os
+import re
 from typing import List, Optional
 
 sys.path.insert(0, os.path.dirname(__file__))
@@ -100,6 +101,23 @@ _SECURITY_HEADERS = {
 }
 
 
+_asset_version = None
+
+
+def _current_asset_version() -> str:
+    """The ?v= that index.html uses for this release (read once). Only files asked for with exactly
+    this version are cached for a year: a stale ?v= written by hand somewhere must not get stuck."""
+    global _asset_version
+    if _asset_version is None:
+        try:
+            with open(os.path.join(STATIC_DIR, "index.html"), encoding="utf-8") as f:
+                m = re.search(r"\?v=(\d+)", f.read())
+            _asset_version = m.group(1) if m else ""
+        except OSError:
+            _asset_version = ""
+    return _asset_version
+
+
 @app.middleware("http")
 async def security_headers(request: Request, call_next):
     response = await call_next(request)
@@ -113,9 +131,14 @@ async def security_headers(request: Request, call_next):
     else:
         response.headers.setdefault("Content-Security-Policy", _CSP)
         if request.method == "GET":
-            # The app's own files change together with each update, so the browser must check for a
-            # newer copy every time (a cheap 304 when nothing changed) instead of mixing old and new files.
-            response.headers.setdefault("Cache-Control", "no-cache")
+            if (request.url.path.startswith("/static/") and response.status_code == 200 and _current_asset_version()
+                    and request.query_params.get("v") == _current_asset_version()):
+                # Versioned files (?v=N) never change under the same address: each update bumps N.
+                response.headers.setdefault("Cache-Control", "public, max-age=31536000, immutable")
+            else:
+                # Everything else must be re-checked every time (a cheap 304 when nothing changed),
+                # so an update never mixes old and new files.
+                response.headers.setdefault("Cache-Control", "no-cache")
     return response
 
 

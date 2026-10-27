@@ -5,7 +5,7 @@
 // cross-origin isolation headers. The input file is mounted read-only (WORKERFS), so a big
 // video is not copied into the engine's memory.
 
-document.head.append(Object.assign(document.createElement("link"), { rel: "stylesheet", href: "/static/media-tool.css?v=13" }));
+document.head.append(Object.assign(document.createElement("link"), { rel: "stylesheet", href: "/static/media-tool.css?v=33" }));
 
 const MediaTool = (() => {
   const BASE = new URL("/static/vendor/ffmpeg/", location.href).href;

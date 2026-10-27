@@ -18,6 +18,7 @@ const TOOLS = [
     accept: ".pdf,application/pdf",
     multipleFiles: true,
     board: "organize",
+    boardOptional: true,
     configHtml: `
       <div class="board-toolbar">
         <span class="drop-hint">Add more files any time. Drag a page, or use ◀ ▶, to move it.</span>
@@ -25,7 +26,8 @@ const TOOLS = [
       </div>`,
     run: (ctx) => {
       if (ctx.buffers.length < 2) throw new ClientPDF.UserError("Add at least two PDFs to merge.");
-      return PdfWorker.run("assemble", ctx.buffers, ctx.board.plan(), "merged.pdf");
+      // Merging can start before the thumbnails are drawn: without a board it keeps the files' order.
+      return PdfWorker.run("assemble", ctx.buffers, ctx.board ? ctx.board.plan() : null, "merged.pdf");
     },
   },
   {
@@ -265,9 +267,7 @@ const TOOLS = [
     run: async (ctx) => {
       const t0 = performance.now();
       let result = await PdfWorker.run("imagesToPdf", await ctx.scan.pages());
-      const stamp = new Date();
-      const pad = (n) => String(n).padStart(2, "0");
-      const name = `Scan_${stamp.getFullYear()}-${pad(stamp.getMonth() + 1)}-${pad(stamp.getDate())}_${pad(stamp.getHours())}${pad(stamp.getMinutes())}.pdf`;
+      const name = ctx.scan.name();
       if (ctx.scan.ocr()) {
         ctx.progress(0.8, "Making the text searchable on the server…");
         const fd = new FormData();

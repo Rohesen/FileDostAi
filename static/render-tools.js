@@ -2,9 +2,13 @@
 // Everything here runs in the browser; nothing is uploaded.
 
 const PdfRender = (() => {
+  // pdf.js (about 430 KB) is fetched only when a tool first needs it, so it never slows the home page.
+  const version = (document.currentScript && new URL(document.currentScript.src).search) || "";
+  let loading = null;
   function ready() {
     if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
-    return new Promise((resolve) => window.addEventListener("pdfjs-ready", () => resolve(window.pdfjsLib), { once: true }));
+    if (!loading) loading = import(`/static/pdfjs-loader.mjs${version}`).then(() => window.pdfjsLib);
+    return loading;
   }
 
   async function open(bytes) {
