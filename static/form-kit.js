@@ -3,7 +3,7 @@
 // then downloaded one by one or as a ZIP. Also registers the HEIC to JPG tool (HeicConvert lives
 // in image-tools.js). Everything runs in the browser; nothing is uploaded.
 
-document.head.append(Object.assign(document.createElement("link"), { rel: "stylesheet", href: "/static/form-kit.css?v=36" }));
+document.head.append(Object.assign(document.createElement("link"), { rel: "stylesheet", href: "/static/form-kit.css?v=37" }));
 
 const FormKit = (() => {
   const P = (typeof PhotoTool !== "undefined" && PhotoTool.PRESETS) || {};
@@ -833,7 +833,7 @@ const FormKit = (() => {
       const label = FORMS[formKey].label.replace(/\s*\(.*\)$/, "").replace(/[^\w]+/g, "_").replace(/^_+|_+$/g, "");
       const filename = `${label}_documents.zip`;
       return {
-        bytes, filename, mime: "application/zip",
+        bytes, filename, mime: "application/zip", keepName: true,
         message: `Done! ${ready.length} file${ready.length > 1 ? "s" : ""} in ${filename}.` +
           (missing.length ? ` Still missing: ${missing.join(", ")}.` : "") + " Nothing was uploaded.",
       };

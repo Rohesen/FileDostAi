@@ -6,7 +6,7 @@
 // worker instead: ONNX Runtime Web and the models (90 MB) then download once from
 // /static/vendor/bg-remove/. Edges, colours and trimming always happen in the browser.
 
-document.head.append(Object.assign(document.createElement("link"), { rel: "stylesheet", href: "/static/bg-remove.css?v=36" }));
+document.head.append(Object.assign(document.createElement("link"), { rel: "stylesheet", href: "/static/bg-remove.css?v=37" }));
 
 const BgRemove = (() => {
   const UserError = (msg) => new ClientPDF.UserError(msg);

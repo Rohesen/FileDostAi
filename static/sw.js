@@ -2,7 +2,7 @@
 // Pages and static files: network first, falling back to the cached copy when offline,
 // so an update never mixes old and new files.
 // The API is never cached, and no user file ever passes through here.
-const V = "36";  // keep equal to the ?v= in index.html
+const V = "37";  // keep equal to the ?v= in index.html
 const VERSION = `filedost-v${V}`;
 // Only the page itself is cached at install, so the first visit downloads nothing extra.
 // CORE (the offline copy of every tool) is fetched later, when the page says it is idle.

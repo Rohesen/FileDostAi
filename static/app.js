@@ -152,6 +152,7 @@ function openToolModal(toolId, { push = true } = {}) {
   const shows = tool.renderResult || ["ai-analyze", "pdf-to-text"].includes(tool.id);
   document.querySelector("#btnExecute .btn-text").textContent = tool.actionLabel || (shows ? "Run" : "Save & download");
 
+  SaveName.reset();
   if (tool.onOpen) tool.onOpen(ctx);
   // PDF tools: fetch pdf.js and start the PDF worker now, while the user picks files.
   if (/pdf/.test(tool.accept || "")) {
@@ -187,6 +188,13 @@ function setupModalEvents() {
     if (b.dataset.board) ctx.board[b.dataset.board]();
     else activeTool.actions[b.dataset.action](ctx);
   });
+  const saveName = document.getElementById("saveName");
+  saveName.addEventListener("input", () => {
+    const was = SaveName.edited;
+    SaveName.edited = !!saveName.value.trim();
+    if (was !== SaveName.edited) SaveName.refresh();
+  });
+  saveName.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); executeCurrentTool(); } });
   config.addEventListener("input", (e) => {
     if (activeTool && activeTool.onInput && e.target.id) activeTool.onInput(ctx, e.target.id);
   });
@@ -263,6 +271,7 @@ function filesChanged() {
 async function filesChangedNow() {
   const tool = activeTool;
   updateSelectedFilesUI();
+  SaveName.refresh();
   ctx.files = currentFiles;
   // Tools that stream big files themselves (video) set noBuffers so a 1 GB video isn't read into memory twice.
   ctx.buffersReady = tool.noBuffers ? Promise.resolve([]) : Promise.all(currentFiles.map((f) => f.arrayBuffer().then((b) => new Uint8Array(b))));
@@ -496,6 +505,9 @@ async function executeCurrentTool({ keep = false } = {}) {
       afterSuccess(tool);
       return result;
     }
+    const toolName = result.filename;
+    result.filename = SaveName.final(result.filename, result.keepName);
+    if (result.message && toolName !== result.filename) result.message = result.message.split(toolName).join(result.filename);
     downloadBlob(new Blob([result.bytes], { type: result.mime }), result.filename);
     showToast(result.message || `Done! Downloaded ${result.filename}${savedText(result)}.${tool.run ? " Nothing was uploaded." : ""}`, "success");
     if (typeof Chains !== "undefined") Chains.offerNext(tool, result);
@@ -609,6 +621,60 @@ function savedText(result) {
 function afterSuccess(tool) {
   if (typeof Feedback !== "undefined") Feedback.askForRating(tool);
 }
+
+// ---------- download names ----------
+// Every download keeps the user's own file name: "report.pdf" through Remove pages saves as
+// "report_pages_removed.pdf", not "pages_removed.pdf". The File name box above the buttons
+// starts as that name and can be changed before saving.
+const SaveName = {
+  edited: false,
+  stem(name) { return String(name || "").replace(/\.[^./\\]+$/, ""); },
+  ext(name) { const m = /\.([A-Za-z0-9]{1,8})$/.exec(String(name || "")); return m ? m[1].toLowerCase() : ""; },
+  clean(name) { return String(name).replace(/[\\/:*?"<>|\u0000-\u001f]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 120); },
+  base() { return currentFiles.length ? this.clean(this.stem(currentFiles[0].name)).slice(0, 80) : ""; },
+  // The automatic name: the input's name plus what the tool did.
+  auto(resultName) {
+    const base = this.base();
+    const ext = this.ext(resultName);
+    const stem = this.stem(resultName);
+    if (!base || !stem) return resultName;
+    // Several files in, a ZIP out: each file inside keeps its own name, so the first file's
+    // name on the ZIP would mislead.
+    if (currentFiles.length > 1 && ext === "zip") return resultName;
+    const lo = stem.toLowerCase(), b = base.toLowerCase();
+    if (lo === b || (lo.startsWith(b) && /[_\-. (]/.test(lo.charAt(b.length)))) return resultName;
+    const what = stem.replace(/^(output|result|document|file|download)[_-]?/i, "").replace(/[_-](document|doc)$/i, "");
+    return `${base}${what ? `_${what}` : ""}${ext ? `.${ext}` : ""}`;
+  },
+  // keep: the tool picked the name on purpose (exam portals expect "Photograph.jpg").
+  final(resultName, keep = false) {
+    if (activeTool && (activeTool.id === "scan" || activeTool.noSaveName)) return resultName;
+    const input = document.getElementById("saveName");
+    const ext = this.ext(resultName);
+    if (this.edited && input && this.clean(input.value)) {
+      let typed = this.clean(input.value);
+      if (ext && typed.toLowerCase().endsWith(`.${ext}`)) typed = typed.slice(0, -(ext.length + 1));
+      return `${typed}${ext ? `.${ext}` : ""}`;
+    }
+    return keep ? resultName : this.auto(resultName);
+  },
+  refresh() {
+    const row = document.getElementById("saveNameRow");
+    if (!row) return;
+    const tool = activeTool;
+    const shows = tool && (tool.renderResult || ["ai-analyze", "pdf-to-text"].includes(tool.id));
+    const own = tool && (tool.id === "scan" || tool.noSaveName);
+    const exec = document.getElementById("btnExecute");
+    row.hidden = !tool || !currentFiles.length || shows || own || (exec && exec.style.display === "none");
+    if (row.hidden) return;
+    const input = document.getElementById("saveName");
+    if (!this.edited) input.value = this.base();
+    document.getElementById("saveNameHint").textContent = this.edited
+      ? "Saved with exactly this name."
+      : "Saved with this name plus what the tool did. Type a new name to change it.";
+  },
+  reset() { this.edited = false; this.refresh(); },
+};
 
 function downloadBlob(blob, filename) {
   const url = window.URL.createObjectURL(blob);

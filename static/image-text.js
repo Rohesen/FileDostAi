@@ -61,7 +61,7 @@ const ImageText = (() => {
       showToast("Copied the text.", "success");
     });
     box.querySelector('[data-act="txt"]').addEventListener("click", () => {
-      const name = results.length === 1 ? `${ImageKit.stem(results[0].name)}.txt` : "pictures_text.txt";
+      const name = results.length === 1 ? `${ImageKit.stem(results[0].name)}.txt` : SaveName.auto("pictures_text.txt");
       downloadBlob(new Blob([current() || all], { type: "text/plain;charset=utf-8" }), name);
     });
   }

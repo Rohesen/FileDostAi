@@ -226,7 +226,7 @@ async function main() {
   const [dl] = await Promise.all([page.waitForEvent("download", { timeout: 60000 }), page.click("#btnExecute")]);
   const file = path.join(OUT, "edited.pdf");
   await dl.saveAs(file);
-  check("download is edited.pdf", dl.suggestedFilename() === "edited.pdf");
+  check("download keeps the file's name (doc_edited.pdf)", dl.suggestedFilename() === "doc_edited.pdf", dl.suggestedFilename());
   const info = inspect(file);
   const span = (t) => info.spans.find((x) => x.text.includes(t));
   const a = span("Hello from e2e");

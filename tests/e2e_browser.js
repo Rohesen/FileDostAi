@@ -122,8 +122,15 @@ async function main() {
   await thumbsDrawn(3);
   await page.fill("#removePagesList", "2");
   check("typing a page marks it in the grid", (await page.locator(".page-card.is-removed").count()) === 1);
-  info = pdfInfo(await save(() => page.click("#btnExecute")));
+  check("the File name box starts with the file's own name", (await page.inputValue("#saveName")) === "a");
+  let saved = await save(() => page.click("#btnExecute"));
+  info = pdfInfo(saved);
   check("remove pages", info.pages.join() === "Alpha page 1,Alpha page 3");
+  check("download keeps the file's name", path.basename(saved) === "a_pages_removed.pdf", path.basename(saved));
+  // A typed name is used exactly (the .pdf is added).
+  await page.fill("#saveName", "Chapter 2 final");
+  saved = await save(() => page.click("#btnExecute"));
+  check("a typed file name is used for the download", path.basename(saved) === "Chapter 2 final.pdf", path.basename(saved));
 
   // 6. Rotate one page by clicking it.
   await open("rotate-pdf", ["a.pdf"]);

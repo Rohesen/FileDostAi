@@ -382,7 +382,7 @@ const ReadTools = (() => {
         <button type="button" class="btn btn-xs" id="trPdf">Download as PDF</button>
       </div>`;
     box.querySelector("#trCopy").addEventListener("click", () => { navigator.clipboard.writeText(text); showToast("Copied.", "success"); });
-    box.querySelector("#trTxt").addEventListener("click", () => downloadBlob(new Blob([text], { type: "text/plain" }), `translated_${data.target}.txt`));
+    box.querySelector("#trTxt").addEventListener("click", () => downloadBlob(new Blob([text], { type: "text/plain" }), SaveName.auto(`translated_${data.target}.txt`)));
     box.querySelector("#trPdf").addEventListener("click", () => {
       // Printing to PDF keeps every script (Hindi, Chinese...) that built-in PDF fonts can't draw.
       const w = window.open("", "_blank");

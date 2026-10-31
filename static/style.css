@@ -1707,3 +1707,9 @@ a.tool-card:focus-visible, .page-card:focus-visible, button:focus-visible {
 .support-icon { font-size: 22px; }
 .support-sponsor { font-size: 13px; color: var(--text-muted); }
 .support-sponsor a { color: var(--accent-cyan); }
+
+/* File name of the download (app.js SaveName). */
+.save-name { display: flex; flex-direction: column; gap: 6px; margin-top: 14px; }
+.save-name[hidden] { display: none; }
+.save-name .form-input { font-weight: 600; }
+.save-name-hint { margin: 0; font-size: 12px; color: var(--text-muted); }

@@ -3,7 +3,7 @@
 // as a one-click recipe. Recipes live in this browser only (localStorage); nothing is uploaded.
 
 const Chains = (() => {
-  document.head.append(Object.assign(document.createElement("link"), { rel: "stylesheet", href: "/static/chains.css?v=36" }));
+  document.head.append(Object.assign(document.createElement("link"), { rel: "stylesheet", href: "/static/chains.css?v=37" }));
 
   const KEY = "ultrapdf-recipes";
   // Tools that need clicks on the page itself can be a next step, but can't run unattended.

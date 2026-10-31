@@ -261,7 +261,7 @@ const PhotoTool = (() => {
       const r = await build();
       const name = preset().file || "photo";
       const f = ImageKit.FORMATS[r.fmt];
-      return { bytes: r.bytes, filename: `${name}.${f.ext}`, mime: f.mime,
+      return { bytes: r.bytes, filename: `${name}.${f.ext}`, mime: f.mime, keepName: !!preset().file,
         message: `Done! ${r.width}×${r.height} px, ${ImageKit.kb(r.bytes.length)}. Downloaded ${name}.${f.ext}. Nothing was uploaded.` };
     }
 
