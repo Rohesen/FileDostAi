@@ -121,3 +121,36 @@ def test_brand_name_comes_from_brand_json(monkeypatch):
     monkeypatch.setattr(main, "HOME_TITLE", "AiDocs: Free PDF, Image and File Tools That Keep Your Files Private")
     page = main._index_html()
     assert "Ai <strong>Docs</strong>" in page and "FileDost AI" not in page and "FileDost <strong>" not in page
+
+
+def test_one_address_per_page_for_google():
+    # www and a trailing slash get a permanent redirect to the site_url address, keeping the query.
+    site = BRAND["site_url"].rstrip("/")
+    r = client.get("/merge-pdf/?x=1", follow_redirects=False)
+    assert r.status_code == 301 and r.headers["location"] == site + "/merge-pdf?x=1"
+    host = site.split("://", 1)[1]
+    r = client.get("/split-pdf", headers={"host": "www." + host}, follow_redirects=False)
+    assert r.status_code == 301 and r.headers["location"] == site + "/split-pdf"
+    assert client.get("/split-pdf").status_code == 200  # the health check host is not redirected
+
+
+def test_search_pages_and_guides_are_their_own_pages():
+    from main import LANDING_PAGES
+    page = client.get("/compress-pdf-to-100kb").text
+    assert '<link rel="canonical" href="' + BRAND["site_url"].rstrip("/") + '/compress-pdf-to-100kb">' in page
+    assert '<h1 class="hero-title hero-title-page">Compress PDF to 100 KB' in page
+    assert 'class="guide"' in page and "How to do it" in page
+    # Plain aliases still point Google at the main tool.
+    assert '/word-to-pdf">' in client.get("/doc-to-pdf").text
+    sitemap = client.get("/sitemap.xml").text
+    for slug in LANDING_PAGES:
+        assert f"/{slug}</loc>" in sitemap
+    assert "<lastmod>" in sitemap
+    # Every tool is a plain link in the HTML, for crawlers that don't run scripts.
+    assert 'href="/merge-pdf" data-slug="merge-pdf"' in client.get("/").text
+
+
+def test_favicon_and_analytics_allowed():
+    assert client.get("/favicon.ico").status_code == 200
+    csp = client.get("/").headers["content-security-policy"]
+    assert "https://static.cloudflareinsights.com" in csp and "https://cloudflareinsights.com" in csp

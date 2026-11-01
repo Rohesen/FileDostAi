@@ -4,10 +4,11 @@
 // tries the server's compressor (files processed in memory, never stored) and then falls back
 // to the browser.
 
-document.head.append(Object.assign(document.createElement("link"), { rel: "stylesheet", href: "/static/pdf-extras.css?v=37" }));
+document.head.append(Object.assign(document.createElement("link"), { rel: "stylesheet", href: "/static/pdf-extras.css?v=38" }));
 
 const PdfExtras = (() => {
-  const { PDFDocument, PDFName, PDFDict, PDFArray, PDFNumber, PDFHexString, PDFRef, StandardFonts, rgb, degrees } = PDFLib;
+  let PDFDocument, PDFName, PDFDict, PDFArray, PDFNumber, PDFHexString, PDFRef, StandardFonts, rgb, degrees;
+  Libs.then(() => ({ PDFDocument, PDFName, PDFDict, PDFArray, PDFNumber, PDFHexString, PDFRef, StandardFonts, rgb, degrees } = PDFLib));
   const UserError = ClientPDF.UserError;
   const PAPER = { a4: [595.28, 841.89], letter: [612, 792] };
 
@@ -1114,7 +1115,7 @@ TOOLS.push(
   {
     id: "compress-to-size",
     slug: "compress-pdf-to-size",
-    aliases: ["compress-pdf-to-100kb", "compress-pdf-to-200kb", "compress-pdf-to-500kb", "compress-pdf-to-1mb"],
+    aliases: ["compress-pdf-to-100kb", "compress-pdf-to-200kb", "compress-pdf-to-500kb", "compress-pdf-to-1mb", "reduce-pdf-size-in-kb"],
     name: "Compress PDF to Exact Size",
     desc: "Get a PDF under the size a form asks for: 100 KB, 200 KB, 1 MB or any limit you type.",
     keywords: "compress pdf to 200kb 100kb 500kb 1mb 2mb 50kb 300kb reduce pdf size in kb exact size target size under limit govt portal upload limit shrink pdf less than mb",

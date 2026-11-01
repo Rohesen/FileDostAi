@@ -156,11 +156,12 @@ const EditTool = (() => {
     const ink = q(".ed-ink"), propsEl = q(".ed-props"), hintEl = q(".ed-hint"), fileInput = q(".ed-file");
 
     // Make sure ClientPDF.applyEdits exists on the page too, for when Web Workers are unavailable.
+    // It needs pdf-lib, which the page loads a moment after first paint (index.html Libs).
     if (window.ClientPDF && !ClientPDF.applyEdits && !document.querySelector("script[data-edit-ops]")) {
       const s = document.createElement("script");
       s.src = "/static/edit-ops.js";
       s.dataset.editOps = "1";
-      document.head.appendChild(s);
+      Libs.load().then(() => document.head.appendChild(s));
     }
 
     let doc = null;

@@ -3,13 +3,14 @@
 // Runs in the browser with pdf-lib and pdf.js; the file is never uploaded.
 
 const FormFill = (() => {
-  const { PDFDocument, PDFName, PDFTextField, PDFCheckBox, PDFRadioGroup, PDFDropdown, PDFOptionList,
-    PDFSignature, PDFButton, StandardFonts } = window.PDFLib || {};
+  let PDFDocument, PDFName, PDFTextField, PDFCheckBox, PDFRadioGroup, PDFDropdown, PDFOptionList, PDFSignature, PDFButton, StandardFonts;
+  Libs.then(() => ({ PDFDocument, PDFName, PDFTextField, PDFCheckBox, PDFRadioGroup, PDFDropdown, PDFOptionList,
+    PDFSignature, PDFButton, StandardFonts } = window.PDFLib));
   const UserError = (msg) => new ClientPDF.UserError(msg);
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
   if (!document.querySelector("link[data-ff-css]")) {
-    const link = Object.assign(document.createElement("link"), { rel: "stylesheet", href: "/static/form-fill.css?v=37" });
+    const link = Object.assign(document.createElement("link"), { rel: "stylesheet", href: "/static/form-fill.css?v=38" });
     link.dataset.ffCss = "1";
     document.head.append(link);
   }

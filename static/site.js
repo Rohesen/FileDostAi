@@ -94,9 +94,14 @@ const Site = (() => {
 
     // Any link to a tool or page opens it in place (Ctrl/Cmd-click still opens a new tab).
     document.addEventListener("click", (e) => {
-      const a = e.target.closest("a[data-tool], a[data-page], a[data-action], a[href='/#support'], a[href='/#toolsGrid']");
+      const a = e.target.closest("a[data-tool], a[data-page], a[data-action], a[data-slug], a[href='/#support'], a[href='/#toolsGrid']");
       if (!a || e.metaKey || e.ctrlKey || e.shiftKey) return;
       e.preventDefault();
+      if (a.dataset.slug) {
+        // Footer directory links (server-written): open the tool in place, set up for that page.
+        history.pushState({}, "", `/${a.dataset.slug}`);
+        return openFromUrl();
+      }
       closeMenus();
       document.body.classList.remove("nav-open");
       burger.innerHTML = Icons.ui("menu");

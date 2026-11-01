@@ -11,7 +11,12 @@
 })(typeof self !== "undefined" ? self : this, function (PDFLib, JSZip) {
   "use strict";
 
-  const { PDFDocument, StandardFonts, rgb, degrees, BlendMode } = PDFLib;
+  // In the page, pdf-lib arrives a moment after this file (index.html Libs); in workers and
+  // tests it is already here.
+  let PDFDocument, StandardFonts, rgb, degrees, BlendMode;
+  const useLibs = (L, Z) => { PDFLib = L; JSZip = Z; ({ PDFDocument, StandardFonts, rgb, degrees, BlendMode } = L); };
+  if (PDFLib) useLibs(PDFLib, JSZip);
+  else self.Libs.then(() => useLibs(self.PDFLib, self.JSZip));
 
   class UserError extends Error {}
 

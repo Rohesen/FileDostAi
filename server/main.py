@@ -25,7 +25,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from fastapi.responses import Response, JSONResponse, FileResponse, HTMLResponse, PlainTextResponse
+from fastapi.responses import Response, JSONResponse, FileResponse, HTMLResponse, PlainTextResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.concurrency import run_in_threadpool
 
@@ -36,6 +36,7 @@ import converters
 import image_ocr
 import bg_remove
 import sandbox
+from guides import GUIDES, guide_html
 
 log = logging.getLogger("ultrapdf")
 
@@ -76,12 +77,13 @@ def warm_up_office() -> None:
 # forms can only post back here.
 _CSP = "; ".join([
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob:",
+    # static.cloudflareinsights.com: Cloudflare Web Analytics (no cookies), added by Cloudflare.
+    "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob: https://static.cloudflareinsights.com",
     "style-src 'self' 'unsafe-inline'",
     "font-src 'self' data:",  # fonts are self-hosted in static/fonts
     "img-src 'self' data: blob:",
     "media-src 'self' blob: mediastream:",
-    "connect-src 'self' blob: data:",
+    "connect-src 'self' blob: data: https://cloudflareinsights.com",
     "worker-src 'self' blob:",
     "frame-src 'self' blob:",
     "object-src 'none'",
@@ -116,6 +118,27 @@ def _current_asset_version() -> str:
         except OSError:
             _asset_version = ""
     return _asset_version
+
+
+@app.middleware("http")
+async def canonical_address(request: Request, call_next):
+    """One address per page, so Google doesn't split a page between copies: www.<site> and
+    /page/ (trailing slash) get a permanent (301) redirect to the site_url address.
+    Starlette's own slash redirect is a temporary 307 to http://, which Google reports as
+    "Page with redirect" and has to follow twice through Cloudflare."""
+    if request.method in ("GET", "HEAD"):
+        site = _site_url()
+        path = request.url.path
+        host = (request.headers.get("host") or "").split(":")[0].lower()
+        target = None
+        if site and host and host == "www." + site.split("://", 1)[1].split("/")[0].lower():
+            target = path
+        if len(path) > 1 and path.endswith("/") and not path.startswith(("/api/", "/static/")):
+            target = path.rstrip("/") or "/"
+        if target is not None:
+            q = request.url.query
+            return RedirectResponse((site or "") + target + ("?" + q if q else ""), status_code=301)
+    return await call_next(request)
 
 
 @app.middleware("http")
@@ -698,16 +721,72 @@ def _index_html() -> str:
     return page.replace("<head>", "<head>\n  " + script, 1)
 
 
+def _site_url() -> str:
+    """brand.json's site_url (no trailing slash), or "" while it isn't set."""
+    site = (BRAND.get("site_url") or "").strip().rstrip("/")
+    return site if site.startswith(("https://", "http://")) and "REPLACE_ME" not in site else ""
+
+
 def _base_url(request: Request) -> str:
     """The site's address for links in pages and the sitemap: brand.json's site_url when set,
     so a forged Host header can't put someone else's address into our pages."""
-    site = (BRAND.get("site_url") or "").strip().rstrip("/")
-    if site.startswith(("https://", "http://")) and "REPLACE_ME" not in site:
-        return site
-    return str(request.base_url).rstrip("/")
+    return _site_url() or str(request.base_url).rstrip("/")
 
 
-def _page(title: str, description: str, path: str, request: Request) -> HTMLResponse:
+# Search-friendly pages for other names of a tool that people search for a lot. Each one is its
+# own page in Google (own title, heading, canonical and sitemap entry) and opens the tool set up
+# for that job (app.js LANDING_PRESETS). Other names in TOOL_ALIASES stay plain alternates.
+LANDING_PAGES = {
+    "png-to-jpg": ("convert-image", "PNG to JPG Converter", "Convert PNG images to JPG free, many at once, with a white background for see-through parts. Runs in your browser, nothing is uploaded."),
+    "jpg-to-png": ("convert-image", "JPG to PNG Converter", "Convert JPG photos to PNG free, many at once, with no quality loss. Runs in your browser, nothing is uploaded."),
+    "webp-to-jpg": ("convert-image", "WebP to JPG Converter", "Convert WebP images from websites and WhatsApp to JPG free, many at once. Runs in your browser, nothing is uploaded."),
+    "pdf-to-png": ("convert-image", "PDF to PNG Converter", "Save every PDF page as a sharp PNG image, free. Choose the resolution. Runs in your browser, nothing is uploaded."),
+    "png-to-pdf": ("jpg-to-pdf", "PNG to PDF Converter", "Turn PNG images and screenshots into one PDF free. Drag to reorder pages. Runs in your browser, nothing is uploaded."),
+    "compress-image": ("compress-file", "Compress Image to KB (JPG, PNG)", "Reduce photo size to 20 KB, 50 KB, 100 KB or any limit for forms and WhatsApp, with the best quality that fits. Free."),
+    "crop-image": ("resize-image", "Crop Image Online", "Crop a photo by dragging a box or to the exact pixels and KB a form asks for. Free, runs in your browser."),
+    "compress-pdf-to-100kb": ("compress-pdf-to-size", "Compress PDF to 100 KB", "Make a PDF smaller than 100 KB for exam, job and government portals. Text stays sharp when possible. Free."),
+    "compress-pdf-to-200kb": ("compress-pdf-to-size", "Compress PDF to 200 KB", "Make a PDF smaller than 200 KB for upload forms. Text stays sharp when possible and it says plainly if it can't fit. Free."),
+    "compress-pdf-to-500kb": ("compress-pdf-to-size", "Compress PDF to 500 KB", "Make a PDF smaller than 500 KB for job, exam and bank portals, with the best quality that fits. Free, files are never stored."),
+    "compress-pdf-to-1mb": ("compress-pdf-to-size", "Compress PDF to 1 MB", "Get a PDF under 1 MB for email and portals with the best quality that fits. Free, files are never stored."),
+    "mp4-to-mp3": ("video-to-mp3", "MP4 to MP3 Converter", "Save the sound of an MP4 video as an MP3 free. Private: the video never leaves your device."),
+    "mp4-to-gif": ("video-to-gif", "MP4 to GIF Converter", "Turn part of an MP4 video into an animated GIF. Choose start, length and size. Free, runs on your device."),
+    "blur-image": ("blur-face", "Blur Image Online", "Blur part of a photo: faces, number plates, names or the whole background. Free, private, runs on your device."),
+    "qr-code-scanner": ("qr-code", "QR Code Scanner Online", "Read a QR code from a photo, screenshot, PDF or your camera, free. Nothing is uploaded."),
+    "upi-qr-code": ("qr-code", "UPI QR Code Generator", "Make a UPI QR code for your UPI ID with an optional amount, to print or share. Free, no sign-up."),
+    "unzip-files": ("zip-tools", "Unzip Files Online (ZIP, RAR, 7z)", "Open a ZIP, RAR, 7z or TAR file in your browser and save only the files you need. Free and private."),
+    "trim-video": ("trim-media", "Trim Video Online", "Cut the start and end off a video with a preview and sliders. Free, private, runs in your browser."),
+    "cut-mp3": ("trim-media", "MP3 Cutter", "Cut a song or voice note to the part you want, for ringtones and status. Free, runs in your browser."),
+}
+
+LANDING_PAGES.update({slug: (g["tool"], g["name"], g["description"]) for slug, g in GUIDES.items()})
+
+_HERO_TITLE_RE = re.compile(r'<h1 class="hero-title">.*?</h1>', re.S)
+_HERO_SUB_RE = re.compile(r'<p class="hero-subtitle">.*?</p>', re.S)
+
+
+def _site_updated() -> str:
+    """Date of the last site update (index.html's file date) for the sitemap's <lastmod>."""
+    import datetime
+    try:
+        ts = os.path.getmtime(os.path.join(STATIC_DIR, "index.html"))
+    except OSError:
+        return ""
+    return datetime.datetime.fromtimestamp(ts, datetime.timezone.utc).strftime("%Y-%m-%d")
+
+
+def _tool_directory() -> str:
+    """Plain links to every tool, written into the page by the server so search engines find
+    every page without running scripts."""
+    e = html.escape
+    links = [f'<a href="/{e(slug)}" data-slug="{e(slug)}">{e(name.split(":")[0].split(" (")[0])}</a>'
+             for slug, (name, _d) in TOOL_PAGES.items()]
+    links += [f'<a href="/{e(slug)}" data-slug="{e(slug)}">{e(name.split(" (")[0])}</a>'
+              for slug, (_t, name, _d) in LANDING_PAGES.items()]
+    return "<h4>All free tools</h4><div class=\"footer-dir-links\">" + "".join(links) + "</div>"
+
+
+def _page(title: str, description: str, path: str, request: Request, heading: Optional[str] = None,
+          tool_slug: Optional[str] = None) -> HTMLResponse:
     page = _index_html()
     page = page.replace(f"<title>{HOME_TITLE}</title>", f"<title>{html.escape(title)}</title>", 1)
     start = page.index('<meta name="description" content="')
@@ -729,12 +808,42 @@ def _page(title: str, description: str, path: str, request: Request) -> HTMLResp
         f'  <meta property="og:image" content="{e(base)}/static/icons/icon-512.png">\n'
         f'  <meta name="twitter:card" content="summary">'
     )
+    ld = []
     if path == "/":
-        site = {"@context": "https://schema.org", "@type": "WebSite", "name": BRAND_NAME,
-                "alternateName": sorted({BRAND_NAME.replace(" ", ""), BRAND_NAME.replace(" ", "").lower() + ".com"} - {BRAND_NAME}),
-                "url": base + "/"}
-        meta += '\n  <script type="application/ld+json">' + json.dumps(site).replace("<", "\\u003c") + "</script>"
+        ld.append({"@context": "https://schema.org", "@type": "WebSite", "name": BRAND_NAME,
+                   "alternateName": sorted({BRAND_NAME.replace(" ", ""), BRAND_NAME.replace(" ", "").lower() + ".com"} - {BRAND_NAME}),
+                   "url": base + "/"})
+    elif heading:
+        if tool_slug:
+            # A free web app: lets Google show the tool as an app with its price (free).
+            ld.append({"@context": "https://schema.org", "@type": "WebApplication", "name": heading,
+                       "description": description, "url": canonical, "applicationCategory": "UtilitiesApplication",
+                       "operatingSystem": "Any (runs in the browser)", "isAccessibleForFree": True,
+                       "offers": {"@type": "Offer", "price": "0", "priceCurrency": "INR"},
+                       "publisher": {"@type": "Organization", "name": BRAND_NAME, "url": base + "/"}})
+        ld.append({"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [
+            {"@type": "ListItem", "position": 1, "name": BRAND_NAME, "item": base + "/"},
+            {"@type": "ListItem", "position": 2, "name": heading, "item": canonical}]})
+    for item in ld:
+        meta += '\n  <script type="application/ld+json">' + json.dumps(item).replace("<", "\\u003c") + "</script>"
     page = page[:start] + meta + page[end:]
+    if heading:
+        # The page's own heading and summary are in the HTML itself (not only drawn by scripts),
+        # so every tool page reads as its own page to search engines. app.js puts the home
+        # heading back when the visitor goes to the home page.
+        tail = '<br><span class="gradient-text">Free online.</span>' if tool_slug else ""
+        page = _HERO_TITLE_RE.sub(lambda m: f'<h1 class="hero-title hero-title-page">{e(heading)}{tail}</h1>', page, 1)
+        page = _HERO_SUB_RE.sub(lambda m: f'<p class="hero-subtitle">{e(description)}</p>', page, 1)
+        if tool_slug:
+            page = page.replace('<h3 class="modal-title" id="mTitle">Tool Name</h3>',
+                                f'<h2 class="modal-title" id="mTitle">{e(heading)}</h2>', 1)
+            page = page.replace('<p class="modal-desc" id="mDesc">Description of action</p>',
+                                f'<p class="modal-desc" id="mDesc">{e(description)}</p>', 1)
+    guide = guide_html(path.lstrip("/"))
+    if guide:
+        page = page.replace("  <!-- Category Filter Bar -->", guide + "\n\n  <!-- Category Filter Bar -->", 1)
+    page = page.replace('<nav class="footer-dir" id="footerDir" aria-label="All tools"></nav>',
+                        f'<nav class="footer-dir" id="footerDir" aria-label="All tools">{_tool_directory()}</nav>', 1)
     return HTMLResponse(page)
 
 
@@ -747,15 +856,24 @@ async def serve_index(request: Request):
 @app.api_route("/sitemap.xml", methods=["GET", "HEAD"])
 async def sitemap(request: Request):
     base = _base_url(request)
-    urls = [f"{base}/"] + [f"{base}/{slug}" for slug in list(TOOL_PAGES) + list(INFO_PAGES)]
+    urls = [f"{base}/"] + [f"{base}/{slug}" for slug in list(TOOL_PAGES) + list(LANDING_PAGES) + list(INFO_PAGES)]
+    day = _site_updated()
+    lastmod = f"<lastmod>{day}</lastmod>" if day else ""
     body = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
-    body += "".join(f"  <url><loc>{html.escape(u)}</loc></url>\n" for u in urls) + "</urlset>\n"
+    body += "".join(f"  <url><loc>{html.escape(u)}</loc>{lastmod}</url>\n" for u in urls) + "</urlset>\n"
     return Response(body, media_type="application/xml")
 
 
 @app.api_route("/robots.txt", methods=["GET", "HEAD"], response_class=PlainTextResponse)
 async def robots(request: Request):
     return f"User-agent: *\nDisallow: /api/\nSitemap: {_base_url(request)}/sitemap.xml\n"
+
+
+@app.api_route("/favicon.ico", methods=["GET", "HEAD"])
+async def favicon():
+    # Browsers and Google ask for /favicon.ico whatever the page says; a PNG is fine for both.
+    return FileResponse(os.path.join(STATIC_DIR, "icons", "icon-192.png"), media_type="image/png",
+                        headers={"Cache-Control": "public, max-age=604800"})
 
 
 @app.get("/sw.js")
@@ -838,11 +956,14 @@ async def manifest():
 
 @app.api_route("/{slug}", methods=["GET", "HEAD"], response_class=HTMLResponse)
 async def tool_page(slug: str, request: Request):
+    if slug in LANDING_PAGES:
+        tool, name, description = LANDING_PAGES[slug]
+        return _page(f"{name} Free Online | {BRAND_NAME}", description, f"/{slug}", request, heading=name, tool_slug=tool)
     slug = TOOL_ALIASES.get(slug, slug)
     if slug in INFO_PAGES:
         title, description = INFO_PAGES[slug]
-        return _page(f"{title} | {BRAND_NAME}", description, f"/{slug}", request)
+        return _page(f"{title} | {BRAND_NAME}", description, f"/{slug}", request, heading=title)
     if slug not in TOOL_PAGES:
         raise HTTPException(status_code=404, detail="Page not found")
     name, description = TOOL_PAGES[slug]
-    return _page(f"{name} Free Online | {BRAND_NAME}", description, f"/{slug}", request)
+    return _page(f"{name} Free Online | {BRAND_NAME}", description, f"/{slug}", request, heading=name, tool_slug=slug)

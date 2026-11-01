@@ -29,12 +29,60 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // ---------- Routing: every tool has its own address, e.g. /merge-pdf ----------
 
+// Pages made for another name of a tool (server LANDING_PAGES) open it set up for that job.
+const LANDING_PRESETS = {
+  "png-to-jpg": { icFormat: "jpeg" }, "webp-to-jpg": { icFormat: "jpeg" },
+  "jpg-to-png": { icFormat: "png" }, "pdf-to-png": { icFormat: "png" },
+  "compress-pdf-to-100kb": { pxTarget: "100", pxUnit: "KB" },
+  "compress-pdf-to-200kb": { pxTarget: "200", pxUnit: "KB" },
+  "compress-pdf-to-500kb": { pxTarget: "500", pxUnit: "KB" },
+  "compress-pdf-to-1mb": { pxTarget: "1", pxUnit: "MB" },
+  "ssc-photo-size": { ptPreset: "ssc-photo" }, "upsc-photo-size": { ptPreset: "upsc-photo" },
+  "jee-main-photo-size": { ptPreset: "jee-photo" }, "neet-photo-size": { ptPreset: "neet-photo" },
+  "cuet-photo-size": { ptPreset: "cuet-photo" }, "passport-size-photo": { ptPreset: "passport" },
+};
+
+// The home page's own heading: tool pages arrive with the tool's heading in the HTML.
+const HOME_HERO = { title: null, sub: null };
+const GUIDE_TITLE = document.title;
+
+function setHero(tool) {
+  const h = document.querySelector(".hero-title"), p = document.querySelector(".hero-subtitle");
+  if (!h || !p) return;
+  if (HOME_HERO.title === null) {
+    HOME_HERO.title = h.classList.contains("hero-title-page")
+      ? 'Do anything with your files.<br><span class="gradient-text">Privately.</span>' : h.innerHTML;
+    HOME_HERO.sub = h.classList.contains("hero-title-page")
+      ? "PDFs, photos and Office files: convert, compress, sign and resize to the exact KB, right in your browser. Most tools never upload your file."
+      : p.textContent.trim();
+  }
+  if (!tool && h.classList.contains("hero-title-page")) {
+    h.classList.remove("hero-title-page");
+    h.innerHTML = HOME_HERO.title;
+    p.textContent = HOME_HERO.sub;
+  }
+}
+
+function applyPreset(slug) {
+  const preset = LANDING_PRESETS[slug];
+  if (!preset) return;
+  for (const [id, value] of Object.entries(preset)) {
+    const el = document.getElementById(id);
+    if (!el) continue;
+    el.value = value;
+    el.dispatchEvent(new Event("input", { bubbles: true }));
+    el.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+}
+
 function openFromUrl() {
   const slug = location.pathname.replace(/^\/+|\/+$/g, "");
   const tool = TOOLS.find((t) => t.slug === slug || (t.aliases || []).includes(slug));
   if (tool) {
     if (!activeTool || activeTool.id !== tool.id) openToolModal(tool.id, { push: false });
+    applyPreset(slug);
   } else {
+    if (!slug) setHero(null);
     if (activeTool) closeModal("universalModal", { push: false });
     if (typeof Site !== "undefined") Site.route(slug);
   }
@@ -121,6 +169,7 @@ function openToolModal(toolId, { push = true } = {}) {
 
   activeTool = tool;
   currentFiles = [];
+  Libs.load();
   ctx = makeContext();
 
   document.getElementById("mIcon").innerHTML = Icons.tool(tool, "ti-md");
@@ -175,8 +224,12 @@ function closeModal(modalId, { push = true } = {}) {
   teardownTool();
   activeTool = null;
   ctx = null;
+  // On a guide page (server/guides.py) closing the tool shows the guide; it stays on that page.
+  const guide = document.querySelector("#guide .guide-open");
+  if (guide && location.pathname === `/${guide.dataset.slug}`) { document.title = GUIDE_TITLE; return; }
   document.title = HOME_TITLE;
   if (push && location.pathname !== "/") history.pushState({}, "", "/");
+  if (location.pathname === "/") setHero(null);
 }
 
 function setupModalEvents() {
@@ -228,6 +281,7 @@ function setupDropZone() {
 
 async function handleFiles(files) {
   if (!activeTool) return;
+  if (!Libs.done) { await Libs.load(); if (!activeTool) return; }
   const accepted = files.filter((f) => acceptsFile(activeTool, f));
   if (accepted.length < files.length) showToast(`This tool takes ${acceptLabel(activeTool)} only.`, "error");
   if (!accepted.length) return;
@@ -450,6 +504,7 @@ let runToken = 0;
 async function executeCurrentTool({ keep = false } = {}) {
   const tool = activeTool;
   if (!tool) return null;
+  await Libs.load();
   if (currentFiles.length === 0) {
     showToast(`Add ${acceptLabel(tool).replace(/ files$/, "")} first.`, "error");
     return null;
@@ -837,6 +892,7 @@ function addPipelineStep(action) {
 }
 
 async function executePipeline() {
+  await Libs.load();
   if (!pipelineFile) {
     showToast("Please provide a source PDF document for the pipeline.", "error");
     return;
