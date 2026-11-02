@@ -2,7 +2,7 @@
 // Pages and static files: network first, falling back to the cached copy when offline,
 // so an update never mixes old and new files.
 // The API is never cached, and no user file ever passes through here.
-const V = "38";  // keep equal to the ?v= in index.html
+const V = "39";  // keep equal to the ?v= in index.html
 const VERSION = `filedost-v${V}`;
 // Only the page itself is cached at install, so the first visit downloads nothing extra.
 // CORE (the offline copy of every tool) is fetched later, when the page says it is idle.
@@ -49,6 +49,9 @@ const CORE = [
   "/static/watermark-image.js",
   "/static/text-diff.js",
   "/static/media-extra.js",
+  "/static/face-fx.js",
+  "/static/screen-recorder.js",
+  "/static/screen-recorder.css",
   "/static/zip-tool.js",
   "/static/media-tool.js",
   "/static/chains.js",
@@ -119,7 +122,7 @@ self.addEventListener("fetch", (event) => {
   // ffmpeg's 31 MB engine is loaded only by the video tools; don't keep a copy in the offline cache.
   if (url.pathname.includes("/vendor/ffmpeg/")) return;
   // Same for the AI runtime and models (background remover, upscaler).
-  if (url.pathname.includes("/vendor/bg-remove/") || url.pathname.includes("/vendor/upscale/") || url.pathname.includes("/vendor/faces/")) return;
+  if (url.pathname.includes("/vendor/bg-remove/") || url.pathname.includes("/vendor/upscale/") || url.pathname.includes("/vendor/faces/") || url.pathname.includes("/vendor/mediapipe/")) return;
 
   if (req.mode === "navigate") {
     event.respondWith(
