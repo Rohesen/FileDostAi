@@ -214,6 +214,8 @@ function openToolModal(toolId, { push = true } = {}) {
     if (!tool.endpoint && !tool.server && typeof PdfWorker !== "undefined") PdfWorker.warm();
   }
   document.getElementById("universalModal").classList.add("open");
+  // Freeze the page behind the tool (lite.css), so each frame only has to draw the tool itself.
+  document.documentElement.classList.add("tool-open");
   document.title = `${tool.name} | ${BRAND_NAME}`;
   if (push && location.pathname !== `/${tool.slug}`) history.pushState({}, "", `/${tool.slug}`);
 }
@@ -226,6 +228,7 @@ function teardownTool() {
 function closeModal(modalId, { push = true } = {}) {
   document.getElementById(modalId).classList.remove("open");
   if (modalId !== "universalModal") return;
+  document.documentElement.classList.remove("tool-open");
   teardownTool();
   activeTool = null;
   ctx = null;
@@ -530,7 +533,8 @@ async function executeCurrentTool({ keep = false } = {}) {
     if (tool.run) {
       Progress.begin({ steps: ["Read your file", "Work on it on this device", "Get the download ready"], expectMs: 1500 + (bytes / 1048576) * 600, cancel });
       Progress.setLabel("Reading your file…");
-      await new Promise((r) => requestAnimationFrame(() => r()));
+      // Let the progress bar paint before the work starts (rAF alone runs just before the paint).
+      await new Promise((r) => requestAnimationFrame(() => setTimeout(r, 0)));
       Progress.step(1, { from: 0.08, to: 0.92 });
       Progress.setLabel("Working on your device…");
       ctx.progress = (f, text) => { if (token === runToken) Progress.set(f, text); };

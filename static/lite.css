@@ -35,3 +35,10 @@
 
 /* The hero's floating pages hold still once scrolled past (depth.js sets hero-off). */
 .hero-off :is(.paper, .scene-chip, .scene-orb) { animation-play-state: paused !important; }
+
+/* While a tool is open (app.js sets tool-open), the page behind its dark backdrop is not drawn
+   (it was 81 animated 3D cards, redrawn on every click inside the tool: Cloudflare measured the
+   Process button at 0.7-1 s) and the rest holds still. The background glow and the top bar stay. */
+.tool-open body > :is(.hero, .container, .faq, .support, .site-footer) { visibility: hidden; }
+.tool-open body > :not(.modal-backdrop, .toast-container),
+.tool-open body > :not(.modal-backdrop, .toast-container) * { animation-play-state: paused !important; }

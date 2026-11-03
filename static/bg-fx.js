@@ -84,7 +84,8 @@
   function frame(t) {
     if (!running) return;
     // 30 frames a second is plenty for slow drift, and halves the work. Hold still behind an open tool.
-    if (t - drawn < 32 || toolOpen()) { requestAnimationFrame(frame); return; }
+    if (toolOpen()) { setTimeout(() => requestAnimationFrame(frame), 400); return; }
+    if (t - drawn < 32) { requestAnimationFrame(frame); return; }
     drawn = t;
     const dt = Math.min(64, t - (last || t)) / 16.7;
     last = t;
