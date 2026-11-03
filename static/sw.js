@@ -2,7 +2,7 @@
 // Pages and static files: network first, falling back to the cached copy when offline,
 // so an update never mixes old and new files.
 // The API is never cached, and no user file ever passes through here.
-const V = "45";  // keep equal to the ?v= in index.html
+const V = "47";  // keep equal to the ?v= in index.html
 const VERSION = `filedost-v${V}`;
 // Only the page itself is cached at install, so the first visit downloads nothing extra.
 // CORE (the offline copy of every tool) is fetched later, when the page says it is idle.
@@ -94,6 +94,8 @@ const CORE = [
   "/static/vendor/pdfjs/pdf.min.mjs",
   "/static/vendor/pdfjs/pdf.worker.min.mjs",
   "/static/icons/icon-192.png",
+  "/static/icons/favicon.svg",
+  "/static/icons/favicon-32.png",
 ];
 
 self.addEventListener("install", (event) => {

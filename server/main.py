@@ -888,7 +888,7 @@ async def robots(request: Request):
 @app.api_route("/favicon.ico", methods=["GET", "HEAD"])
 async def favicon():
     # Browsers and Google ask for /favicon.ico whatever the page says; a PNG is fine for both.
-    return FileResponse(os.path.join(STATIC_DIR, "icons", "icon-192.png"), media_type="image/png",
+    return FileResponse(os.path.join(STATIC_DIR, "icons", "favicon-32.png"), media_type="image/png",
                         headers={"Cache-Control": "public, max-age=604800"})
 
 
