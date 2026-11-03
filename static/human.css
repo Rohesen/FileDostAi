@@ -1,0 +1,268 @@
+/* "Paper and ink" look (v41, 2026-11-03). Loaded last, after redesign.css and holo.css.
+   Rohesen asked for a site that looks made by a person, not generated: no purple gradient.
+   What changed and why:
+   - Colours: graphite (night) or stone paper (day), with a teal-to-lime gradient (Rohesen
+     picked "Fresh", option B) and teal as the flat accent. No purple.
+   - Opaque surfaces instead of frosted glass; the background glow is gone.
+   - Headings in Mukta (drawn for Hindi and English by Ek Type, Mumbai).
+   - The 3D stays: hero paper stacks, card holograms with their neon glow, and tilt.
+   To go back to the old look, remove the human.css <link> from index.html. */
+
+:root {
+  --bg-main: #131416;
+  --surface: #1b1c1f;
+  --surface-2: #222327;
+  --glass: #1b1c1f;
+  --glass-strong: #1f2024;
+  --bg-card: #1b1c1f;
+  --bg-card-hover: #202125;
+  --line: rgba(236, 235, 231, 0.09);
+  --line-strong: rgba(236, 235, 231, 0.16);
+  --border-subtle: rgba(236, 235, 231, 0.09);
+  --border-accent: rgba(45, 212, 191, 0.5);
+  --text-main: #e6e5e0;
+  --text-strong: #f5f4ef;
+  --text-muted: #a8a7a0;
+  --text-dim: #7a7972;
+  --primary: #2dd4bf;
+  --primary-hover: #5eead4;
+  --primary-light: rgba(45, 212, 191, 0.14);
+  --btn-bg: #0d9488;
+  --btn-bg-hover: #14a394;
+  --brand-a: #2dd4bf;
+  --brand-b: #2dd4bf;
+  --accent-cyan: #2bb3a3;
+  --surface-nav: #131416;
+  --surface-modal: #1b1c1f;
+  --shadow-card: none;
+  --shadow-glow: none;
+  --body-glow-1: transparent;
+  --body-glow-2: transparent;
+  --hero-grad: none;
+  --ink: 236, 235, 231;
+}
+:root[data-theme="light"] {
+  --bg-main: #f4f3ef;
+  --surface: #ffffff;
+  --surface-2: #faf9f6;
+  --glass: #ffffff;
+  --glass-strong: #ffffff;
+  --bg-card: #ffffff;
+  --bg-card-hover: #ffffff;
+  --line: rgba(28, 27, 22, 0.1);
+  --line-strong: rgba(28, 27, 22, 0.18);
+  --border-subtle: rgba(28, 27, 22, 0.1);
+  --border-accent: rgba(15, 118, 110, 0.5);
+  --text-main: #1d1d1b;
+  --text-strong: #111110;
+  --text-muted: #5b5a54;
+  --text-dim: #85847c;
+  --primary: #0f766e;
+  --primary-hover: #115e59;
+  --primary-light: rgba(15, 118, 110, 0.1);
+  --btn-bg: #0d9488;
+  --btn-bg-hover: #0f766e;
+  --brand-a: #0f766e;
+  --brand-b: #0f766e;
+  --accent-cyan: #0f8a7e;
+  --surface-nav: #f4f3ef;
+  --surface-modal: #ffffff;
+  --shadow-card: none;
+  --ink: 28, 27, 22;
+}
+.fx-lite, :root.fx-lite[data-theme="light"], :root.fx-lite:not([data-theme="light"]) { --glass: var(--surface); --glass-strong: var(--surface); }
+
+body { background: var(--bg-main); background-image: none; }
+::selection { background: rgba(45, 212, 191, 0.3); }
+
+/* ---------- No glow behind the page; the drifting file cards stay, quieter ---------- */
+.aurora, .bg-grid { display: none !important; }
+.bg-canvas { opacity: 0.45; }
+:root[data-theme="light"] .bg-canvas { opacity: 0.4; }
+
+/* ---------- Headings ---------- */
+.hero-title, .faq h2, .support h2, .modal-title, .info-card h3 {
+  font-family: var(--font-head); font-weight: 800;
+}
+.card-title { font-family: var(--font-head); font-weight: 700; font-size: 18px; letter-spacing: 0; }
+
+/* ---------- Menu bar: a plain bar, not a floating frosted pill ---------- */
+.navbar {
+  top: 0; padding: 0 20px; background: var(--surface-nav);
+  border-bottom: 1px solid var(--line);
+}
+.nav-container {
+  border: 0; border-radius: 0; background: none; box-shadow: none;
+  backdrop-filter: none; -webkit-backdrop-filter: none; padding: 10px 0;
+}
+.brand-icon { background: var(--btn-bg); box-shadow: none; border-radius: 9px; color: #fff; }
+.brand-title { font-family: var(--font-head); font-weight: 800; font-size: 21px; letter-spacing: 0; }
+.brand-title strong {
+  background: none; -webkit-text-fill-color: currentColor; color: var(--primary);
+}
+.btn-donate, .btn.btn-donate, .btn.btn-primary.btn-donate {
+  background: transparent; color: var(--text-main); border: 1px solid var(--line-strong);
+  box-shadow: none;
+}
+.btn-donate:hover, .btn.btn-primary.btn-donate:hover { background: rgba(var(--ink), 0.06); border-color: var(--text-dim); box-shadow: none; transform: none; }
+.btn-donate .ico, .btn-donate .donate-ico { color: #e2483d; }
+@media (max-width: 980px) {
+  .navbar { padding: 0 12px; top: 0; }
+  .nav-container { padding: 8px 0; border-radius: 0; }
+  .main-nav { background: var(--surface); box-shadow: 0 18px 30px -18px rgba(0, 0, 0, 0.5); }
+}
+
+/* Theme switch: drawn icons instead of emoji, no glow. */
+.theme-toggle { background: rgba(var(--ink), 0.06); box-shadow: none; }
+.theme-toggle .knob, :root[data-theme="light"] .theme-toggle .knob {
+  background: var(--text-strong); box-shadow: none;
+}
+.theme-toggle .knob::before, :root[data-theme="light"] .theme-toggle .knob::before {
+  content: ""; width: 14px; height: 14px; background: var(--bg-main);
+  -webkit-mask: var(--knob-ico) center / contain no-repeat; mask: var(--knob-ico) center / contain no-repeat;
+}
+.theme-toggle { --knob-ico: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z'/%3E%3C/svg%3E"); }
+:root[data-theme="light"] .theme-toggle { --knob-ico: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='5'/%3E%3Cpath d='M12 1v3M12 20v3M1 12h3M20 12h3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1' stroke='%23000' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E"); }
+.theme-toggle .stars { display: none; }
+
+/* ---------- Buttons: flat, named for what they do ---------- */
+.btn-primary, .btn.btn-primary, .hp-pick.btn,
+.it-actions .btn-primary.btn-xs, .sm-save .btn-primary.btn-xs, .td-actions .btn-primary.btn-xs {
+  background: var(--btn-bg); border-color: var(--btn-bg); color: #fff;
+  box-shadow: none; text-shadow: none;
+}
+.btn-primary:hover, .btn.btn-primary:hover, .hp-pick.btn:hover {
+  background: var(--btn-bg-hover); border-color: var(--btn-bg-hover); box-shadow: none;
+}
+.btn-primary:active { transform: translateY(1px); box-shadow: none; }
+.progress-fill { background: var(--btn-bg); box-shadow: none; }
+
+/* ---------- Hero ---------- */
+.hero { padding-top: 84px; }
+.hero-badge { display: none; }
+.hero-title {
+  font-size: clamp(42px, 6.2vw, 80px); line-height: 1.02; letter-spacing: -0.01em;
+  max-width: 900px;
+}
+.hero-title .gradient-text, :root[data-theme="light"] .hero-title .gradient-text {
+  background: none; -webkit-text-fill-color: currentColor; color: inherit; animation: none;
+}
+.hero-subtitle { font-size: 19px; max-width: 640px; }
+.hero-subtitle b { color: var(--text-strong); font-weight: 600; }
+
+/* The 3D page stacks: same objects, no purple floor or glowing balls. */
+.hero-scene .scene-floor, :root[data-theme="light"] .hero-scene .scene-floor {
+  background: radial-gradient(circle, rgba(var(--ink), 0.1) 0%, rgba(var(--ink), 0.04) 45%, transparent 68%);
+  border-color: rgba(var(--ink), 0.1); box-shadow: none;
+}
+.hero-scene .scene-orb { display: none; }
+.hero-scene .scene-chip { background: #e2483d; box-shadow: 0 5px 0 #9f2a21; }
+.hs-right .scene-chip { background: #16a394; box-shadow: 0 5px 0 #0c6b61; }
+.hs-right .paper.p2, .hero-scene .paper.p2 { --accent: #2a9fd6; }
+
+/* Search bar and file button */
+.hp-ask, .fx-lite .hp-ask {
+  background: var(--surface); border: 1px solid var(--line-strong); border-radius: 14px;
+  backdrop-filter: none; -webkit-backdrop-filter: none; box-shadow: none;
+}
+:root[data-theme="light"] .hp-ask { box-shadow: 0 1px 2px rgba(28, 27, 22, 0.06); }
+.hp-ask:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+.hp-pick.btn { border-radius: 10px; }
+.hp-drop.has-files { background: var(--surface); backdrop-filter: none; -webkit-backdrop-filter: none; }
+.hp-chip, .hp-chip-top {
+  background: var(--surface); border-color: var(--line); backdrop-filter: none; -webkit-backdrop-filter: none;
+  box-shadow: none;
+}
+.hp-chip:hover, .hp-chip:focus-visible { background: var(--surface-2); border-color: var(--line-strong); }
+
+/* ---------- Category tabs: plain words, the chosen one filled ---------- */
+.category-tabs {
+  background: none; border: 0; padding: 0; gap: 6px; border-radius: 0;
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+}
+.tab-btn { border-radius: 99px; padding: 8px 15px; color: var(--text-muted); }
+.tab-btn.active, :root[data-theme="light"] .tab-btn.active {
+  background: var(--text-strong); color: var(--bg-main); box-shadow: none;
+}
+
+/* ---------- Tool cards: solid, a coloured edge on hover instead of a glow ---------- */
+.tool-card, .fx-lite .tool-card {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+  backdrop-filter: none; -webkit-backdrop-filter: none; box-shadow: none;
+}
+.tool-card:hover {
+  background: var(--surface); box-shadow: none;
+  border-color: color-mix(in srgb, var(--c1, var(--primary)) 70%, transparent);
+}
+:root[data-theme="light"] .tool-card { box-shadow: 0 1px 2px rgba(28, 27, 22, 0.05); }
+:root[data-theme="light"] .tool-card:hover { box-shadow: 0 1px 2px rgba(28, 27, 22, 0.05); }
+.tool-card .tile-stage { border-radius: 13px 13px 0 0; }
+.tool-card .runs-device { color: #3fb27f; }
+:root[data-theme="light"] .tool-card .runs-device { color: #0d7a4f; }
+
+/* Hologram stage: kept as it was (neon glow, beam, scan line, sparks; Rohesen likes it),
+   on a dark stage in both themes so the glow reads. Only the colours changed: no purple. */
+.tool-card .tile-stage.holo-stage,
+:root[data-theme="light"] .tool-card .tile-stage.holo-stage {
+  background:
+    radial-gradient(60% 75% at 50% 100%, color-mix(in srgb, var(--c1) 34%, transparent), transparent 70%),
+    radial-gradient(50% 60% at 50% 30%, color-mix(in srgb, var(--c2) 12%, transparent), transparent 70%),
+    #0d0e10;
+}
+
+/* Icons on chips and in tool windows: flat colour tiles, no lit gloss. */
+.ti, .ci:not(.ci-plain) { background: var(--ti-a); }
+.ti, .ci:not(.ci-plain), .ti-md, .ti-lg, .card-head .ti, .modal-icon .ti, .t3-icon .ti {
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.16);
+}
+.ti .ico, .ci:not(.ci-plain) .ico { filter: none; }
+
+/* ---------- Below the grid ---------- */
+.faq-item, .fx-lite .faq-item { background: var(--surface); backdrop-filter: none; -webkit-backdrop-filter: none; }
+.support-card, :root[data-theme="light"] .support-card {
+  background: var(--surface); border: 1px solid var(--line); box-shadow: none;
+}
+.modal-card { box-shadow: 0 30px 60px -24px rgba(0, 0, 0, 0.6); }
+.modal-backdrop { backdrop-filter: none; -webkit-backdrop-filter: none; }
+.footer-grid h4, .footer-dir h4 {
+  font: 700 16px var(--font-head); letter-spacing: 0; text-transform: none; color: var(--text-strong);
+}
+
+@media (max-width: 640px) {
+  .hero { padding-top: 40px; }
+  .hero-title { font-size: 42px; }
+  .hero-subtitle { font-size: 16.5px; }
+  .category-tabs { gap: 4px; }
+}
+
+/* ---------- Gradient accent (v42): one warm gradient, no purple ----------
+   Change the three colours here to change it everywhere. */
+:root { --g1: #14b8a6; --g2: #22c55e; --g3: #a3e635; }
+:root { --grad: linear-gradient(110deg, var(--g1), var(--g2) 50%, var(--g3)); }
+.btn-primary, .btn.btn-primary, .hp-pick.btn, .scan-btn-primary {
+  background: var(--grad); border-color: transparent; color: #05261f;
+}
+.btn-primary:hover, .btn.btn-primary:hover, .hp-pick.btn:hover {
+  background: var(--grad); border-color: transparent; filter: brightness(1.08);
+}
+.btn-donate, .btn.btn-donate, .btn.btn-primary.btn-donate, .btn-donate:hover, .btn.btn-primary.btn-donate:hover { background: transparent; filter: none; }
+.progress-fill { background: var(--grad); }
+.brand-icon { background: var(--grad); }
+.brand-title strong, .hero-title .gradient-text, :root[data-theme="light"] .hero-title .gradient-text {
+  background: var(--grad); -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: var(--g2); animation: none;
+}
+/* A soft warm light behind the headline (still; nothing moves). */
+.bg-fx::before {
+  content: ""; position: absolute; left: 50%; top: 40px; width: min(1100px, 120vw); height: 560px;
+  transform: translateX(-50%); pointer-events: none;
+  background:
+    radial-gradient(40% 50% at 30% 45%, color-mix(in srgb, var(--g1) 22%, transparent), transparent 70%),
+    radial-gradient(40% 50% at 70% 40%, color-mix(in srgb, var(--g3) 16%, transparent), transparent 70%);
+  filter: blur(20px);
+}
+:root[data-theme="light"] .bg-fx::before { opacity: 0.7; }
+.fx-lite .bg-fx::before { filter: none; }
+
+.btn-primary .ico, .hp-pick.btn .ico, .btn-primary svg { color: #05261f; }
+.btn-donate .ico, .btn-donate .donate-ico, .btn-donate svg { color: #e2483d; }

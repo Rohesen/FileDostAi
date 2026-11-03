@@ -203,7 +203,16 @@ print(json.dumps([round(p.rect.width / 0.75) for p in pymupdf.open(sys.argv[1])]
   await page.locator(".io-card").nth(0).locator('[data-act="right"]').click();
   let names = await boardNames();
   check("▶ moves a picture later", names[0] === "img2.png" && names[1] === "img1.png" && (await page.inputValue("#ioSort")) === "manual");
-  await page.locator(".io-card").nth(4).dragTo(page.locator(".io-card").nth(0), { targetPosition: { x: 5, y: 60 } });
+  {
+    // Drag by hand (mouse down, a few moves, up): a one-step dragTo could start the drag from
+    // the wrong card when the page was idle.
+    const from = await page.locator(".io-card").nth(4).boundingBox(), to = await page.locator(".io-card").nth(0).boundingBox();
+    await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(from.x + from.width / 2 - 20, from.y + from.height / 2, { steps: 3 });
+    await page.mouse.move(to.x + 5, to.y + 60, { steps: 8 });
+    await page.mouse.up();
+  }
   names = await boardNames();
   check("dragging moves a picture", names[0] === "img5.png", names.slice(0, 4).join());
   await page.locator(".io-card", { hasText: "img3.png" }).locator(".io-x").click();
@@ -345,7 +354,7 @@ print(pymupdf.open(sys.argv[1])[0].get_text())
   const kept = await page.evaluate(() => document.documentElement.dataset.theme);
   check("theme toggle switches and is remembered", before !== after && kept === after, `${before} → ${after} → ${kept}`);
   const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
-  check("light theme has a light background", after !== "light" || bg === "rgb(251, 251, 254)", bg);
+  check("light theme has a light background", after !== "light" || bg === "rgb(244, 243, 239)", bg);
   check("aurora background glow is drawn", await page.locator("#bgFx .aurora").count() === 1);
   check("drifting file background is drawn", await page.locator("canvas.bg-canvas").count() === 1);
 

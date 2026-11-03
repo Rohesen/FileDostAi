@@ -19,6 +19,9 @@ const PhotoTool = (() => {
     "cuet-photo": { label: "CUET photo (10–200 KB, 3.5×4.5 cm)", w: 350, h: 450, min: 10, max: 200, fmt: "jpeg", dpi: 254, file: "Photograph" },
     "cuet-sign": { label: "CUET signature (4–30 KB)", w: 350, h: 150, min: 4, max: 30, fmt: "jpeg", dpi: 254, file: "Signature", sign: true },
     passport: { label: "Passport photo (35×45 mm, 300 dpi)", w: 413, h: 531, min: 0, max: 0, fmt: "jpeg", dpi: 300, file: "Passport_photo" },
+    "pan-photo": { label: "PAN card photo (2.5×3.5 cm, under 50 KB)", w: 295, h: 413, min: 0, max: 50, fmt: "jpeg", dpi: 300, file: "PAN_photo" },
+    "pan-sign": { label: "PAN card signature (4.5×2 cm, under 50 KB)", w: 531, h: 236, min: 0, max: 50, fmt: "jpeg", dpi: 300, file: "PAN_signature", sign: true },
+    "sign-20kb": { label: "Any signature under 20 KB", w: 0, h: 0, min: 0, max: 20, fmt: "jpeg", dpi: 0, file: "Signature", sign: true },
     "ten-kb": { label: "Any photo under 20 KB", w: 0, h: 0, min: 0, max: 20, fmt: "jpeg", dpi: 0 },
     "fifty-kb": { label: "Any photo under 50 KB", w: 0, h: 0, min: 0, max: 50, fmt: "jpeg", dpi: 0 },
   };

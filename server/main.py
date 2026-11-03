@@ -688,6 +688,14 @@ TOOL_PAGES = {
     "compress-video": ("Compress Video", "Shrink a video to fit WhatsApp (16 MB), email (25 MB) or any size. Runs in your browser, nothing uploaded. Free."),
     "video-to-mp3": ("Video to MP3", "Save the sound from any video as an MP3, or convert M4A and WAV to MP3. Private, in your browser. Free."),
     "trim-media": ("Trim Audio or Video", "Cut the start and end off a video or audio file with a preview and sliders. Private, in your browser. Free."),
+    "video-converter": ("Video Converter: MOV, MKV, AVI to MP4", "Convert MOV, MKV, AVI, WebM, 3GP and other videos to MP4, or MP4 to WebM, MOV and AVI. Free, private, runs in your browser."),
+    "audio-converter": ("Audio Converter: MP3, WAV, M4A, OGG", "Convert audio between MP3, WAV, M4A, OGG, FLAC and Opus, many files at once. Free, private, runs in your browser."),
+    "merge-videos": ("Merge Videos", "Join several videos into one MP4 in the order you choose. Different sizes and phones are fine. Free, runs in your browser."),
+    "mute-video": ("Mute Video: Remove Audio", "Remove the sound from a video in seconds with no loss in picture quality. Free, private, nothing is uploaded."),
+    "rotate-video": ("Rotate Video", "Turn a sideways or upside-down video the right way, or mirror it. Free, private, runs in your browser."),
+    "crop-video": ("Crop Video", "Cut off black bars, a corner logo or the edges of a video, or make it square or 9:16. Free, private, runs in your browser."),
+    "rotate-image": ("Rotate & Flip Image", "Rotate photos left, right or 180 degrees, or mirror them, many at once. Free, nothing is uploaded."),
+    "barcode-generator": ("Barcode Generator", "Make barcodes free: Code 128, EAN-13, UPC-A, Code 39 and more. Download PNG or SVG, one or hundreds at once."),
     "my-recipes": ("My Recipes: Run Several Tools in One Click", "Save a chain of tools like OCR, Compress and Page Numbers as a recipe and run it on any file in one click. Kept in your browser only."),
 }
 
@@ -756,6 +764,13 @@ LANDING_PAGES = {
     "upi-qr-code": ("qr-code", "UPI QR Code Generator", "Make a UPI QR code for your UPI ID with an optional amount, to print or share. Free, no sign-up."),
     "unzip-files": ("zip-tools", "Unzip Files Online (ZIP, RAR, 7z)", "Open a ZIP, RAR, 7z or TAR file in your browser and save only the files you need. Free and private."),
     "trim-video": ("trim-media", "Trim Video Online", "Cut the start and end off a video with a preview and sliders. Free, private, runs in your browser."),
+    "mov-to-mp4": ("video-converter", "MOV to MP4 Converter", "Convert iPhone MOV videos to MP4 free, usually in seconds and with no quality loss. Runs in your browser, nothing is uploaded."),
+    "mkv-to-mp4": ("video-converter", "MKV to MP4 Converter", "Convert MKV videos to MP4 free so they play on phones and TVs. Usually takes seconds. Runs in your browser."),
+    "avi-to-mp4": ("video-converter", "AVI to MP4 Converter", "Convert AVI videos to MP4 free for phones, WhatsApp and YouTube. Runs in your browser, nothing is uploaded."),
+    "mp3-to-wav": ("audio-converter", "MP3 to WAV Converter", "Convert MP3 to WAV free, many files at once. Runs in your browser, nothing is uploaded."),
+    "wav-to-mp3": ("audio-converter", "WAV to MP3 Converter", "Convert WAV recordings to MP3 free, many files at once, in good, high or best quality. Runs in your browser."),
+    "m4a-to-mp3": ("audio-converter", "M4A to MP3 Converter", "Convert M4A voice recordings and iPhone audio to MP3 free, many at once. Runs in your browser, nothing is uploaded."),
+    "flip-image": ("rotate-image", "Flip Image Online", "Mirror a photo left to right or flip it upside down, many at once. Free, runs in your browser."),
     "cut-mp3": ("trim-media", "MP3 Cutter", "Cut a song or voice note to the part you want, for ringtones and status. Free, runs in your browser."),
 }
 
@@ -851,7 +866,7 @@ def _page(title: str, description: str, path: str, request: Request, heading: Op
 @app.api_route("/", methods=["GET", "HEAD"], response_class=HTMLResponse)
 async def serve_index(request: Request):
     return _page(HOME_TITLE, "Free PDF tools: merge, split, rotate, compress, OCR, redact, sign and more. "
-                 "Most tools run in your browser, so your files never leave your device.", "/", request)
+                 "Most tools run in your browser, so the file stays on your computer.", "/", request)
 
 
 @app.api_route("/sitemap.xml", methods=["GET", "HEAD"])
@@ -933,6 +948,20 @@ TOOL_ALIASES = {
     "unzip-files": "zip-tools", "extract-rar": "zip-tools",
     "video-compressor": "compress-video", "reduce-video-size": "compress-video", "compress-video-for-whatsapp": "compress-video",
     "mp4-to-mp3": "video-to-mp3", "extract-audio": "video-to-mp3", "convert-to-mp3": "video-to-mp3",
+    "mov-to-mp4": "video-converter", "mkv-to-mp4": "video-converter", "avi-to-mp4": "video-converter", "webm-to-mp4": "video-converter",
+    "convert-video-to-mp4": "video-converter", "3gp-to-mp4": "video-converter", "wmv-to-mp4": "video-converter", "flv-to-mp4": "video-converter",
+    "mp4-to-webm": "video-converter", "mp4-to-avi": "video-converter",
+    "mp3-to-wav": "audio-converter", "wav-to-mp3": "audio-converter", "m4a-to-mp3": "audio-converter", "ogg-to-mp3": "audio-converter",
+    "flac-to-mp3": "audio-converter", "aac-to-mp3": "audio-converter", "opus-to-mp3": "audio-converter", "amr-to-mp3": "audio-converter",
+    "mp3-to-m4a": "audio-converter", "mp3-to-ogg": "audio-converter", "convert-audio": "audio-converter",
+    "video-merger": "merge-videos", "join-videos": "merge-videos", "combine-videos": "merge-videos", "merge-mp4": "merge-videos", "video-joiner": "merge-videos",
+    "remove-audio-from-video": "mute-video", "remove-sound-from-video": "mute-video", "video-mute": "mute-video", "silent-video": "mute-video",
+    "flip-video": "rotate-video", "mirror-video": "rotate-video", "rotate-video-90-degrees": "rotate-video", "turn-video": "rotate-video",
+    "video-cropper": "crop-video", "crop-mp4": "crop-video", "cut-video-frame": "crop-video", "remove-black-bars": "crop-video",
+    "flip-image": "rotate-image", "mirror-image": "rotate-image", "rotate-photo": "rotate-image", "flip-photo": "rotate-image",
+    "rotate-jpg": "rotate-image", "mirror-photo": "rotate-image", "turn-image": "rotate-image",
+    "barcode-maker": "barcode-generator", "create-barcode": "barcode-generator", "ean-13-barcode": "barcode-generator",
+    "code-128-barcode": "barcode-generator", "upc-barcode": "barcode-generator", "product-barcode": "barcode-generator", "barcode-creator": "barcode-generator",
     "trim-video": "trim-media", "trim-audio": "trim-media", "cut-video": "trim-media", "cut-audio": "trim-media", "cut-mp3": "trim-media",
 }
 

@@ -4,7 +4,7 @@
 // Everything happens in this browser: the screen and camera are drawn onto a canvas, and
 // MediaRecorder turns that into an MP4 or WebM file. Nothing is uploaded.
 
-document.head.append(Object.assign(document.createElement("link"), { rel: "stylesheet", href: "/static/screen-recorder.css?v=39" }));
+document.head.append(Object.assign(document.createElement("link"), { rel: "stylesheet", href: "/static/screen-recorder.css?v=40" }));
 
 /** Writes the duration into a MediaRecorder WebM (browsers leave it out, so players can't seek). */
 const WebmDuration = (() => {
@@ -432,7 +432,7 @@ const ScreenRecorder = (() => {
     function drawPlaceholder() {
       const W = canvas.width, H = canvas.height;
       const gr = g.createLinearGradient(0, 0, W, H);
-      gr.addColorStop(0, "#111827"); gr.addColorStop(1, "#1e1b4b");
+      gr.addColorStop(0, "#111827"); gr.addColorStop(1, "#1f2024");
       g.fillStyle = gr; g.fillRect(0, 0, W, H);
       g.strokeStyle = "rgba(255,255,255,0.05)"; g.lineWidth = 1;
       const step = Math.round(H / 12);

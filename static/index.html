@@ -29,7 +29,7 @@
           started = true;
           files.forEach(function (f) {
             var s = document.createElement("script");
-            s.src = "/static/vendor/" + f + "?v=39";
+            s.src = "/static/vendor/" + f + "?v=44";
             s.async = false;
             s.onload = s.onerror = function () { if (++n === files.length) { ready.done = true; go(); } };
             document.head.appendChild(s);
@@ -50,28 +50,29 @@
   <title>FileDost AI: Free PDF, Image and File Tools That Keep Your Files Private</title>
   <meta name="description" content="Free PDF tools: merge, split, rotate, compress, OCR, redact and more. Organize tools run in your browser, so your files never leave your device.">
   <link rel="preload" href="/static/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="/static/style.css?v=39">
-  <link rel="stylesheet" href="/static/fonts.css?v=39">
-  <link rel="stylesheet" href="/static/edit-tool.css?v=39">
-  <link rel="stylesheet" href="/static/scan-tool.css?v=39">
-  <link rel="stylesheet" href="/static/tiles.css?v=39">
-  <link rel="stylesheet" href="/static/theme.css?v=39">
-  <link rel="stylesheet" href="/static/site.css?v=39">
-  <link rel="stylesheet" href="/static/home-plus.css?v=39">
-  <link rel="stylesheet" href="/static/form-kit.css?v=39">
-  <link rel="stylesheet" href="/static/pdf-extras.css?v=39">
-  <link rel="stylesheet" href="/static/form-fill.css?v=39">
-  <link rel="stylesheet" href="/static/qr-tool.css?v=39">
-  <link rel="stylesheet" href="/static/zip-tool.css?v=39">
-  <link rel="stylesheet" href="/static/new-tools.css?v=39">
-  <link rel="stylesheet" href="/static/media-tool.css?v=39">
-  <link rel="stylesheet" href="/static/chains.css?v=39">
-  <link rel="stylesheet" href="/static/icons.css?v=39">
-  <link rel="stylesheet" href="/static/redesign.css?v=39">
-  <link rel="stylesheet" href="/static/holo.css?v=39">
-  <link rel="stylesheet" href="/static/lite.css?v=39">
+  <link rel="stylesheet" href="/static/style.css?v=44">
+  <link rel="stylesheet" href="/static/fonts.css?v=44">
+  <link rel="stylesheet" href="/static/edit-tool.css?v=44">
+  <link rel="stylesheet" href="/static/scan-tool.css?v=44">
+  <link rel="stylesheet" href="/static/tiles.css?v=44">
+  <link rel="stylesheet" href="/static/theme.css?v=44">
+  <link rel="stylesheet" href="/static/site.css?v=44">
+  <link rel="stylesheet" href="/static/home-plus.css?v=44">
+  <link rel="stylesheet" href="/static/form-kit.css?v=44">
+  <link rel="stylesheet" href="/static/pdf-extras.css?v=44">
+  <link rel="stylesheet" href="/static/form-fill.css?v=44">
+  <link rel="stylesheet" href="/static/qr-tool.css?v=44">
+  <link rel="stylesheet" href="/static/zip-tool.css?v=44">
+  <link rel="stylesheet" href="/static/new-tools.css?v=44">
+  <link rel="stylesheet" href="/static/media-tool.css?v=44">
+  <link rel="stylesheet" href="/static/chains.css?v=44">
+  <link rel="stylesheet" href="/static/icons.css?v=44">
+  <link rel="stylesheet" href="/static/redesign.css?v=44">
+  <link rel="stylesheet" href="/static/holo.css?v=44">
+  <link rel="stylesheet" href="/static/lite.css?v=44">
+  <link rel="stylesheet" href="/static/human.css?v=44">
   <link rel="manifest" href="/manifest.webmanifest">
-  <meta name="theme-color" content="#0b1020">
+  <meta name="theme-color" content="#131416">
   <link rel="icon" href="/static/icons/icon-192.png">
   <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
 </head>
@@ -84,7 +85,7 @@
   <header class="navbar">
     <div class="nav-container">
       <a class="brand" href="/" aria-label="Home">
-        <div class="brand-icon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M13.5 2 4.5 13.5H11L10 22l9-11.5h-6.5z" fill="currentColor"/></svg></div>
+        <div class="brand-icon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2.5h8l5 5V21a.5.5 0 0 1-.5.5h-12A.5.5 0 0 1 6 21z" fill="currentColor" opacity=".95"/><path d="M14 2.5v5h5" fill="none" stroke="#000" stroke-opacity=".35" stroke-width="1.4" stroke-linejoin="round"/><path d="M9 13.5l2.2 2.2L15.5 11" fill="none" stroke="#000" stroke-opacity=".55" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
         <div class="brand-text">
           <span class="brand-title">FileDost <strong>AI</strong></span>
           <span class="brand-badge">Free for everyone</span>
@@ -147,13 +148,9 @@
         <div class="scene-orb o2"></div>
       </div>
     </div>
-    <div class="hero-badge"><span class="dot"></span> Free forever · No sign-up · No watermarks</div>
-    <h1 class="hero-title">
-      Do anything with your files.<br>
-      <span class="gradient-text">Privately.</span>
-    </h1>
+    <h1 class="hero-title">Free PDF and photo tools,<br><span class="gradient-text">no sign-up</span></h1>
     <p class="hero-subtitle">
-      PDFs, photos and Office files: convert, compress, sign and resize to the exact KB, right in your browser. Most tools never upload your file.
+      Merge, compress, convert and sign PDFs, or resize a photo to the exact KB a form asks for. No watermark, no account. <b>Most tools run in your browser, so the file stays on your computer.</b>
     </p>
     <div class="hp-go" id="hpGo"></div>
   </section>
@@ -180,7 +177,7 @@
     <div class="container">
       <div class="faq-head">
         <h2>Frequently asked questions</h2>
-        <p>Everything about privacy, file limits, formats and how each tool works.</p>
+        <p>Privacy, file size limits, formats, and how each tool works.</p>
         <input type="search" class="form-input faq-search" id="faqSearch" placeholder="Search the answers…" aria-label="Search the answers">
       </div>
       <div class="faq-body" id="faqBody"></div>
@@ -275,8 +272,8 @@
         <div class="modal-title-wrap">
           <span class="modal-icon" data-ico="chain"></span>
           <div>
-            <h3 class="modal-title">Chained Batch Pipeline</h3>
-            <p class="modal-desc">Combine multiple operations into a single execution pass with zero intermediate downloads.</p>
+            <h3 class="modal-title">Run several steps on one PDF</h3>
+            <p class="modal-desc">Add the steps you need, then download the finished PDF once.</p>
           </div>
         </div>
         <button class="modal-close" onclick="closeModal('pipelineModal')">&times;</button>
@@ -388,15 +385,15 @@
     <div class="container">
       <div class="footer-grid">
         <div class="footer-brand">
-          <a class="brand" href="/"><div class="brand-icon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M13.5 2 4.5 13.5H11L10 22l9-11.5h-6.5z" fill="currentColor"/></svg></div><span class="brand-title">FileDost <strong>AI</strong></span></a>
-          <p>Free, open-source tools for PDFs, images and every kind of file. No sign-up, no watermarks, and most tools never upload your files.</p>
+          <a class="brand" href="/"><div class="brand-icon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2.5h8l5 5V21a.5.5 0 0 1-.5.5h-12A.5.5 0 0 1 6 21z" fill="currentColor" opacity=".95"/><path d="M14 2.5v5h5" fill="none" stroke="#000" stroke-opacity=".35" stroke-width="1.4" stroke-linejoin="round"/><path d="M9 13.5l2.2 2.2L15.5 11" fill="none" stroke="#000" stroke-opacity=".55" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="brand-title">FileDost <strong>AI</strong></span></a>
+          <p>Free, open-source tools for PDFs, images and every kind of file. No sign-up, no watermarks. Most tools run in your browser, so your files stay on your computer.</p>
         </div>
         <div>
           <h4>Product</h4>
           <a href="/">Home</a>
           <a href="/#toolsGrid">All tools</a>
           <a href="/faq" data-page="faq">FAQ</a>
-          <a href="#" onclick="openPipelineModal(); return false;">Chained pipeline</a>
+          <a href="#" onclick="openPipelineModal(); return false;">Run several steps</a>
           <a href="/pdf-insights" data-tool="ai-analyze">Document insights</a>
         </div>
         <div>
@@ -432,48 +429,51 @@
     </div>
   </footer>
 
-  <script defer src="/static/icons.js?v=39"></script>
-  <script defer src="/static/client-tools.js?v=39"></script>
-  <script defer src="/static/worker-client.js?v=39"></script>
-  <script defer src="/static/render-tools.js?v=39"></script>
-  <script defer src="/static/page-board.js?v=39"></script>
-  <script defer src="/static/sign-tool.js?v=39"></script>
-  <script defer src="/static/edit-tool.js?v=39"></script>
-  <script defer src="/static/scan-tool.js?v=39"></script>
-  <script defer src="/static/crop-tool.js?v=39"></script>
-  <script defer src="/static/compare-tool.js?v=39"></script>
-  <script defer src="/static/read-tools.js?v=39"></script>
-  <script defer src="/static/privacy-view.js?v=39"></script>
-  <script defer src="/static/image-tools.js?v=39"></script>
-  <script defer src="/static/photo-tool.js?v=39"></script>
-  <script defer src="/static/tile-art.js?v=39"></script>
-  <script defer src="/static/image-order.js?v=39"></script>
-  <script defer src="/static/tools.js?v=39"></script>
-  <script defer src="/static/form-kit.js?v=39"></script>
-  <script defer src="/static/pdf-extras.js?v=39"></script>
-  <script defer src="/static/form-fill.js?v=39"></script>
-  <script defer src="/static/qr-tool.js?v=39"></script>
-  <script defer src="/static/bg-remove.js?v=39"></script>
-  <script defer src="/static/image-text.js?v=39"></script>
-  <script defer src="/static/upscale-tool.js?v=39"></script>
-  <script defer src="/static/signature-maker.js?v=39"></script>
-  <script defer src="/static/exif-tool.js?v=39"></script>
-  <script defer src="/static/blur-tool.js?v=39"></script>
-  <script defer src="/static/watermark-image.js?v=39"></script>
-  <script defer src="/static/text-diff.js?v=39"></script>
-  <script defer src="/static/zip-tool.js?v=39"></script>
-  <script defer src="/static/media-tool.js?v=39"></script>
-  <script defer src="/static/media-extra.js?v=39"></script>
-  <script defer src="/static/face-fx.js?v=39"></script>
-  <script defer src="/static/screen-recorder.js?v=39"></script>
-  <script defer src="/static/chains.js?v=39"></script>
-  <script defer src="/static/app.js?v=39"></script>
-  <script defer src="/static/depth.js?v=39"></script>
-  <script defer src="/static/bg-fx.js?v=39"></script>
-  <script defer src="/static/feedback.js?v=39"></script>
-  <script defer src="/static/support.js?v=39"></script>
-  <script defer src="/static/theme.js?v=39"></script>
-  <script defer src="/static/site.js?v=39"></script>
-  <script defer src="/static/home-plus.js?v=39"></script>
+  <script defer src="/static/icons.js?v=44"></script>
+  <script defer src="/static/client-tools.js?v=44"></script>
+  <script defer src="/static/worker-client.js?v=44"></script>
+  <script defer src="/static/render-tools.js?v=44"></script>
+  <script defer src="/static/page-board.js?v=44"></script>
+  <script defer src="/static/sign-tool.js?v=44"></script>
+  <script defer src="/static/edit-tool.js?v=44"></script>
+  <script defer src="/static/scan-tool.js?v=44"></script>
+  <script defer src="/static/crop-tool.js?v=44"></script>
+  <script defer src="/static/compare-tool.js?v=44"></script>
+  <script defer src="/static/read-tools.js?v=44"></script>
+  <script defer src="/static/privacy-view.js?v=44"></script>
+  <script defer src="/static/image-tools.js?v=44"></script>
+  <script defer src="/static/photo-tool.js?v=44"></script>
+  <script defer src="/static/tile-art.js?v=44"></script>
+  <script defer src="/static/image-order.js?v=44"></script>
+  <script defer src="/static/tools.js?v=44"></script>
+  <script defer src="/static/form-kit.js?v=44"></script>
+  <script defer src="/static/pdf-extras.js?v=44"></script>
+  <script defer src="/static/form-fill.js?v=44"></script>
+  <script defer src="/static/qr-tool.js?v=44"></script>
+  <script defer src="/static/bg-remove.js?v=44"></script>
+  <script defer src="/static/image-text.js?v=44"></script>
+  <script defer src="/static/upscale-tool.js?v=44"></script>
+  <script defer src="/static/signature-maker.js?v=44"></script>
+  <script defer src="/static/exif-tool.js?v=44"></script>
+  <script defer src="/static/blur-tool.js?v=44"></script>
+  <script defer src="/static/watermark-image.js?v=44"></script>
+  <script defer src="/static/text-diff.js?v=44"></script>
+  <script defer src="/static/zip-tool.js?v=44"></script>
+  <script defer src="/static/media-tool.js?v=44"></script>
+  <script defer src="/static/media-extra.js?v=44"></script>
+  <script defer src="/static/media-more.js?v=44"></script>
+  <script defer src="/static/image-rotate.js?v=44"></script>
+  <script defer src="/static/barcode-tool.js?v=44"></script>
+  <script defer src="/static/face-fx.js?v=44"></script>
+  <script defer src="/static/screen-recorder.js?v=44"></script>
+  <script defer src="/static/chains.js?v=44"></script>
+  <script defer src="/static/app.js?v=44"></script>
+  <script defer src="/static/depth.js?v=44"></script>
+  <script defer src="/static/bg-fx.js?v=44"></script>
+  <script defer src="/static/feedback.js?v=44"></script>
+  <script defer src="/static/support.js?v=44"></script>
+  <script defer src="/static/theme.js?v=44"></script>
+  <script defer src="/static/site.js?v=44"></script>
+  <script defer src="/static/home-plus.js?v=44"></script>
 </body>
 </html>

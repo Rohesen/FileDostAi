@@ -16,14 +16,14 @@
 
 /* The headline's second line slowly shifts colour. */
 .hero-title .gradient-text {
-  background: linear-gradient(100deg, #a5b4fc 0%, #22d3ee 30%, #f0abfc 55%, #a5b4fc 80%, #22d3ee 100%);
+  background: linear-gradient(100deg, #5eead4 0%, #22d3ee 30%, #f0abfc 55%, #5eead4 80%, #22d3ee 100%);
   background-size: 220% 100%;
   -webkit-background-clip: text;
   background-clip: text;
   animation: hp-shine 9s ease-in-out infinite alternate;
 }
 :root[data-theme="light"] .hero-title .gradient-text {
-  background-image: linear-gradient(100deg, #4f46e5 0%, #0891b2 30%, #c026d3 55%, #4f46e5 80%, #0891b2 100%);
+  background-image: linear-gradient(100deg, #0f766e 0%, #0891b2 30%, #c026d3 55%, #0f766e 80%, #0891b2 100%);
 }
 @keyframes hp-shine { to { background-position: 100% 0; } }
 
@@ -49,11 +49,11 @@
   border-radius: 16px;
   background: var(--surface-strip);
   border: 1px solid var(--border-accent);
-  box-shadow: 0 0 0 0 rgba(99, 102, 241, 0), 0 18px 40px -22px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 0 0 0 rgba(13, 148, 136, 0), 0 18px 40px -22px rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(10px);
   transition: box-shadow 0.25s ease, border-color 0.25s ease;
 }
-.hp-ask:focus-within { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.18), 0 18px 40px -22px rgba(0, 0, 0, 0.7); }
+.hp-ask:focus-within { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.18), 0 18px 40px -22px rgba(0, 0, 0, 0.7); }
 .hp-ask-ico { font-size: 18px; }
 .hp-ask input {
   flex: 1;
@@ -76,11 +76,11 @@
   border-radius: 12px;
   font: 700 14px var(--font-sans);
   color: #fff;
-  background: linear-gradient(135deg, #6366f1, #06b6d4);
-  box-shadow: 0 8px 20px -8px rgba(99, 102, 241, 0.8);
+  background: #0d9488;
+  box-shadow: 0 8px 20px -8px rgba(13, 148, 136, 0.8);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
-.hp-pick.btn:hover { transform: translateY(-1px); box-shadow: 0 12px 26px -10px rgba(99, 102, 241, 0.95); }
+.hp-pick.btn:hover { transform: translateY(-1px); box-shadow: 0 12px 26px -10px rgba(13, 148, 136, 0.95); }
 
 .hp-drop {
   margin-top: 10px;
@@ -130,12 +130,12 @@
   height: 24px;
   border-radius: 50%;
   font-size: 13px;
-  background: linear-gradient(135deg, var(--c1, #6366f1), var(--c2, #06b6d4));
-  box-shadow: 0 3px 8px -3px var(--c1, #6366f1);
+  background: var(--c1, #0d9488);
+  box-shadow: 0 3px 8px -3px var(--c1, #0d9488);
 }
 .hp-chip-sm { padding: 5px 11px 5px 5px; font-size: 12.5px; }
 .hp-chip-sm .hp-chip-ico { width: 21px; height: 21px; font-size: 11.5px; }
-.hp-chip-top { border-color: var(--c1, var(--primary)); background: linear-gradient(135deg, rgba(99, 102, 241, 0.22), rgba(6, 182, 212, 0.14)); box-shadow: 0 6px 18px -10px var(--c1, #6366f1); }
+.hp-chip-top { border-color: var(--c1, var(--primary)); background: var(--surface, transparent); box-shadow: 0 6px 18px -10px var(--c1, #0d9488); }
 
 .hp-popular, .hp-recent { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 12px; }
 .hp-label { font-size: 12px; font-weight: 700; color: var(--text-dim); margin-right: 2px; }
@@ -181,7 +181,7 @@
   padding: 40px 56px;
   border-radius: 24px;
   border: 2px dashed rgba(165, 180, 252, 0.8);
-  background: rgba(30, 27, 75, 0.55);
+  background: rgba(19, 20, 22, 0.6);
   color: #fff;
   font-size: 15px;
   transform: scale(0.96);
@@ -189,7 +189,7 @@
 }
 .hp-veil.on .hp-veil-card { transform: scale(1); }
 .hp-veil-card b { font-size: 22px; }
-.hp-veil-card span { color: #c7d2fe; }
+.hp-veil-card span { color: #99f6e4; }
 .hp-veil-ico { font-size: 44px; animation: hp-bob 1.2s ease-in-out infinite alternate; }
 @keyframes hp-bob { to { transform: translateY(-8px); } }
 
@@ -219,7 +219,7 @@
 .hp-drop-note .ico, .hp-label .ico, .hp-file-name .ico { width: 14px; height: 14px; vertical-align: -0.15em; }
 .hp-clear { display: inline-grid; place-items: center; }
 .hp-clear .ico { width: 14px; height: 14px; }
-.hp-veil-ico { color: #c7d2fe; }
+.hp-veil-ico { color: #99f6e4; }
 .hp-veil-ico .ico { width: 52px; height: 52px; stroke-width: 1.5; }
 .hp-chip .ti { box-shadow: 0 3px 8px -3px var(--ti-a); }
 .faq-group h3 .ci { margin-right: 4px; }

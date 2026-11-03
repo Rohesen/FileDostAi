@@ -36,9 +36,9 @@ const TileArt = (() => {
     audio: "Listen instead", "ai-analyze": "Stats & insights",
   };
   const COLORS = {
-    organize: ["#6366f1", "#06b6d4"], edit: ["#f59e0b", "#ef4444"], convert: ["#10b981", "#06b6d4"],
-    image: ["#ec4899", "#f59e0b"], optimize: ["#06b6d4", "#6366f1"], security: ["#ef4444", "#a855f7"],
-    ai: ["#a855f7", "#06b6d4"],
+    organize: ["#f0643f", "#f5a524"], edit: ["#d9486b", "#f0643f"], convert: ["#f5a524", "#34b864"],
+    image: ["#16b4a6", "#f5a524"], optimize: ["#34b864", "#16b4a6"], security: ["#3f83f8", "#16b4a6"],
+    ai: ["#2a9fd6", "#16b4a6"],
   };
 
   function scene(tool) {

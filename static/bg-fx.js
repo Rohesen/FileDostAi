@@ -16,7 +16,7 @@
   // stay still, so scrolling never waits on the background.
   const still = () => reduced.matches || document.documentElement.classList.contains("fx-lite");
   const KINDS = [
-    { t: "PDF", c: "#ef4444" }, { t: "JPG", c: "#ec4899" }, { t: "PNG", c: "#a855f7" },
+    { t: "PDF", c: "#ef4444" }, { t: "JPG", c: "#ec4899" }, { t: "PNG", c: "#14b8a6" },
     { t: "DOC", c: "#3b82f6" }, { t: "XLS", c: "#10b981" }, { t: "PPT", c: "#f97316" },
     { t: "ZIP", c: "#eab308" }, { t: "TXT", c: "#64748b" },
   ];
@@ -112,7 +112,7 @@
         const dx = a[0] - b[0], dy = a[1] - b[1], d = Math.hypot(dx, dy), max = 190 * a[2].z;
         if (d > max) continue;
         const alpha = (1 - d / max) * 0.35 * a[2].z;
-        g.strokeStyle = light ? `rgba(79,70,229,${alpha})` : `rgba(129,140,248,${alpha})`;
+        g.strokeStyle = light ? `rgba(40,40,36,${alpha * 0.5})` : `rgba(236,235,231,${alpha * 0.35})`;
         g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.stroke();
         // a dot travelling along the line, like a file being sent
         const p = ((t / 2600) + i * 0.17) % 1;

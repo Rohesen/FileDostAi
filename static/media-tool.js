@@ -5,7 +5,7 @@
 // cross-origin isolation headers. The input file is mounted read-only (WORKERFS), so a big
 // video is not copied into the engine's memory.
 
-document.head.append(Object.assign(document.createElement("link"), { rel: "stylesheet", href: "/static/media-tool.css?v=38" }));
+document.head.append(Object.assign(document.createElement("link"), { rel: "stylesheet", href: "/static/media-tool.css?v=40" }));
 
 const MediaTool = (() => {
   const BASE = new URL("/static/vendor/ffmpeg/", location.href).href;
@@ -191,9 +191,14 @@ const MediaTool = (() => {
     const v = videoLines[0] || "";
     const br = /(\d+) kb\/s/.exec(v);
     const size = /\b(\d{2,5})x(\d{2,5})\b/.exec(v);
+    const a = (log.split("\n").find((l) => /Stream #.*Audio:/.test(l)) || "");
+    const rot = /rotat(?:e\s*:\s*|ion of\s*)(-?\d+)/.exec(log);
     return {
       duration, video: !!v, audio,
       videoKbps: br ? Number(br[1]) : 0, width: size ? Number(size[1]) : 0, height: size ? Number(size[2]) : 0,
+      // Codec names ("h264", "aac"…) so tools can copy streams instead of re-encoding them.
+      vcodec: (/Video:\s*(\w+)/.exec(v) || [])[1] || "", acodec: (/Audio:\s*(\w+)/.exec(a) || [])[1] || "",
+      rotation: rot ? ((Number(rot[1]) % 360) + 360) % 360 : 0,
     };
   }
 

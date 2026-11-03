@@ -16,3 +16,11 @@
   --font-mono: "Geist Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
 }
 body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+/* Mukta (Ek Type, Mumbai; SIL OFL) for headings. Chosen for FileDost because it was drawn
+   for Hindi and English together. Only the bold weights are loaded. */
+@font-face { font-family: "Mukta"; font-style: normal; font-weight: 700; font-display: swap;
+  src: url(/static/fonts/mukta-latin-700-normal.woff2) format("woff2"); }
+@font-face { font-family: "Mukta"; font-style: normal; font-weight: 800; font-display: swap;
+  src: url(/static/fonts/mukta-latin-800-normal.woff2) format("woff2"); }
+:root { --font-head: "Mukta", var(--font-sans); }

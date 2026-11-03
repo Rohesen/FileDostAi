@@ -40,6 +40,11 @@ const LANDING_PRESETS = {
   "ssc-photo-size": { ptPreset: "ssc-photo" }, "upsc-photo-size": { ptPreset: "upsc-photo" },
   "jee-main-photo-size": { ptPreset: "jee-photo" }, "neet-photo-size": { ptPreset: "neet-photo" },
   "cuet-photo-size": { ptPreset: "cuet-photo" }, "passport-size-photo": { ptPreset: "passport" },
+  "pan-card-photo-size": { ptPreset: "pan-photo" }, "signature-resize-20kb": { ptPreset: "sign-20kb" },
+  "photo-resize-20kb": { ptPreset: "ten-kb" }, "passport-photo-maker": { ptPreset: "passport" },
+  "aadhaar-card-compress": { pxTarget: "200", pxUnit: "KB" },
+  "mp3-to-wav": { acFormat: "wav" }, "wav-to-mp3": { acFormat: "mp3" }, "m4a-to-mp3": { acFormat: "mp3" },
+  "mov-to-mp4": { vcFormat: "mp4" }, "mkv-to-mp4": { vcFormat: "mp4" }, "avi-to-mp4": { vcFormat: "mp4" },
 };
 
 // The home page's own heading: tool pages arrive with the tool's heading in the HTML.
@@ -51,15 +56,15 @@ function setHero(tool) {
   if (!h || !p) return;
   if (HOME_HERO.title === null) {
     HOME_HERO.title = h.classList.contains("hero-title-page")
-      ? 'Do anything with your files.<br><span class="gradient-text">Privately.</span>' : h.innerHTML;
+      ? 'Free PDF and photo tools,<br><span class="gradient-text">no sign-up</span>' : h.innerHTML;
     HOME_HERO.sub = h.classList.contains("hero-title-page")
-      ? "PDFs, photos and Office files: convert, compress, sign and resize to the exact KB, right in your browser. Most tools never upload your file."
-      : p.textContent.trim();
+      ? "Merge, compress, convert and sign PDFs, or resize a photo to the exact KB a form asks for. No watermark, no account. <b>Most tools run in your browser, so the file stays on your computer.</b>"
+      : p.innerHTML.trim();
   }
   if (!tool && h.classList.contains("hero-title-page")) {
     h.classList.remove("hero-title-page");
     h.innerHTML = HOME_HERO.title;
-    p.textContent = HOME_HERO.sub;
+    p.innerHTML = HOME_HERO.sub;
   }
 }
 

@@ -10,11 +10,11 @@ const HomePlus = (() => {
   const FIRST = {
     pdf: ["compress", "merge", "split", "pdf-to-docx", "pdf-to-jpg", "sign", "edit", "compress-to-size", "organize", "ocr", "protect", "page-numbers"],
     pdfs: ["merge", "compress", "compare", "compress-any", "zip-tools"],
-    image: ["img-to-pdf", "photo-resize", "image-convert", "compress-any", "exam-form-kit", "remove-bg", "image-to-text", "upscale-image", "jpg-to-word", "remove-exif", "blur-image", "watermark-image", "scan", "qr-code"],
-    images: ["img-to-pdf", "image-to-text", "jpg-to-word", "remove-exif", "watermark-image", "image-convert", "scan", "compress-any", "exam-form-kit", "zip-tools"],
+    image: ["img-to-pdf", "photo-resize", "image-convert", "compress-any", "exam-form-kit", "remove-bg", "image-to-text", "upscale-image", "jpg-to-word", "remove-exif", "blur-image", "watermark-image", "scan", "qr-code", "rotate-image", "barcode-generator"],
+    images: ["img-to-pdf", "image-to-text", "jpg-to-word", "remove-exif", "watermark-image", "image-convert", "scan", "compress-any", "exam-form-kit", "rotate-image", "zip-tools"],
     heic: ["heic-to-jpg", "img-to-pdf", "photo-resize", "image-convert", "remove-bg"],
     word: ["word-to-pdf"], excel: ["excel-to-pdf"], slides: ["powerpoint-to-pdf"], text: ["markdown-to-pdf", "word-to-pdf"],
-    video: ["compress-video", "video-to-mp3", "trim-media", "reels-resizer", "video-to-gif", "media-speed", "volume-booster"], audio: ["trim-media", "video-to-mp3", "audio-joiner", "volume-booster", "media-speed"],
+    video: ["compress-video", "video-converter", "video-to-mp3", "trim-media", "merge-videos", "mute-video", "rotate-video", "crop-video", "reels-resizer", "video-to-gif", "media-speed", "volume-booster"], audio: ["audio-converter", "trim-media", "video-to-mp3", "audio-joiner", "volume-booster", "media-speed"],
     other: ["zip-tools", "compress-any"],
   };
   const LAST = new Set(["recipes", "compress-any", "zip-tools"]);
@@ -55,7 +55,7 @@ const HomePlus = (() => {
     return `<button type="button" class="hp-chip ${extra}" data-open="${t.id}" style="--c1:${colors(t)[0]};--c2:${colors(t)[1]}">
       ${Icons.tool(t, "ti-sm")}<span>${esc(t.name)}</span></button>`;
   }
-  const colors = (t) => (typeof TileArt !== "undefined" ? TileArt.colors(t) : ["#6366f1", "#06b6d4"]);
+  const colors = (t) => (typeof TileArt !== "undefined" ? TileArt.colors(t) : ["#f5a524", "#16b4a6"]);
 
   async function openWith(id, files) {
     remember(id);

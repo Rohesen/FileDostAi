@@ -84,6 +84,126 @@ GUIDES["passport-size-photo"] = {
     ],
 }
 
+GUIDES["pan-card-photo-size"] = {
+    "tool": "resize-image",
+    "name": "PAN Card Photo and Signature Size Resizer",
+    "description": ("Resize your photo (2.5 × 3.5 cm) and signature (4.5 × 2 cm) for the PAN card form, under 50 KB at 300 dpi. "
+                    "Free, the photo is never uploaded."),
+    "intro": ("The online PAN application (Protean/NSDL and UTIITSL) asks for a scanned photo and signature at a fixed size, "
+              "300 dpi and a small file size. The resizer below is already set for the PAN photo: add your picture, drag "
+              "the box over your face and save."),
+    "table": (["Upload", "Size", "File size", "Format"], [
+        ("Photo", "295 × 413 px (2.5 × 3.5 cm, 300 dpi)", "Under 50 KB", "JPG"),
+        ("Signature", "531 × 236 px (4.5 × 2 cm, 300 dpi)", "Under 50 KB", "JPG"),
+    ]),
+    "steps": [
+        "Take a photo against a plain white wall, looking straight at the camera.",
+        "Add it to the resizer at the top of this page.",
+        "Drag the box so your face and the top of your shoulders fill it, then press Save photo.",
+        "For the signature, sign in black ink on white paper, take a photo, and pick “PAN card signature” in “Made for”.",
+        "Tick “Clean signature” to make the paper pure white and the ink darker.",
+    ],
+    "faqs": [
+        ("Is my photo uploaded anywhere?", "No. The resizer runs in your browser, so the picture stays on your phone or computer."),
+        ("The portal says a different size. What do I do?",
+         "Check the latest instructions on the PAN portal, then change the width, height and KB numbers in the tool. Everything stays editable."),
+        ("Can I upload a PDF instead?", "Some PAN forms take the documents as one PDF. Turn your photos into a PDF with JPG to PDF, then use Compress PDF to Exact Size."),
+    ],
+}
+
+GUIDES["signature-resize-20kb"] = {
+    "tool": "resize-image",
+    "name": "Resize Signature to 20 KB",
+    "description": "Make a photo of your signature smaller than 20 KB for exam and job forms, with clean white paper and dark ink. Free, nothing is uploaded.",
+    "intro": ("Most forms want the signature as a JPG under 20 KB, and often over 10 KB. The resizer below is set for "
+              "it: add a photo of your signature, drag the box tight around it and save."),
+    "table": (["Form says", "Set in the tool", "Common forms"], [
+        ("10–20 KB", "Minimum 10, maximum 20", "SSC, many state exams"),
+        ("Under 20 KB", "Maximum 20", "Bank and job forms"),
+        ("4–30 KB", "Pick NEET or CUET signature", "NEET, CUET"),
+    ]),
+    "steps": [
+        "Sign in black or blue ink on plain white paper and take a photo from straight above.",
+        "Add the photo to the resizer at the top of this page.",
+        "Drag the box tight around the signature, with a little white space on each side.",
+        "Keep “Clean signature” ticked for a white background, set the pixels if the form gives them, and press Save.",
+    ],
+    "faqs": [
+        ("Is my signature uploaded anywhere?", "No. It is resized in your browser and stays on your device."),
+        ("The form also asks for a minimum size.", "Type it in Minimum KB. The tool keeps the file between the two numbers."),
+    ],
+}
+
+GUIDES["photo-resize-20kb"] = {
+    "tool": "resize-image",
+    "name": "Resize Photo to 20 KB",
+    "description": "Reduce any photo to under 20 KB for online forms, with the best quality that fits. Set exact pixels too if the form asks. Free, nothing is uploaded.",
+    "intro": ("Online forms often take photos only under 20 KB, while a phone photo is 2–5 MB. The resizer below is set "
+              "to 20 KB: add your photo, crop it if you like and save."),
+    "table": (["Form says", "Set in the tool"], [
+        ("Under 20 KB", "Maximum 20 (already set)"),
+        ("10–20 KB", "Minimum 10, maximum 20"),
+        ("Under 50 KB", "Pick “Any photo under 50 KB”"),
+        ("Exact pixels, e.g. 200 × 230", "Type them in Width and Height"),
+    ]),
+    "steps": [
+        "Add your photo to the resizer at the top of this page.",
+        "Drag the box to keep only the part you need.",
+        "Change the KB numbers if the form gives a different limit.",
+        "Press Save photo. The result shows the final size, so you can see it fits before uploading.",
+    ],
+    "faqs": [
+        ("Is my photo uploaded anywhere?", "No. It runs in your browser."),
+        ("The photo looks blurry at 20 KB.", "Set a smaller width and height (for example 200 × 230 px). Fewer pixels look sharper at the same KB."),
+    ],
+}
+
+GUIDES["passport-photo-maker"] = {
+    "tool": "resize-image",
+    "name": "Passport Photo Maker Online",
+    "description": "Make a passport photo from a phone picture: crop to 35 × 45 mm at 300 dpi, add a white background, and print several on one sheet. Free.",
+    "intro": ("Skip the studio: take a photo at home against a light wall and turn it into a passport photo here. "
+              "The tool below is set to 35 × 45 mm at 300 dpi (413 × 531 pixels), the size used for Indian passports and most visa forms."),
+    "table": (["Use", "Size", "Pixels at 300 dpi"], [
+        ("Indian passport, most visas", "35 × 45 mm", "413 × 531 px"),
+        ("US passport and visa", "2 × 2 in (51 × 51 mm)", "600 × 600 px"),
+        ("Many exam forms", "3.5 × 4.5 cm", "413 × 531 px"),
+    ]),
+    "steps": [
+        "Stand in front of a plain light wall in daylight and have someone take the photo at eye level.",
+        "Add it to the tool at the top of this page and drag the box over your head and shoulders.",
+        "For a white background, run the photo through the Background Remover first and pick white.",
+        "Press Save photo. To print, make a PDF with JPG to PDF, then use Pages per Sheet to fit 6 or 8 on a page.",
+    ],
+    "faqs": [
+        ("Is my photo uploaded anywhere?", "No. It stays in your browser."),
+        ("Will the passport office accept it?", "It is made at the official size. Check the latest rules for face size, glasses and background before you print."),
+    ],
+}
+
+GUIDES["aadhaar-card-compress"] = {
+    "tool": "compress-pdf-to-size",
+    "name": "Compress Aadhaar Card PDF",
+    "description": "Make your e-Aadhaar or scanned Aadhaar PDF small enough for forms: 100 KB, 200 KB or any limit. Free, files are never stored.",
+    "intro": ("Forms often want the Aadhaar card as a PDF under 100 or 200 KB. The tool above is set to 200 KB: add the "
+              "file and press Compress to size. The e-Aadhaar downloaded from UIDAI is locked with a password, so unlock it first."),
+    "table": (["Step", "Tool"], [
+        ("Unlock e-Aadhaar (password = first 4 letters of your name in capitals + birth year, e.g. RAHU1998)", "Unlock PDF"),
+        ("Make it smaller than the limit", "Compress PDF to Exact Size (this page)"),
+        ("Only the front side needed", "Remove Pages or Split PDF"),
+    ]),
+    "steps": [
+        "If you downloaded e-Aadhaar from UIDAI, open Unlock PDF and type the password to remove it.",
+        "Add the unlocked PDF to the tool at the top of this page.",
+        "Change the size limit if the form asks for something else, then press Compress to size.",
+        "Download the file. The result shows the new size so you can check it fits.",
+    ],
+    "faqs": [
+        ("Is my Aadhaar stored?", "No. The file is compressed in memory and deleted as soon as you get the result. Nothing is kept."),
+        ("Can I make a photo of my Aadhaar into a PDF?", "Yes. Use JPG to PDF (or Scan to PDF on a phone), then compress it here."),
+    ],
+}
+
 _PDF_STEPS = [
     "Add your PDF to the tool at the top of this page.",
     "The size limit is already filled in. Change it if your form asks for something else.",
@@ -116,6 +236,8 @@ _pdf("compress-pdf-to-100kb", "100 KB", "exam, job and scholarship portals")
 _pdf("compress-pdf-to-200kb", "200 KB", "government and university upload forms")
 _pdf("compress-pdf-to-500kb", "500 KB", "job portals and bank KYC uploads")
 _pdf("compress-pdf-to-1mb", "1 MB", "email attachments and online applications")
+
+GUIDES["aadhaar-card-compress"]["tips"] = _PDF_TIPS
 
 GUIDES["reduce-pdf-size-in-kb"] = {
     "tool": "compress-pdf-to-size",

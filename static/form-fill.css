@@ -60,7 +60,7 @@ select.ff-input[multiple], select.ff-input[size] { padding: 4px; }
 .ff-layer { position: absolute; inset: 0; pointer-events: none; }
 .ff-box {
   position: absolute; pointer-events: auto; cursor: pointer;
-  border: 1px solid rgba(99, 102, 241, 0.45); background: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(13, 148, 136, 0.45); background: rgba(13, 148, 136, 0.08);
   border-radius: 2px; overflow: hidden; display: flex; align-items: center;
   color: #0f172a; font-family: Helvetica, Arial, sans-serif; line-height: 1; padding: 0 2px; white-space: nowrap;
 }

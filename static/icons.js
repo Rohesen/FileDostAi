@@ -7,12 +7,12 @@ const Icons = (() => {
   // Category colours: tile gradient [from, to].
   const CAT = {
     organize: ["#f0643f", "#e0452a"],
-    edit: ["#a463e8", "#8446d6"],
+    edit: ["#d9486b", "#bf3456"],
     convert: ["#f5a524", "#e8870b"],
     image: ["#16b4a6", "#0e958a"],
     optimize: ["#34b864", "#22984d"],
     security: ["#3f83f8", "#2563eb"],
-    ai: ["#7c6cf8", "#5b4be6"],
+    ai: ["#2a9fd6", "#1a80b8"],
   };
   const CAT_LABEL = { organize: "Organize", edit: "Edit & Sign", convert: "Convert", image: "Images", optimize: "Optimize", security: "Security", ai: "Read & Compare" };
 
@@ -95,6 +95,14 @@ const Icons = (() => {
     "volume-booster": P("M3 9.5h3.5L11 5.5v13l-4.5-4H3z M15 9a4.5 4.5 0 0 1 0 6 M17.5 6.5a8 8 0 0 1 0 11 M20.5 3v4 M18.5 5h4"),
     "audio-joiner": P("M3 12h2 M6 8.5v7 M9 6v12 M12 10v4 M15 8v8 M18 5.5v13 M21 11v2"),
     "text-diff": P("M4 3h7v18H4z M13 3h7v18h-7z M6.5 8h2.5 M6.5 12h2.5 M15.5 8h2.5 M15.5 12h2.5 M16.75 15v3 M15.25 16.5h3 M6.5 16.5h2.5"),
+    "video-converter": P("M2.5 5h12v14h-12z M14.5 10l4-2.5v9l-4-2.5 M20 7.5h1.5 M20 16.5h1.5 M6 9.5h5 M9 7.5l2 2-2 2 M11 14.5H6 M8 12.5l-2 2 2 2"),
+    "audio-converter": P("M9 18V5.5l10-2V16 M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0z M19 16a3 3 0 1 1-6 0 3 3 0 0 1 6 0z M9 9.5l10-2"),
+    "merge-videos": P("M2.5 3.5h8v7h-8z M13.5 13.5h8v7h-8z M5.5 6l2.5 1-2.5 1z M16.5 16l2.5 1-2.5 1z M14 7h4a2 2 0 0 1 2 2v2 M18 9l2 2 2-2"),
+    "mute-video": P("M2.5 5h14v14h-14z M16.5 10l5-3v10l-5-3 M6 9.5l7 5 M13 9.5l-7 5"),
+    "rotate-video": P("M5 6.5h11v11H5z M8.5 10v4l3.5-2z M19 4.5a8 8 0 0 1 2 7 M21 4.5v4h-4"),
+    "crop-video": P("M6 2.5V18h15.5 M2.5 6H18v15.5 M10 10v4l3-2z"),
+    "rotate-image": P("M4 8h12v12H4z M4 16.5l3.5-3.5 2.5 2.5 2-2 4 4 M12.5 11.5h.01 M14 3.5h2.5a4 4 0 0 1 4 4V11 M18.5 9l2 2 2-2"),
+    "barcode-generator": P("M3 5v14 M6 5v14 M8.5 5v14 M12 5v14 M14 5v14 M17 5v14 M19.5 5v14 M21.5 5v14"),
     "qr-code": P("M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M6 6h1v1H6z M17 6h1v1h-1z M6 17h1v1H6z M14 14h3v3h-3z M20 14v.01 M14 20.5h.01 M17 17.5h4v3.5h-4z"),
 
     // Optimize

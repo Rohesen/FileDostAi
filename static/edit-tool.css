@@ -92,8 +92,8 @@
 .ed-tool.active {
   color: var(--text-strong);
   background: var(--primary-light);
-  border-color: rgba(99, 102, 241, 0.65);
-  box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.25), 0 0 18px rgba(99, 102, 241, 0.18);
+  border-color: rgba(13, 148, 136, 0.65);
+  box-shadow: inset 0 0 0 1px rgba(13, 148, 136, 0.25), 0 0 18px rgba(13, 148, 136, 0.18);
 }
 
 .ed-tool:focus-visible,
@@ -295,13 +295,13 @@
   pointer-events: auto;
   cursor: text;
   border-radius: 2px;
-  outline: 1px dashed rgba(99, 102, 241, 0.45);
-  background: rgba(99, 102, 241, 0.06);
+  outline: 1px dashed rgba(13, 148, 136, 0.45);
+  background: rgba(13, 148, 136, 0.06);
   transition: background 0.12s ease, outline-color 0.12s ease;
 }
 .ed-run:hover {
   outline: 1.5px solid var(--primary);
-  background: rgba(99, 102, 241, 0.16);
+  background: rgba(13, 148, 136, 0.16);
 }
 
 .ed-obj {
@@ -364,9 +364,9 @@
   pointer-events: none;
   outline: 1.5px solid var(--primary);
   outline-offset: 2px;
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
+  box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.12);
 }
-.ed-sel.is-line { outline: 1px dashed rgba(99, 102, 241, 0.6); box-shadow: none; }
+.ed-sel.is-line { outline: 1px dashed rgba(13, 148, 136, 0.6); box-shadow: none; }
 .ed-sel.is-editing {
   outline: 1.5px dashed var(--accent-cyan);
   box-shadow: 0 0 0 4px rgba(6, 182, 212, 0.12);

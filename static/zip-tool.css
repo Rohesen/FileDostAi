@@ -9,7 +9,7 @@
   border: 0; background: transparent; color: var(--text-muted); font: inherit; font-weight: 700; font-size: 14px;
   padding: 10px 12px; border-radius: 9px; cursor: pointer;
 }
-.zt-mode[aria-selected="true"] { background: var(--primary); color: #fff; box-shadow: 0 4px 14px -6px rgba(99, 102, 241, 0.8); }
+.zt-mode[aria-selected="true"] { background: var(--primary); color: #fff; box-shadow: 0 4px 14px -6px rgba(13, 148, 136, 0.8); }
 .zt-mode:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 
 .zt-make, .zt-open { display: flex; flex-direction: column; gap: 12px; }

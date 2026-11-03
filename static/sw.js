@@ -2,7 +2,7 @@
 // Pages and static files: network first, falling back to the cached copy when offline,
 // so an update never mixes old and new files.
 // The API is never cached, and no user file ever passes through here.
-const V = "39";  // keep equal to the ?v= in index.html
+const V = "44";  // keep equal to the ?v= in index.html
 const VERSION = `filedost-v${V}`;
 // Only the page itself is cached at install, so the first visit downloads nothing extra.
 // CORE (the offline copy of every tool) is fetched later, when the page says it is idle.
@@ -49,6 +49,9 @@ const CORE = [
   "/static/watermark-image.js",
   "/static/text-diff.js",
   "/static/media-extra.js",
+  "/static/media-more.js",
+  "/static/image-rotate.js",
+  "/static/barcode-tool.js",
   "/static/face-fx.js",
   "/static/screen-recorder.js",
   "/static/screen-recorder.css",
@@ -76,12 +79,15 @@ const CORE = [
   "/static/redesign.css",
   "/static/holo.css",
   "/static/lite.css",
+  "/static/human.css",
   "/static/icons.js",
   "/static/icons.css",
   "/static/fonts.css",
   "/static/fonts/geist-latin-wght-normal.woff2",
   "/static/fonts/geist-latin-ext-wght-normal.woff2",
   "/static/fonts/geist-mono-latin-wght-normal.woff2",
+  "/static/fonts/mukta-latin-800-normal.woff2",
+  "/static/fonts/mukta-latin-700-normal.woff2",
   "/static/pdfjs-loader.mjs",
   "/static/vendor/pdf-lib.min.js",
   "/static/vendor/jszip.min.js",

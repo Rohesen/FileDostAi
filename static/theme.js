@@ -14,7 +14,7 @@ const Theme = (() => {
     }
     root.dataset.theme = theme;
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.content = theme === "light" ? "#f4f6fb" : "#0b0f19";
+    if (meta) meta.content = theme === "light" ? "#f4f3ef" : "#131416";
     const btn = document.getElementById("themeToggle");
     if (btn) {
       btn.setAttribute("aria-pressed", String(theme === "light"));

@@ -214,7 +214,7 @@ const TOOLS = [
   {
     id: "photo-resize",
     slug: "resize-image",
-    aliases: ["crop-image", "image-cropper", "photo-resizer", "ssc-photo-size", "upsc-photo-size", "jee-main-photo-size", "neet-photo-size", "cuet-photo-size", "passport-size-photo"],
+    aliases: ["crop-image", "image-cropper", "photo-resizer", "ssc-photo-size", "upsc-photo-size", "jee-main-photo-size", "neet-photo-size", "cuet-photo-size", "passport-size-photo", "pan-card-photo-size", "signature-resize-20kb", "photo-resize-20kb", "passport-photo-maker"],
     name: "Exam Photo & Signature Resizer",
     desc: "Crop and resize a photo or signature to the exact pixels, KB and DPI that JEE, NEET, SSC, UPSC and other forms ask for.",
     keywords: "image cropper crop image resize image kb jee neet ssc upsc passport photo signature 20kb 50kb dpi pixels",

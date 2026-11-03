@@ -4,7 +4,7 @@
 // tries the server's compressor (files processed in memory, never stored) and then falls back
 // to the browser.
 
-document.head.append(Object.assign(document.createElement("link"), { rel: "stylesheet", href: "/static/pdf-extras.css?v=38" }));
+document.head.append(Object.assign(document.createElement("link"), { rel: "stylesheet", href: "/static/pdf-extras.css?v=40" }));
 
 const PdfExtras = (() => {
   let PDFDocument, PDFName, PDFDict, PDFArray, PDFNumber, PDFHexString, PDFRef, StandardFonts, rgb, degrees;
@@ -1115,7 +1115,7 @@ TOOLS.push(
   {
     id: "compress-to-size",
     slug: "compress-pdf-to-size",
-    aliases: ["compress-pdf-to-100kb", "compress-pdf-to-200kb", "compress-pdf-to-500kb", "compress-pdf-to-1mb", "reduce-pdf-size-in-kb"],
+    aliases: ["compress-pdf-to-100kb", "compress-pdf-to-200kb", "compress-pdf-to-500kb", "compress-pdf-to-1mb", "reduce-pdf-size-in-kb", "aadhaar-card-compress"],
     name: "Compress PDF to Exact Size",
     desc: "Get a PDF under the size a form asks for: 100 KB, 200 KB, 1 MB or any limit you type.",
     keywords: "compress pdf to 200kb 100kb 500kb 1mb 2mb 50kb 300kb reduce pdf size in kb exact size target size under limit govt portal upload limit shrink pdf less than mb",

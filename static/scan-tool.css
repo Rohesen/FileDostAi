@@ -91,7 +91,7 @@
 .scan-seg button[aria-checked="true"] {
   background: var(--primary);
   color: #fff;
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 2px 8px rgba(13, 148, 136, 0.4);
 }
 
 /* ---------- empty state ---------- */
@@ -187,7 +187,7 @@
   display: none;
 }
 .scan-thumb.loaded .scan-thumb-btn canvas { display: block; }
-.scan-thumb.active .scan-thumb-btn { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25); }
+.scan-thumb.active .scan-thumb-btn { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.25); }
 .scan-thumb.failed .scan-thumb-btn { border-color: rgba(239, 68, 68, 0.6); }
 .scan-thumb-spin {
   position: absolute;
@@ -897,7 +897,7 @@
    Glass pills on the camera, the site's cyan-to-indigo gradient for the main action,
    icon bubbles in the editor tool bar. Pure CSS; .fx-lite phones skip the blur. */
 .scan-cam {
-  --scan-grad: linear-gradient(135deg, #06b6d4 0%, #6366f1 100%);
+  --scan-grad: #0d9488;
   --scan-glass: rgba(255, 255, 255, 0.1);
   --scan-glass-line: rgba(255, 255, 255, 0.18);
 }
@@ -914,7 +914,7 @@
 .scan-cam-opt[aria-pressed="true"] {
   background: var(--scan-grad);
   border-color: transparent;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 6px 18px -4px rgba(99, 102, 241, 0.6);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 6px 18px -4px rgba(13, 148, 136, 0.6);
 }
 .scan-cam-x { width: 44px; height: 44px; }
 .scan-cam-opt:active, .scan-cam-x:active, .scan-review-btn:active, .scan-cam-done:active, .scan-cam-import:active { transform: scale(0.95); }
@@ -939,8 +939,8 @@
   height: 78px;
   padding: 5px;
   border: 0;
-  background: conic-gradient(from 210deg, #06b6d4, #6366f1, #a855f7, #06b6d4);
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.15), 0 8px 26px -6px rgba(99, 102, 241, 0.7);
+  background: conic-gradient(from 210deg, #06b6d4, #0d9488, #e0527e, #06b6d4);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.15), 0 8px 26px -6px rgba(13, 148, 136, 0.7);
 }
 .scan-shutter span {
   background: radial-gradient(circle at 35% 30%, #fff 0%, #f1f5f9 55%, #cbd5e1 100%);
@@ -948,14 +948,14 @@
 }
 .scan-cam.found .scan-shutter { animation: scanReady 1.6s ease-in-out infinite; }
 @keyframes scanReady {
-  0%, 100% { box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.15), 0 8px 26px -6px rgba(99, 102, 241, 0.7); }
-  50% { box-shadow: 0 0 0 6px rgba(99, 102, 241, 0.18), 0 8px 30px -4px rgba(6, 182, 212, 0.8); }
+  0%, 100% { box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.15), 0 8px 26px -6px rgba(13, 148, 136, 0.7); }
+  50% { box-shadow: 0 0 0 6px rgba(13, 148, 136, 0.18), 0 8px 30px -4px rgba(6, 182, 212, 0.8); }
 }
 
 .scan-cam-done, .scan-review-ok {
   background: var(--scan-grad);
   border: 0;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 8px 22px -6px rgba(99, 102, 241, 0.75);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 8px 22px -6px rgba(13, 148, 136, 0.75);
   transition: transform 0.12s, filter 0.15s;
 }
 .scan-cam-done:hover, .scan-review-ok:hover { filter: brightness(1.08); }
@@ -1001,20 +1001,20 @@
   box-sizing: content-box;
   padding: 8px;
   border-radius: 12px;
-  background: rgba(99, 102, 241, 0.12);
+  background: rgba(13, 148, 136, 0.12);
   color: var(--primary);
   transition: background 0.15s, color 0.15s, box-shadow 0.15s;
   width: 19px !important;
   height: 19px !important;
 }
 .scan-tool:hover:not(:disabled) { background: transparent; }
-.scan-tool:hover:not(:disabled) svg { background: var(--scan-grad-ed, linear-gradient(135deg, #06b6d4, #6366f1)); color: #fff; box-shadow: 0 6px 14px -6px rgba(99, 102, 241, 0.8); }
+.scan-tool:hover:not(:disabled) svg { background: var(--scan-grad-ed, #0d9488); color: #fff; box-shadow: 0 6px 14px -6px rgba(13, 148, 136, 0.8); }
 .scan-tool:active:not(:disabled) { transform: scale(0.94); }
 .scan-tool-danger svg { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
 .scan-tool-danger:hover:not(:disabled) svg { background: #ef4444; color: #fff; box-shadow: 0 6px 14px -6px rgba(239, 68, 68, 0.8); }
 .scan-btn { border-radius: 14px; transition: background 0.15s, border-color 0.15s, transform 0.1s, box-shadow 0.15s; }
-.scan-btn-primary { background: linear-gradient(135deg, #06b6d4, #6366f1); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 8px 20px -8px rgba(99, 102, 241, 0.8); }
-.scan-btn-primary:hover { background: linear-gradient(135deg, #0891b2, #4f46e5); }
+.scan-btn-primary { background: #0d9488; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 8px 20px -8px rgba(13, 148, 136, 0.8); }
+.scan-btn-primary:hover { background: #14a394; }
 
 /* Weak phones: no blur, no pulsing. */
 .fx-lite .scan-cam-opt, .fx-lite .scan-cam-x, .fx-lite .scan-review-btn, .fx-lite .scan-cam-view .scan-cam-hint {
@@ -1026,5 +1026,5 @@
 .fx-lite .scan-cam.found .scan-shutter { animation: none; }
 @media (prefers-reduced-motion: reduce) { .scan-cam.found .scan-shutter { animation: none; } }
 .scan-review-auto { white-space: nowrap; flex: none; }
-.scan-review-auto input { accent-color: #6366f1; }
+.scan-review-auto input { accent-color: #0d9488; }
 @media (max-width: 380px) { .scan-review-auto { padding: 8px 10px; font-size: 13px; } .scan-review-btn { padding: 0 14px; } }
