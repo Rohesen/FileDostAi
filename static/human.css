@@ -266,3 +266,7 @@ body { background: var(--bg-main); background-image: none; }
 
 .btn-primary .ico, .hp-pick.btn .ico, .btn-primary svg { color: #05261f; }
 .btn-donate .ico, .btn-donate .donate-ico, .btn-donate svg { color: #e2483d; }
+
+/* v48: header logo = the tab icon (dark square, green lined page). */
+.brand-icon, :root[data-theme="light"] .brand-icon { background: #0b0f19; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1); }
+.brand-icon .ico.brand-page { width: 72%; height: 72%; }
