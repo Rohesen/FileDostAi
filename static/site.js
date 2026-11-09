@@ -217,7 +217,7 @@ const Site = (() => {
       ["How do I make a photo or signature the right size for JEE, NEET, SSC or UPSC?", "Open Exam Photo & Signature Resizer, pick your exam, drag the box over your face or signature, and press Save. It hits the exact pixel size, KB range and DPI the form asks for. Forms change their rules each year, so check the latest official notice and adjust the numbers if needed."],
       ["How do I get a file under 50 KB, 100 KB or any size?", "Use Compress Any File and type your limit in \"Target size in KB\". Photos are re-saved at the best quality that fits; for exam photos with an exact pixel size, use the Exam Photo resizer instead."],
       [`Is ${N} open source?`, `Yes, under the AGPL-3.0 licence. ${real(BRAND.source_code_url) ? `The code is at <a href="${esc(BRAND.source_code_url)}" target="_blank" rel="noopener">${esc(BRAND.source_code_url)}</a>.` : "Anyone can read, check and improve the code."}`],
-      ["Do you use cookies or tracking?", "No tracking cookies, no ads and no analytics. Your browser only remembers small settings such as dark or light mode."],
+      ["Do you use cookies or tracking?", "No tracking cookies and no ads. We count visits with Cloudflare Web Analytics, which uses no cookies and never sees your files. Your browser only remembers small settings such as dark or light mode."],
       ["Something didn't work. How do I report it?", `Use <a href="#" data-feedback="problem">Report a problem</a> at the bottom of any page, or write to ${email()}. Please don't send private documents; describe what happened instead.`],
       ["How can I support the project?", `Use the <a href="/#support">Donate</a> buttons, tell your friends, or rate the tools you use. Companies and coaching institutes can sponsor ${N}.`],
     ];
@@ -292,7 +292,7 @@ const Site = (() => {
 
   // ---------- About, privacy, terms... ----------
 
-  const UPDATED = "12 October 2026";
+  const UPDATED = "9 November 2026";
   const PAGES = {
     about: ["About us", () => `
       <p>${N} is a free, open-source set of tools for PDFs, images and every other kind of file: merge, split, compress, convert, sign, OCR, resize photos for exam forms and much more.</p>
@@ -310,8 +310,9 @@ const Site = (() => {
       <ul>
         <li><strong>Ratings and messages you choose to send</strong> (the star rating, your comment, and an email address only if you type one). No file content is ever included.</li>
         <li><strong>Basic server logs</strong> (IP address, the page or tool requested and the time), kept briefly to stop abuse and keep the service running.</li>
+        <li><strong>Anonymous visit counts</strong> from Cloudflare Web Analytics: which pages are visited, how fast they load, and the visitor's country, browser and device type. It uses no cookies, doesn't follow you to other sites, and never sees your files. See <a href="https://www.cloudflare.com/web-analytics/" target="_blank" rel="noopener">Cloudflare Web Analytics</a>.</li>
       </ul>
-      <p>We use no advertising, no analytics trackers and no tracking cookies, and we never sell data.</p>
+      <p>We use no advertising, no tracking cookies and nothing that follows you across sites, and we never sell data.</p>
       <h4>Your choices</h4>
       <p>To have a message you sent deleted, contact ${email()}.</p>`],
     terms: ["Terms of use", () => `

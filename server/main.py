@@ -37,6 +37,9 @@ import image_ocr
 import bg_remove
 import sandbox
 from guides import GUIDES, guide_html
+import og_image
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from fastapi.exception_handlers import http_exception_handler
 
 log = logging.getLogger("ultrapdf")
 
@@ -802,7 +805,7 @@ def _tool_directory() -> str:
 
 
 def _page(title: str, description: str, path: str, request: Request, heading: Optional[str] = None,
-          tool_slug: Optional[str] = None) -> HTMLResponse:
+          tool_slug: Optional[str] = None, og: str = "home", status_code: int = 200) -> HTMLResponse:
     page = _index_html()
     page = page.replace(f"<title>{HOME_TITLE}</title>", f"<title>{html.escape(title)}</title>", 1)
     start = page.index('<meta name="description" content="')
@@ -814,15 +817,21 @@ def _page(title: str, description: str, path: str, request: Request, heading: Op
     # instead of the bare domain.
     meta = (
         f'<meta name="description" content="{e(description)}">\n'
-        f'  <link rel="canonical" href="{e(canonical)}">\n'
-        f'  <meta name="application-name" content="{e(BRAND_NAME)}">\n'
+        + (f'  <link rel="canonical" href="{e(canonical)}">\n' if status_code == 200 else
+           '  <meta name="robots" content="noindex">\n')
+        + f'  <meta name="application-name" content="{e(BRAND_NAME)}">\n'
         f'  <meta property="og:site_name" content="{e(BRAND_NAME)}">\n'
         f'  <meta property="og:type" content="website">\n'
         f'  <meta property="og:title" content="{e(title)}">\n'
         f'  <meta property="og:description" content="{e(description)}">\n'
         f'  <meta property="og:url" content="{e(canonical)}">\n'
-        f'  <meta property="og:image" content="{e(base)}/static/icons/icon-512.png">\n'
-        f'  <meta name="twitter:card" content="summary">'
+        f'  <meta property="og:image" content="{e(base)}/og/{e(og)}.png?v={OG_VERSION}">\n'
+        f'  <meta property="og:image:type" content="image/png">\n'
+        f'  <meta property="og:image:width" content="{og_image.W}">\n'
+        f'  <meta property="og:image:height" content="{og_image.H}">\n'
+        f'  <meta property="og:image:alt" content="{e(heading or BRAND_NAME)}: {e(description)}">\n'
+        f'  <meta name="twitter:card" content="summary_large_image">\n'
+        f'  <meta name="twitter:image" content="{e(base)}/og/{e(og)}.png?v={OG_VERSION}">'
     )
     ld = []
     if path == "/":
@@ -860,7 +869,7 @@ def _page(title: str, description: str, path: str, request: Request, heading: Op
         page = page.replace("  <!-- Category Filter Bar -->", guide + "\n\n  <!-- Category Filter Bar -->", 1)
     page = page.replace('<nav class="footer-dir" id="footerDir" aria-label="All tools"></nav>',
                         f'<nav class="footer-dir" id="footerDir" aria-label="All tools">{_tool_directory()}</nav>', 1)
-    return HTMLResponse(page)
+    return HTMLResponse(page, status_code=status_code)
 
 
 @app.api_route("/", methods=["GET", "HEAD"], response_class=HTMLResponse)
@@ -978,6 +987,56 @@ INFO_PAGES = {
 }
 
 
+# ---------- Link-preview pictures and the "page not found" page ----------
+OG_VERSION = "1"  # raise when the picture's design changes, so WhatsApp/LinkedIn fetch it again
+_HOME_DESCRIPTION = ("Merge, compress, convert and sign PDFs, or resize a photo to the exact KB a form asks for. "
+                     "Most tools run in your browser.")
+
+
+def _og_text(slug: str):
+    """(title, description) drawn on a page's link-preview picture, or None for an unknown page."""
+    if slug == "home":
+        return "Free PDF and photo tools, no sign-up", _HOME_DESCRIPTION
+    if slug in LANDING_PAGES:
+        _tool, name, description = LANDING_PAGES[slug]
+        return name, description
+    if slug in INFO_PAGES:
+        return INFO_PAGES[slug]
+    if slug in TOOL_PAGES:
+        return TOOL_PAGES[slug]
+    return None
+
+
+@app.api_route("/og/{slug}.png", methods=["GET", "HEAD"])
+async def og_picture(slug: str, request: Request):
+    text = _og_text(slug)
+    if text is None:
+        raise HTTPException(status_code=404, detail="Not found")
+    domain = re.sub(r"^https?://(www\.)?", "", _base_url(request)).split("/")[0]
+    brand = f"{BRAND['logo_main']} {BRAND['logo_accent']}".strip() or BRAND_NAME
+    png = await run_in_threadpool(og_image.render, text[0], text[1], brand, domain,
+                                  "Free | No sign-up | No watermark")
+    return Response(png, media_type="image/png",
+                    headers={"Cache-Control": "public, max-age=604800"})
+
+
+@app.exception_handler(StarletteHTTPException)
+async def not_found_page(request: Request, exc: StarletteHTTPException):
+    """A wrong address opened in a browser gets the home page's search box and popular tools under
+    a "Page not found" heading, with status 404 and noindex; API calls, files and scripts keep the
+    short JSON answer."""
+    path = request.url.path
+    wants_page = (exc.status_code == 404 and request.method in ("GET", "HEAD")
+                  and not path.startswith(("/api/", "/static/", "/og/"))
+                  and "." not in path.rsplit("/", 1)[-1]
+                  and "text/html" in request.headers.get("accept", ""))
+    if not wants_page:
+        return await http_exception_handler(request, exc)
+    return _page(f"Page not found | {BRAND_NAME}",
+                 "The link may be old or mistyped. Search for the tool you need, or pick a popular one below.",
+                 path, request, heading="Page not found", status_code=404)
+
+
 @app.get("/manifest.webmanifest")
 async def manifest():
     with open(os.path.join(STATIC_DIR, "manifest.webmanifest"), encoding="utf-8") as f:
@@ -990,12 +1049,14 @@ async def manifest():
 async def tool_page(slug: str, request: Request):
     if slug in LANDING_PAGES:
         tool, name, description = LANDING_PAGES[slug]
-        return _page(f"{name} Free Online | {BRAND_NAME}", description, f"/{slug}", request, heading=name, tool_slug=tool)
+        return _page(f"{name} Free Online | {BRAND_NAME}", description, f"/{slug}", request, heading=name,
+                     tool_slug=tool, og=slug)
     slug = TOOL_ALIASES.get(slug, slug)
     if slug in INFO_PAGES:
         title, description = INFO_PAGES[slug]
-        return _page(f"{title} | {BRAND_NAME}", description, f"/{slug}", request, heading=title)
+        return _page(f"{title} | {BRAND_NAME}", description, f"/{slug}", request, heading=title, og=slug)
     if slug not in TOOL_PAGES:
         raise HTTPException(status_code=404, detail="Page not found")
     name, description = TOOL_PAGES[slug]
-    return _page(f"{name} Free Online | {BRAND_NAME}", description, f"/{slug}", request, heading=name, tool_slug=slug)
+    return _page(f"{name} Free Online | {BRAND_NAME}", description, f"/{slug}", request, heading=name,
+                 tool_slug=slug, og=slug)
